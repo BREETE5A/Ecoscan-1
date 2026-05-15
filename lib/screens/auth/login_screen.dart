@@ -1,4 +1,5 @@
 // Page de connexion — vague SVG, logo animé, loading button, shake sur erreur
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -457,10 +458,8 @@ class _FormCard extends StatelessWidget {
       tween: Tween(begin: 0, end: shake ? 1 : 0),
       duration: const Duration(milliseconds: 500),
       builder: (_, t, ch) {
-        // Sinusoïde d'oscillation : 5 allers-retours qui s'amortissent
-        final offset = shake
-            ? 10.0 * t * (1 - t) * 4 * (2 * (t * 5).ceil() % 2 == 0 ? 1 : -1)
-            : 0.0;
+        // sin(t·π·5) → 5 demi-oscillations qui s'amortissent
+        final offset = shake ? math.sin(t * math.pi * 5) * 10.0 * (1 - t) : 0.0;
         return Transform.translate(offset: Offset(offset, 0), child: ch);
       },
       child: Container(
@@ -554,11 +553,9 @@ class _OrbitingLeaves extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: List.generate(2, (i) {
-              const pi = 3.14159265;
-              final angle =
-                  ctrl.value * 2 * pi + i * pi;
-              final x = 14.0 * (angle.isNaN ? 1 : _cos(angle));
-              final y = 14.0 * (angle.isNaN ? 0 : _sin(angle));
+              final angle = ctrl.value * 2 * math.pi + i * math.pi;
+              final x = 14.0 * math.cos(angle);
+              final y = 14.0 * math.sin(angle);
               return Transform.translate(
                 offset: Offset(x, y),
                 child: Icon(
@@ -574,8 +571,6 @@ class _OrbitingLeaves extends StatelessWidget {
     );
   }
 
-  double _cos(double a) => a == 0 ? 1 : (1 - a * a / 2 + a * a * a * a / 24);
-  double _sin(double a) => a - a * a * a / 6 + a * a * a * a * a / 120;
 }
 
 // ── Séparateur animé ──────────────────────────────────────────────────────────

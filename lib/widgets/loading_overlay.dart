@@ -83,10 +83,11 @@ class _LoadingOverlayState extends State<LoadingOverlay>
   }
 
   Widget _buildOverlay() {
-    return Container(
-      key: const ValueKey('loading'),
-      color: Colors.white.withValues(alpha: 0.88),
-      child: Column(
+    return SizedBox.expand(
+      child: Container(
+        key: const ValueKey('loading'),
+        color: Colors.white.withValues(alpha: 0.88),
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Spinner organique : 3 feuilles en orbite
@@ -149,6 +150,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
           ),
         ],
       ),
+    ),   // SizedBox.expand
     );
   }
 }
