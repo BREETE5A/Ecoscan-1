@@ -98,12 +98,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
+      resizeToAvoidBottomInset: true,
+      body: Column(
+        children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 14, 20, 14),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkSurface : Colors.white,
                 boxShadow: [
@@ -125,10 +125,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       height: 46,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppColors.primaryGradient,
+                        gradient: AppColors.goldGradient,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
+                            color: AppColors.accent.withValues(alpha: 0.4),
                             blurRadius: 10,
                           ),
                         ],
@@ -159,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                               width: 8,
                               height: 8,
                               decoration: const BoxDecoration(
-                                color: AppColors.primary,
+                                color: AppColors.accent,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -205,7 +205,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
                                 child: const Text('OK',
-                                    style: TextStyle(color: AppColors.primary, fontFamily: 'Poppins')),
+                                    style: TextStyle(color: AppColors.accent, fontFamily: 'Poppins')),
                               ),
                             ],
                           ),
@@ -286,17 +286,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
+                        color: AppColors.accent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.25)),
+                            color: AppColors.accent.withValues(alpha: 0.25)),
                       ),
                       child: Text(
                         _quickReplies[i],
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
-                          color: AppColors.primary,
+                          color: AppColors.accent,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -359,11 +359,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
+                        gradient: AppColors.goldGradient,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
+                            color: AppColors.accent.withValues(alpha: 0.4),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
@@ -376,9 +376,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
-      ),
     );
   }
 }
@@ -405,7 +405,7 @@ class _MessageBubble extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: AppColors.primaryGradient,
+                gradient: AppColors.goldGradient,
               ),
               child: const Icon(Icons.smart_toy_rounded,
                   color: Colors.white, size: 16),
@@ -417,7 +417,7 @@ class _MessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isBot
                     ? (isDark ? AppColors.darkCard : Colors.white)
-                    : AppColors.primary,
+                    : AppColors.accent,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -426,7 +426,7 @@ class _MessageBubble extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isBot ? Colors.black : AppColors.primary)
+                    color: (isBot ? Colors.black : AppColors.accent)
                         .withValues(alpha: isBot ? 0.06 : 0.25),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
@@ -474,7 +474,7 @@ class _TypingBubble extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.goldGradient,
             ),
             child: const Icon(Icons.smart_toy_rounded,
                 color: Colors.white, size: 16),
@@ -506,7 +506,7 @@ class _TypingBubble extends StatelessWidget {
                     width: 7,
                     height: 7 + ctrl.value * 5,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.6 + ctrl.value * 0.4),
+                      color: AppColors.accent.withValues(alpha: 0.6 + ctrl.value * 0.4),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),

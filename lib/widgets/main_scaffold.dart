@@ -63,18 +63,13 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     if (loc.startsWith('/home')) return 0;
     if (loc.startsWith('/map')) return 1;
     if (loc.startsWith('/scan')) return 2;
-    if (loc.startsWith('/chat')) return 3;
+    if (loc.startsWith('/guide')) return 3;
     if (loc.startsWith('/profile')) return 4;
     return 0;
   }
 
   void _openEcoBot(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _EcoBotSheet(),
-    );
+    context.go('/chat');
   }
 
   @override
@@ -139,11 +134,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                     ),
                     const SizedBox(width: 64),
                     _NavItem(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      activeIcon: Icons.chat_bubble_rounded,
-                      label: 'Assistant',
+                      icon: Icons.menu_book_outlined,
+                      activeIcon: Icons.menu_book_rounded,
+                      label: 'Guide',
                       selected: idx == 3,
-                      onTap: () => context.go('/chat'),
+                      onTap: () => context.go('/guide'),
                     ),
                     _NavItem(
                       icon: Icons.person_outline_rounded,
@@ -279,10 +274,10 @@ class _EcoBotFabState extends State<_EcoBotFab>
             height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.goldGradient,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.5),
+                  color: AppColors.accent.withValues(alpha: 0.55),
                   blurRadius: 16,
                   spreadRadius: 2,
                   offset: const Offset(0, 4),
