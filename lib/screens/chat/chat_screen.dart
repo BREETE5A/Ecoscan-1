@@ -177,8 +177,66 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
-                  Icon(Icons.more_vert_rounded,
-                      color: AppColors.textSecondary),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert_rounded,
+                        color: AppColors.textSecondary),
+                    onSelected: (value) {
+                      if (value == 'clear') {
+                        setState(() {
+                          _messages.clear();
+                          _messages.add(_Msg(
+                            'Bonjour ! Je suis EcoBot 🌿 Votre assistant de tri intelligent. Comment puis-je vous aider ?',
+                            true,
+                          ));
+                        });
+                      } else if (value == 'about') {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            title: const Text('À propos de EcoBot',
+                                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+                            content: const Text(
+                              'EcoBot est votre assistant IA spécialisé dans le tri des déchets et le recyclage. Posez vos questions sur comment trier, où déposer vos déchets, et réduire votre empreinte carbone.',
+                              style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK',
+                                    style: TextStyle(color: AppColors.primary, fontFamily: 'Poppins')),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'clear',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                            SizedBox(width: 10),
+                            Text('Effacer la conversation',
+                                style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'about',
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 20),
+                            SizedBox(width: 10),
+                            Text('À propos de EcoBot',
+                                style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05),

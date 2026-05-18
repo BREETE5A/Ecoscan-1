@@ -117,37 +117,50 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
         child: SafeArea(
           child: SizedBox(
             height: 64,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                _NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home_rounded,
-                  label: 'Accueil',
-                  selected: idx == 0,
-                  onTap: () => context.go('/home'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _NavItem(
+                      icon: Icons.home_outlined,
+                      activeIcon: Icons.home_rounded,
+                      label: 'Accueil',
+                      selected: idx == 0,
+                      onTap: () => context.go('/home'),
+                    ),
+                    _NavItem(
+                      icon: Icons.map_outlined,
+                      activeIcon: Icons.map_rounded,
+                      label: 'Carte',
+                      selected: idx == 1,
+                      onTap: () => context.go('/map'),
+                    ),
+                    const SizedBox(width: 64),
+                    _NavItem(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      activeIcon: Icons.chat_bubble_rounded,
+                      label: 'Assistant',
+                      selected: idx == 3,
+                      onTap: () => context.go('/chat'),
+                    ),
+                    _NavItem(
+                      icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
+                      label: 'Profil',
+                      selected: idx == 4,
+                      onTap: () => context.go('/profile'),
+                    ),
+                  ],
                 ),
-                _NavItem(
-                  icon: Icons.map_outlined,
-                  activeIcon: Icons.map_rounded,
-                  label: 'Carte',
-                  selected: idx == 1,
-                  onTap: () => context.go('/map'),
-                ),
-                _ScanFab(scaleAnim: _scanScale, onTap: () => context.go('/scan')),
-                _NavItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  activeIcon: Icons.chat_bubble_rounded,
-                  label: 'Assistant',
-                  selected: idx == 3,
-                  onTap: () => context.go('/chat'),
-                ),
-                _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
-                  label: 'Profil',
-                  selected: idx == 4,
-                  onTap: () => context.go('/profile'),
+                Positioned(
+                  top: -18,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: _ScanFab(scaleAnim: _scanScale, onTap: () => context.go('/scan')),
+                  ),
                 ),
               ],
             ),
@@ -266,14 +279,10 @@ class _EcoBotFabState extends State<_EcoBotFab>
             height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF9B59B6), Color(0xFF6C3483)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppColors.primaryGradient,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF9B59B6).withValues(alpha: 0.5),
+                  color: AppColors.primary.withValues(alpha: 0.5),
                   blurRadius: 16,
                   spreadRadius: 2,
                   offset: const Offset(0, 4),
@@ -281,7 +290,7 @@ class _EcoBotFabState extends State<_EcoBotFab>
               ],
             ),
             child: const Center(
-              child: Text('🤖', style: TextStyle(fontSize: 24)),
+              child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 26),
             ),
           ),
         ),
@@ -434,13 +443,11 @@ class _EcoBotSheetState extends State<_EcoBotSheet> {
                         width: 42,
                         height: 42,
                         decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF9B59B6), Color(0xFF6C3483)],
-                          ),
+                          gradient: AppColors.primaryGradient,
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
-                          child: Text('🤖', style: TextStyle(fontSize: 22)),
+                          child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 22),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -575,9 +582,7 @@ class _EcoBotSheetState extends State<_EcoBotSheet> {
                       height: 46,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF9B59B6), Color(0xFF6C3483)],
-                        ),
+                        gradient: AppColors.primaryGradient,
                       ),
                       child: const Icon(Icons.send_rounded,
                           color: Colors.white, size: 20),

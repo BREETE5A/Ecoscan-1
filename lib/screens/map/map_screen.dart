@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import '../../theme/app_theme.dart';
 
 class MapScreen extends StatefulWidget {
@@ -12,18 +14,26 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _markerCtrl;
+  late MapController _mapController;
   String _selected = 'Tous';
   final _search = TextEditingController();
 
   final _filters = ['Tous', 'Plastique', 'Verre', 'Papier', 'Compost', 'Électronique'];
 
+  // Real recycling collection points in Oujda, Morocco
   static const _points = [
-    _Point('Centre de Tri Oujda', 'Plastique • Papier • Verre', 0.35, 0.28, AppColors.plastic, Icons.recycling_rounded),
-    _Point('Bac Compost Hay Salam', 'Déchets organiques', 0.55, 0.45, Color(0xFF795548), Icons.compost_rounded),
-    _Point('Collecte Électronique', 'Électroménager • Câbles', 0.25, 0.60, AppColors.electronics, Icons.electrical_services_rounded),
-    _Point('Point Verre Bd Hassan II', 'Bouteilles • Bocaux', 0.72, 0.35, AppColors.glass, Icons.local_bar_outlined),
-    _Point('Déchetterie Centrale', 'Tous types de déchets', 0.62, 0.68, AppColors.primary, Icons.delete_sweep_rounded),
-    _Point('Bac Papier Université', 'Journaux • Cartons', 0.42, 0.72, AppColors.paper, Icons.article_outlined),
+    _Point('Centre de Tri Oujda', 'Plastique • Papier • Verre',
+        LatLng(34.6882, -1.9082), AppColors.plastic, Icons.recycling_rounded),
+    _Point('Bac Compost Hay Salam', 'Déchets organiques',
+        LatLng(34.6752, -1.9178), Color(0xFF795548), Icons.compost_rounded),
+    _Point('Collecte Électronique', 'Électroménager • Câbles',
+        LatLng(34.6945, -1.9218), AppColors.electronics, Icons.electrical_services_rounded),
+    _Point('Point Verre Bd Hassan II', 'Bouteilles • Bocaux',
+        LatLng(34.6820, -1.9005), AppColors.glass, Icons.local_bar_outlined),
+    _Point('Déchetterie Centrale', 'Tous types de déchets',
+        LatLng(34.6715, -1.9135), AppColors.primary, Icons.delete_sweep_rounded),
+    _Point('Bac Papier Université', 'Journaux • Cartons',
+        LatLng(34.6908, -1.9295), AppColors.paper, Icons.article_outlined),
   ];
 
   int? _tapped;
@@ -31,6 +41,7 @@ class _MapScreenState extends State<MapScreen>
   @override
   void initState() {
     super.initState();
+    _mapController = MapController();
     _markerCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1200));
     _markerCtrl.forward();
@@ -43,53 +54,72 @@ class _MapScreenState extends State<MapScreen>
     super.dispose();
   }
 
+  List<_Point> get _visiblePoints {
+    if (_selected == 'Tous') return _points;
+    return _points.where((p) => p.label.contains(_selected)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Map background
-          CustomPaint(
-            painter: _MapPainter(isDark: isDark),
-            size: Size(size.width, size.height),
-          ),
-
-          // Markers
-          ...List.generate(_points.length, (i) {
-            final p = _points[i];
-            final visible = _selected == 'Tous' || p.label.contains(_selected);
-            return AnimatedOpacity(
-              opacity: visible ? 1 : 0,
-              duration: const Duration(milliseconds: 300),
-              child: AnimatedBuilder(
-                animation: _markerCtrl,
-                builder: (_, child) {
-                  final delay = i / _points.length;
-                  final progress = ((_markerCtrl.value - delay).clamp(0.0, 1.0) / (1 - delay))
-                      .clamp(0.0, 1.0);
-                  return Transform.translate(
-                    offset: Offset(0, -20 * (1 - progress)),
-                    child: Opacity(opacity: progress, child: child),
-                  );
-                },
-                child: Positioned(
-                  left: p.x * size.width - 22,
-                  top: p.y * (size.height * 0.65) + 80,
-                  child: GestureDetector(
-                    onTap: () => setState(() => _tapped = _tapped == i ? null : i),
-                    child: _MarkerPin(
-                      color: p.color,
-                      icon: p.icon,
-                      selected: _tapped == i,
-                    ),
-                  ),
-                ),
+          // Real OpenStreetMap
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: const LatLng(34.682, -1.912),
+              initialZoom: 13.5,
+              minZoom: 10,
+              maxZoom: 18,
+              onTap: (tapPosition, latLng) => setState(() => _tapped = null),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.ecoscan.ecoscan',
+                maxZoom: 19,
               ),
-            );
-          }),
+              MarkerLayer(
+                markers: List.generate(_visiblePoints.length, (i) {
+                  final p = _visiblePoints[i];
+                  return Marker(
+                    point: p.latLng,
+                    width: 56,
+                    height: 68,
+                    child: GestureDetector(
+                      onTap: () {
+                        final originalIdx = _points.indexOf(p);
+                        setState(() => _tapped = _tapped == originalIdx ? null : originalIdx);
+                        _mapController.move(p.latLng, 15.0);
+                      },
+                      child: AnimatedBuilder(
+                        animation: _markerCtrl,
+                        builder: (_, child) {
+                          final delay = i / _visiblePoints.length;
+                          final progress =
+                              ((_markerCtrl.value - delay).clamp(0.0, 1.0) /
+                                      (1 - delay + 0.001))
+                                  .clamp(0.0, 1.0);
+                          return Transform.translate(
+                            offset: Offset(0, -20 * (1 - progress)),
+                            child: Opacity(opacity: progress, child: child),
+                          );
+                        },
+                        child: _MarkerPin(
+                          color: p.color,
+                          icon: p.icon,
+                          selected: _tapped == _points.indexOf(p),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
 
           // Top overlay
           SafeArea(
@@ -114,9 +144,19 @@ class _MapScreenState extends State<MapScreen>
                         ),
                         child: TextField(
                           controller: _search,
+                          onChanged: (v) => setState(() {}),
                           decoration: InputDecoration(
                             hintText: 'Rechercher un point de collecte...',
                             prefixIcon: const Icon(Icons.search_rounded),
+                            suffixIcon: _search.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear_rounded),
+                                    onPressed: () {
+                                      _search.clear();
+                                      setState(() {});
+                                    },
+                                  )
+                                : null,
                             filled: false,
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -136,7 +176,7 @@ class _MapScreenState extends State<MapScreen>
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: _filters.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          separatorBuilder: (context, index) => const SizedBox(width: 8),
                           itemBuilder: (_, i) {
                             final f = _filters[i];
                             final active = _selected == f;
@@ -203,7 +243,9 @@ class _MapScreenState extends State<MapScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCard : Colors.white,
+                      color: isDark
+                          ? AppColors.darkCard.withValues(alpha: 0.95)
+                          : Colors.white.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -227,7 +269,66 @@ class _MapScreenState extends State<MapScreen>
               ],
             ),
           ),
+
+          // Zoom controls
+          Positioned(
+            right: 16,
+            bottom: 120,
+            child: Column(
+              children: [
+                _MapBtn(
+                  icon: Icons.add_rounded,
+                  onTap: () {
+                    final zoom = _mapController.camera.zoom;
+                    _mapController.move(_mapController.camera.center, zoom + 1);
+                  },
+                ),
+                const SizedBox(height: 8),
+                _MapBtn(
+                  icon: Icons.remove_rounded,
+                  onTap: () {
+                    final zoom = _mapController.camera.zoom;
+                    _mapController.move(_mapController.camera.center, zoom - 1);
+                  },
+                ),
+                const SizedBox(height: 8),
+                _MapBtn(
+                  icon: Icons.my_location_rounded,
+                  onTap: () => _mapController.move(
+                      const LatLng(34.682, -1.912), 13.5),
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _MapBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _MapBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 20, color: AppColors.textPrimary),
       ),
     );
   }
@@ -332,7 +433,9 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: isDark
+            ? AppColors.darkCard.withValues(alpha: 0.97)
+            : Colors.white.withValues(alpha: 0.97),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -370,6 +473,14 @@ class _InfoCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  '${point.latLng.latitude.toStringAsFixed(4)}, ${point.latLng.longitude.toStringAsFixed(4)}',
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 10,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -419,81 +530,11 @@ class _LegendItem extends StatelessWidget {
   }
 }
 
-class _MapPainter extends CustomPainter {
-  final bool isDark;
-  _MapPainter({required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bg = isDark ? const Color(0xFF0D1F12) : const Color(0xFFE8F5E9);
-    canvas.drawRect(Offset.zero & size, Paint()..color = bg);
-
-    final roadPaint = Paint()
-      ..color = isDark ? const Color(0xFF1F3D26) : const Color(0xFFC8E6C9)
-      ..strokeWidth = 18
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final routes = [
-      [Offset(0, size.height * 0.3), Offset(size.width, size.height * 0.3)],
-      [Offset(0, size.height * 0.55), Offset(size.width, size.height * 0.6)],
-      [Offset(size.width * 0.25, 0), Offset(size.width * 0.28, size.height)],
-      [Offset(size.width * 0.6, 0), Offset(size.width * 0.65, size.height)],
-      [Offset(0, size.height * 0.75), Offset(size.width, size.height * 0.72)],
-    ];
-
-    for (final r in routes) {
-      canvas.drawLine(r[0], r[1], roadPaint);
-    }
-
-    // Park blocks
-    final parkPaint = Paint()
-      ..color = isDark
-          ? const Color(0xFF1A3A20)
-          : const Color(0xFFA5D6A7).withValues(alpha: 0.5);
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(size.width * 0.35, size.height * 0.35,
-                size.width * 0.22, size.height * 0.15),
-            const Radius.circular(12)),
-        parkPaint);
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(size.width * 0.05, size.height * 0.62,
-                size.width * 0.18, size.height * 0.1),
-            const Radius.circular(8)),
-        parkPaint);
-
-    // Water
-    final waterPaint = Paint()
-      ..color = isDark
-          ? const Color(0xFF0D2D40)
-          : const Color(0xFF90CAF9).withValues(alpha: 0.4);
-    final waterPath = Path()
-      ..moveTo(size.width * 0.0, size.height * 0.65)
-      ..quadraticBezierTo(size.width * 0.15, size.height * 0.68,
-          size.width * 0.3, size.height * 0.64)
-      ..quadraticBezierTo(size.width * 0.45, size.height * 0.60,
-          size.width * 0.6, size.height * 0.62)
-      ..lineTo(size.width * 0.6, size.height * 0.66)
-      ..quadraticBezierTo(size.width * 0.45, size.height * 0.65,
-          size.width * 0.3, size.height * 0.68)
-      ..quadraticBezierTo(size.width * 0.15, size.height * 0.72,
-          size.width * 0.0, size.height * 0.69)
-      ..close();
-    canvas.drawPath(waterPath, waterPaint);
-  }
-
-  @override
-  bool shouldRepaint(_MapPainter old) => old.isDark != isDark;
-}
-
 class _Point {
   final String name;
   final String label;
-  final double x;
-  final double y;
+  final LatLng latLng;
   final Color color;
   final IconData icon;
-  const _Point(this.name, this.label, this.x, this.y, this.color, this.icon);
+  const _Point(this.name, this.label, this.latLng, this.color, this.icon);
 }

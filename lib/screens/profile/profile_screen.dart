@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _statCtrl;
   late Animation<double> _statAnim;
+  String? _avatarPath;
 
   @override
   void initState() {
@@ -23,6 +26,51 @@ class _ProfileScreenState extends State<ProfileScreen>
     _statAnim =
         CurvedAnimation(parent: _statCtrl, curve: Curves.easeOut);
     _statCtrl.forward();
+  }
+
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+              title: const Text('Prendre une photo',
+                  style: TextStyle(fontFamily: 'Poppins')),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+              title: const Text('Choisir depuis la galerie',
+                  style: TextStyle(fontFamily: 'Poppins')),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 512,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _avatarPath = picked.path);
   }
 
   @override
@@ -73,7 +121,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                               height: 90,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: AppColors.darkPrimaryGradient,
+                                gradient: _avatarPath == null
+                                    ? AppColors.darkPrimaryGradient
+                                    : null,
                                 border: Border.all(
                                     color: Colors.white, width: 3),
                                 boxShadow: [
@@ -83,9 +133,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     blurRadius: 16,
                                   ),
                                 ],
+                                image: _avatarPath != null
+                                    ? DecorationImage(
+                                        image: FileImage(File(_avatarPath!)),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
                               ),
-                              child: const Icon(Icons.person_rounded,
-                                  color: Colors.white, size: 46),
+                              child: _avatarPath == null
+                                  ? const Icon(Icons.person_rounded,
+                                      color: Colors.white, size: 46)
+                                  : null,
                             ),
                           ).animate().scale(
                               begin: const Offset(0.7, 0.7),
@@ -95,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             bottom: 2,
                             right: 2,
                             child: GestureDetector(
-                              onTap: () => context.go('/profile/edit'),
+                              onTap: _pickPhoto,
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(

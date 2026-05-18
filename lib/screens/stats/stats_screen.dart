@@ -168,7 +168,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
 
             // Summary cards (live from provider)
             SizedBox(
-              height: 100,
+              height: 120,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),

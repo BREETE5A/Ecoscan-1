@@ -122,10 +122,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             .animate()
                             .scale(
                               begin: const Offset(0.4, 0.4),
-                              duration: 700.ms,
+                              duration: 450.ms,
                               curve: Curves.elasticOut,
                             )
-                            .fadeIn(duration: 400.ms),
+                            .fadeIn(duration: 250.ms),
 
                         const SizedBox(height: 14),
 
@@ -140,7 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                         )
                             .animate()
-                            .fadeIn(duration: 500.ms, delay: 150.ms)
+                            .fadeIn(duration: 320.ms, delay: 100.ms)
                             .slideY(begin: 0.15),
 
                         const SizedBox(height: 36),
@@ -293,7 +293,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                         )
                             .animate()
-                            .fadeIn(duration: 500.ms, delay: 200.ms)
+                            .fadeIn(duration: 320.ms, delay: 130.ms)
                             .slideY(begin: 0.1),
 
                         const SizedBox(height: 22),
@@ -661,31 +661,49 @@ class _GoogleLogo extends StatelessWidget {
 }
 
 class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
+  // Convertit des degrés en radians
+  static double _d(double deg) => deg * math.pi / 180;
+
   @override
   void paint(Canvas canvas, Size s) {
-    final colors = [
-      const Color(0xFF4285F4),
-      const Color(0xFF34A853),
-      const Color(0xFFFBBC05),
-      const Color(0xFFEA4335),
-    ];
-    final quadrants = [
-      [0.0, -1.5707],
-      [-1.5707, -1.5707],
-      [3.1415, -1.5707],
-      [1.5707, -1.5707],
-    ];
-    final r = s.width / 2;
-    for (int i = 0; i < 4; i++) {
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(r, r), radius: r),
-        quadrants[i][0],
-        quadrants[i][1],
-        true,
-        Paint()..color = colors[i],
-      );
-    }
-    canvas.drawCircle(Offset(r, r), r * 0.55, Paint()..color = Colors.white);
+    final cx = s.width / 2;
+    final cy = s.height / 2;
+    // Rayon médian de l'anneau et épaisseur du trait
+    final r  = s.width * 0.36;
+    final sw = s.width * 0.19;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = sw
+      ..strokeCap = StrokeCap.butt;
+
+    final arcRect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+
+    // Le "G" s'ouvre à 0° (3 h) — l'arc démarre à 0° et fait 340° au total
+    // Bleu  :   0° → 160°
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(arcRect, _d(0),   _d(160), false, paint);
+    // Rouge : 160° → 220°
+    paint.color = const Color(0xFFEA4335);
+    canvas.drawArc(arcRect, _d(160), _d(60),  false, paint);
+    // Jaune : 220° → 275°
+    paint.color = const Color(0xFFFBBC05);
+    canvas.drawArc(arcRect, _d(220), _d(55),  false, paint);
+    // Vert  : 275° → 340°
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(arcRect, _d(275), _d(65),  false, paint);
+
+    // Barre horizontale bleue (le jambage du "G"), de cx vers la droite
+    paint
+      ..color = const Color(0xFF4285F4)
+      ..strokeCap = StrokeCap.square;
+    canvas.drawLine(
+      Offset(cx, cy),
+      Offset(cx + r + sw / 2, cy),
+      paint,
+    );
   }
 
   @override
