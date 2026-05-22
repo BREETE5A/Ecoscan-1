@@ -7,9 +7,15 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../models/scan_entry.dart';
+import '../../models/scan_result_model.dart';
 import '../../providers/scan_history_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../services/classifier_service.dart';
 
 enum _DetectionState { idle, analyzing, recyclable, dangerous }
+
+// ── Catégories affichées dans le badge de mode ────────────────────────────────
+const _kModeLabel = 'Analyse locale';
 
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
@@ -33,16 +39,15 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
   bool _scanning = false;
   bool _torchOn = false;
-  bool _isCloud = true;
   _DetectionState _state = _DetectionState.idle;
 
-  // Camera
   CameraController? _cameraCtrl;
   bool _cameraReady = false;
   String? _cameraError;
-
-  // Gallery picked image
   File? _galleryImage;
+
+  final _classifier = ClassifierService();
+  bool _modelLoaded = false;
 
   Color get _frameColorValue {
     switch (_state) {
@@ -58,11 +63,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
   }
 
   String get _statusLabel {
+    if (!_modelLoaded) return '⏳  Chargement du modèle IA...';
     switch (_state) {
       case _DetectionState.recyclable:
-        return '♻️  Recyclable détecté';
+        return '♻️  Recyclable détecté !';
       case _DetectionState.dangerous:
-        return '⚠️  Déchet dangereux';
+        return '⚠️  Déchet dangereux détecté';
       case _DetectionState.analyzing:
         return '🔍  Analyse en cours...';
       case _DetectionState.idle:
@@ -77,44 +83,50 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     super.initState();
 
     _scanLine = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-
+        vsync: this, duration: const Duration(milliseconds: 2000))
+      ..repeat(reverse: true);
     _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
+        vsync: this, duration: const Duration(milliseconds: 1500))
+      ..repeat(reverse: true);
     _ripple = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat();
+        vsync: this, duration: const Duration(milliseconds: 1800))
+      ..repeat();
+    _flash =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _frameColor =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
 
-    _flash = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    _frameColor = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-
-    _scanLineAnim = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scanLine, curve: Curves.easeInOut),
-    );
-    _pulseAnim = Tween(begin: 0.98, end: 1.02).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
-    _rippleAnim = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _ripple, curve: Curves.easeOut),
-    );
-    _flashAnim = Tween(begin: 0.0, end: 0.6).animate(
-      CurvedAnimation(parent: _flash, curve: Curves.easeIn),
-    );
+    _scanLineAnim = Tween(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _scanLine, curve: Curves.easeInOut));
+    _pulseAnim = Tween(begin: 0.98, end: 1.02)
+        .animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
+    _rippleAnim = Tween(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _ripple, curve: Curves.easeOut));
+    _flashAnim = Tween(begin: 0.0, end: 0.6)
+        .animate(CurvedAnimation(parent: _flash, curve: Curves.easeIn));
 
     _initCamera();
+    _loadModel();
+  }
+
+  Future<void> _loadModel() async {
+    try {
+      await _classifier.load();
+      if (mounted) setState(() => _modelLoaded = true);
+    } catch (e) {
+      debugPrint('TFLite load error: $e');
+      if (mounted) {
+        setState(() => _modelLoaded = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur chargement modèle IA : $e',
+                style: const TextStyle(fontFamily: 'Poppins')),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _initCamera() async {
@@ -128,12 +140,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
         (c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
-      final ctrl = CameraController(
-        back,
-        ResolutionPreset.high,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
+      final ctrl = CameraController(back, ResolutionPreset.high,
+          enableAudio: false, imageFormatGroup: ImageFormatGroup.jpeg);
       await ctrl.initialize();
       if (!mounted) {
         ctrl.dispose();
@@ -143,10 +151,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
         _cameraCtrl = ctrl;
         _cameraReady = true;
       });
-    } catch (e) {
-      if (mounted) {
-        setState(() => _cameraError = 'Caméra non disponible');
-      }
+    } catch (_) {
+      if (mounted) setState(() => _cameraError = 'Caméra non disponible');
     }
   }
 
@@ -161,44 +167,166 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
   Future<void> _pickFromGallery() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
+    final picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked == null || !mounted) return;
     setState(() {
       _galleryImage = File(picked.path);
       _state = _DetectionState.idle;
     });
-    // Auto-trigger scan after picking
     _triggerScan();
+  }
+
+  void _showError(String msg) {
+    if (!mounted) return;
+    setState(() {
+      _scanning = false;
+      _state = _DetectionState.idle;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        backgroundColor: Colors.red.shade700,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   Future<void> _triggerScan() async {
     if (_scanning) return;
+
+    if (!_modelLoaded) {
+      _showError('Modèle IA non chargé. Vérifiez l\'installation de l\'app.');
+      return;
+    }
+
     setState(() {
       _scanning = true;
       _state = _DetectionState.analyzing;
     });
 
-    await Future.delayed(const Duration(milliseconds: 1200));
+    File? imageToClassify = _galleryImage;
 
-    final entry = ScanEntry.random();
-    final nextState = entry.dangerous
-        ? _DetectionState.dangerous
-        : _DetectionState.recyclable;
+    if (imageToClassify == null && _cameraReady && _cameraCtrl != null) {
+      try {
+        final xFile = await _cameraCtrl!.takePicture();
+        imageToClassify = File(xFile.path);
+      } catch (e) {
+        _showError('Impossible de capturer la photo : $e');
+        return;
+      }
+    }
+
+    if (imageToClassify == null) {
+      _showError('Aucune image disponible. Utilisez la caméra ou la galerie.');
+      return;
+    }
+
+    ScanEntry entry;
+    List<({String label, double score})> allScores = [];
+    try {
+      final result = await _classifier.classify(imageToClassify);
+      allScores = result.allScores;
+      debugPrint('Classification: ${result.label} (${(result.confidence * 100).toStringAsFixed(1)}%)');
+      entry = ScanEntry.fromClassification(result.label, result.confidence);
+    } catch (e) {
+      debugPrint('Classify error: $e');
+      _showError('Erreur d\'analyse : $e');
+      return;
+    }
+
+    final nextState =
+        entry.dangerous ? _DetectionState.dangerous : _DetectionState.recyclable;
 
     if (!mounted) return;
     setState(() => _state = nextState);
 
     await _flash.forward();
     await _flash.reverse();
-
     await Future.delayed(const Duration(milliseconds: 700));
+
+    if (!mounted) return;
+
+    // Panneau debug — scores de toutes les classes
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('🔬 Scores du modèle TFLite',
+                style: TextStyle(color: Colors.white, fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 12),
+            ...allScores.map((s) {
+              final pct = (s.score * 100);
+              final isTop = s.label == entry.category;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    SizedBox(width: 110,
+                        child: Text(s.label,
+                            style: TextStyle(
+                                color: isTop ? Colors.greenAccent : Colors.white70,
+                                fontFamily: 'Poppins', fontSize: 13,
+                                fontWeight: isTop ? FontWeight.bold : FontWeight.normal))),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: s.score.clamp(0.0, 1.0),
+                          backgroundColor: Colors.white12,
+                          color: isTop ? Colors.greenAccent : Colors.white38,
+                          minHeight: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('${pct.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                            color: isTop ? Colors.greenAccent : Colors.white54,
+                            fontFamily: 'Poppins', fontSize: 12)),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 12),
+            SizedBox(width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent,
+                    foregroundColor: Colors.black),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Continuer', style: TextStyle(fontFamily: 'Poppins')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     if (!mounted) return;
     ref.read(scanHistoryProvider.notifier).addScan(entry);
     ref.read(currentScanProvider.notifier).state = entry;
+
+    // Mise à jour des stats utilisateur (points, scans, CO₂)
+    final scanResult = ScanResultModel(
+      rawClass: entry.category,
+      category: entry.category,
+      binColor: entry.binColor,
+      confidence: entry.recyclability,
+      co2SavedPerKg: entry.co2Saved / 100,
+      scannedAt: entry.scannedAt,
+    );
+    if (mounted) {
+      await ref.read(userProvider.notifier).recordScan(scanResult);
+    }
 
     setState(() {
       _scanning = false;
@@ -206,6 +334,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       _galleryImage = null;
     });
 
+    if (!mounted) return;
     context.go('/scan/result');
   }
 
@@ -217,6 +346,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     _flash.dispose();
     _frameColor.dispose();
     _cameraCtrl?.dispose();
+    _classifier.close();
     super.dispose();
   }
 
@@ -230,7 +360,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Camera preview or fallback
+          // Camera / gallery preview
           if (_cameraReady && _cameraCtrl != null)
             Positioned.fill(
               child: _galleryImage != null
@@ -254,14 +384,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                           const Icon(Icons.no_photography_rounded,
                               color: Colors.white54, size: 64),
                           const SizedBox(height: 12),
-                          Text(
-                            _cameraError!,
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              color: Colors.white54,
-                              fontSize: 14,
-                            ),
-                          ),
+                          Text(_cameraError!,
+                              style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  color: Colors.white54,
+                                  fontSize: 14)),
                         ],
                       ),
                     )
@@ -274,11 +401,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                     ),
             ),
 
-          // Dark overlay for readability over camera
           if (_cameraReady)
             Container(color: Colors.black.withValues(alpha: 0.2)),
 
-          // Overlay outside frame
+          // Dark overlay with frame cutout
           AnimatedBuilder(
             animation: _rippleAnim,
             builder: (_, _) => CustomPaint(
@@ -305,16 +431,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
             ),
           ),
 
-          // Scanner frame with animated corner brackets
+          // Scanner frame
           Center(
             child: Transform.translate(
               offset: const Offset(0, -40),
               child: AnimatedBuilder(
                 animation: _pulseAnim,
-                builder: (_, child) => Transform.scale(
-                  scale: _pulseAnim.value,
-                  child: child,
-                ),
+                builder: (_, child) =>
+                    Transform.scale(scale: _pulseAnim.value, child: child),
                 child: SizedBox(
                   width: frameSize,
                   height: frameSize,
@@ -331,20 +455,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                             child: Container(
                               height: 2,
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    frameCol.withValues(alpha: 0.9),
-                                    frameCol,
-                                    frameCol.withValues(alpha: 0.9),
-                                    Colors.transparent,
-                                  ],
-                                ),
+                                gradient: LinearGradient(colors: [
+                                  Colors.transparent,
+                                  frameCol.withValues(alpha: 0.9),
+                                  frameCol,
+                                  frameCol.withValues(alpha: 0.9),
+                                  Colors.transparent,
+                                ]),
                               ),
                             ),
                           ),
                         ),
-
                       if (_state == _DetectionState.recyclable ||
                           _state == _DetectionState.dangerous)
                         Positioned.fill(
@@ -369,13 +490,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                                     size: 60,
                                   )
                                       .animate(
-                                          onPlay: (c) =>
-                                              c.repeat(reverse: true))
+                                          onPlay: (c) => c.repeat(reverse: true))
                                       .scale(
-                                        begin: const Offset(0.9, 0.9),
-                                        end: const Offset(1.1, 1.1),
-                                        duration: 600.ms,
-                                      ),
+                                          begin: const Offset(0.9, 0.9),
+                                          end: const Offset(1.1, 1.1),
+                                          duration: 600.ms),
                                   const SizedBox(height: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -402,7 +521,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                             ),
                           ).animate().fadeIn(duration: 300.ms),
                         ),
-
                       ..._corners(frameSize, frameCol),
                     ],
                   ),
@@ -420,7 +538,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
             ),
           ),
 
-          // Mode indicator badge
+          // Mode badge
           Positioned(
             top: 0,
             left: 0,
@@ -430,46 +548,28 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
                 child: Row(
                   children: [
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => setState(() => _isCloud = !_isCloud),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: _isCloud
-                              ? AppColors.info.withValues(alpha: 0.25)
-                              : AppColors.accent.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _isCloud
-                                ? AppColors.info.withValues(alpha: 0.5)
-                                : AppColors.accent.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _isCloud
-                                  ? Icons.cloud_done_rounded
-                                  : Icons.offline_bolt_rounded,
-                              color: _isCloud ? AppColors.info : AppColors.accent,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              _isCloud ? 'YOLOv8 Cloud' : 'TFLite Local',
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.5)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.eco_rounded,
+                              color: AppColors.primary, size: 13),
+                          SizedBox(width: 4),
+                          Text(_kModeLabel,
                               style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: _isCloud ? AppColors.info : AppColors.accent,
-                              ),
-                            ),
-                          ],
-                        ),
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary)),
+                        ],
                       ),
                     ),
                   ],
@@ -500,11 +600,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                   const Text(
                     'Scanner un déchet',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                        fontFamily: 'Poppins',
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600),
                   ),
                   GestureDetector(
                     onTap: _toggleTorch,
@@ -559,7 +658,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                       _statusLabel,
                       style: TextStyle(
                         fontFamily: 'Poppins',
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: _frameColorValue,
                       ),
@@ -638,23 +737,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     const thick = 3.5;
     const r = 6.0;
 
-    Widget corner(Alignment align, bool flipX, bool flipY) {
-      return Align(
-        alignment: align,
-        child: Transform.scale(
-          scaleX: flipX ? -1 : 1,
-          scaleY: flipY ? -1 : 1,
-          child: SizedBox(
-            width: len + thick,
-            height: len + thick,
-            child: CustomPaint(
-              painter:
-                  _CornerPainter(color: color, length: len, thick: thick, radius: r),
+    Widget corner(Alignment align, bool flipX, bool flipY) => Align(
+          alignment: align,
+          child: Transform.scale(
+            scaleX: flipX ? -1 : 1,
+            scaleY: flipY ? -1 : 1,
+            child: SizedBox(
+              width: len + thick,
+              height: len + thick,
+              child: CustomPaint(
+                  painter: _CornerPainter(
+                      color: color, length: len, thick: thick, radius: r)),
             ),
           ),
-        ),
-      );
-    }
+        );
 
     return [
       corner(Alignment.topLeft, false, false),
@@ -665,11 +761,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
   }
 }
 
+// ── Painters & helpers ────────────────────────────────────────────────────────
+
 class _CornerPainter extends CustomPainter {
   final Color color;
-  final double length;
-  final double thick;
-  final double radius;
+  final double length, thick, radius;
   const _CornerPainter(
       {required this.color,
       required this.length,
@@ -709,23 +805,20 @@ class _OverlayPainter extends CustomPainter {
     final paint = Paint()..color = Colors.black.withValues(alpha: 0.65);
     final frameRect =
         Rect.fromCenter(center: center, width: frameSize, height: frameSize);
-    final fullRect = Rect.fromLTWH(0, 0, size.width, size.height);
     final path = Path.combine(
       PathOperation.difference,
-      Path()..addRect(fullRect),
+      Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
       Path()
         ..addRRect(
             RRect.fromRectAndRadius(frameRect, const Radius.circular(16))),
     );
     canvas.drawPath(path, paint);
-
-    final borderPaint = Paint()
-      ..color = frameColor.withValues(alpha: 0.4)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
     canvas.drawRRect(
       RRect.fromRectAndRadius(frameRect, const Radius.circular(16)),
-      borderPaint,
+      Paint()
+        ..color = frameColor.withValues(alpha: 0.4)
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke,
     );
   }
 
@@ -744,13 +837,11 @@ class _RipplePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     for (int i = 0; i < 3; i++) {
       final p = (progress + i / 3) % 1.0;
-      final radius = 130.0 + p * 70;
-      final opacity = (1 - p) * 0.25;
       canvas.drawCircle(
         center,
-        radius,
+        130.0 + p * 70,
         Paint()
-          ..color = color.withValues(alpha: opacity)
+          ..color = color.withValues(alpha: (1 - p) * 0.25)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5,
       );
@@ -784,14 +875,11 @@ class _BottomAction extends StatelessWidget {
             child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.7),
-            ),
-          ),
+          Text(label,
+              style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.7))),
         ],
       ),
     );

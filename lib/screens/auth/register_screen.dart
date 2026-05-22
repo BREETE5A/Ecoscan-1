@@ -191,7 +191,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         _confettiCtrl.play();
         final router = GoRouter.of(context);
         Future.delayed(const Duration(milliseconds: 2600), () {
-          if (mounted) router.go('/home');
+          if (mounted) router.go('/verify-email');
         });
       }
     });

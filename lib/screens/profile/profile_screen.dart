@@ -1,18 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen>
+class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _statCtrl;
   late Animation<double> _statAnim;
@@ -91,6 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = ref.watch(userProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -174,9 +177,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ],
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Amine Benali',
-                        style: TextStyle(
+                      Text(
+                        user.name,
+                        style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -184,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
                       Text(
-                        'Éco-Warrior • Oujda',
+                        'Niveau ${user.level} • ${user.city}',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 13,
@@ -196,35 +199,27 @@ class _ProfileScreenState extends State<ProfileScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _StatItem(label: 'Points', value: 1240, anim: _statAnim),
+                          _StatItem(label: 'Points', value: user.points, anim: _statAnim),
                           Container(
                               height: 30,
                               width: 1,
                               color: Colors.white.withValues(alpha: 0.3)),
-                          _StatItem(label: 'Scans', value: 47, anim: _statAnim),
+                          _StatItem(label: 'Scans', value: user.scans, anim: _statAnim),
                           Container(
                               height: 30,
                               width: 1,
                               color: Colors.white.withValues(alpha: 0.3)),
-                          _StatItem(label: 'Badges', value: 8, anim: _statAnim),
+                          _StatItem(label: 'Badges', value: user.badges, anim: _statAnim),
                           Container(
                               height: 30,
                               width: 1,
                               color: Colors.white.withValues(alpha: 0.3)),
-                          _StatItem(label: 'Rang', value: 12, anim: _statAnim),
+                          _StatItem(label: 'Rang', value: user.rank == 0 ? 1 : user.rank, anim: _statAnim),
                         ],
                       ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
                     ],
                   ),
                 ),
-              ),
-            ),
-            title: Text(
-              'Mon Profil',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.darkText : AppColors.textPrimary,
               ),
             ),
           ),
@@ -233,13 +228,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Level progress
-                _LevelCard(isDark: isDark)
+                _LevelCard(isDark: isDark, user: user)
                     .animate()
                     .fadeIn(duration: 400.ms, delay: 200.ms)
                     .slideY(begin: 0.1),
                 const SizedBox(height: 20),
                 // Recent badges
-                _BadgeRow(isDark: isDark)
+                _BadgeRow(isDark: isDark, unlockedCount: user.badges)
                     .animate()
                     .fadeIn(duration: 400.ms, delay: 300.ms),
                 const SizedBox(height: 20),
@@ -339,7 +334,8 @@ class _StatItem extends StatelessWidget {
 
 class _LevelCard extends StatelessWidget {
   final bool isDark;
-  const _LevelCard({required this.isDark});
+  final dynamic user;
+  const _LevelCard({required this.isDark, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +357,7 @@ class _LevelCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Niveau 7 — Éco-Warrior',
+                'Niveau ${user.level}',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,
@@ -391,7 +387,7 @@ class _LevelCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 0.68),
+              tween: Tween(begin: 0.0, end: user.xp / user.xpMax),
               duration: const Duration(milliseconds: 1200),
               curve: Curves.easeOut,
               builder: (_, v, _) => LinearProgressIndicator(
@@ -405,7 +401,7 @@ class _LevelCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '1240 / 1800 XP pour le prochain niveau',
+            '${user.xp} / ${user.xpMax} XP pour le prochain niveau',
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 12,
@@ -422,7 +418,8 @@ class _LevelCard extends StatelessWidget {
 
 class _BadgeRow extends StatelessWidget {
   final bool isDark;
-  const _BadgeRow({required this.isDark});
+  final int unlockedCount;
+  const _BadgeRow({required this.isDark, required this.unlockedCount});
 
   static const _badges = [
     (Icons.recycling_rounded, AppColors.primary, 'Recycleur'),
@@ -449,7 +446,7 @@ class _BadgeRow extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => context.go('/badges'),
               child: const Text(
                 'Voir tout',
                 style: TextStyle(
@@ -465,41 +462,53 @@ class _BadgeRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: List.generate(
             _badges.length,
-            (i) => Column(
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _badges[i].$2.withValues(alpha: 0.15),
-                    border: Border.all(
-                        color: _badges[i].$2.withValues(alpha: 0.4),
-                        width: 2),
+            (i) {
+              final unlocked = i < unlockedCount;
+              return Column(
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: unlocked
+                          ? _badges[i].$2.withValues(alpha: 0.15)
+                          : Colors.grey.withValues(alpha: 0.1),
+                      border: Border.all(
+                          color: unlocked
+                              ? _badges[i].$2.withValues(alpha: 0.4)
+                              : Colors.grey.withValues(alpha: 0.3),
+                          width: 2),
+                    ),
+                    child: Icon(
+                      unlocked ? _badges[i].$1 : Icons.lock_outline_rounded,
+                      color: unlocked
+                          ? _badges[i].$2
+                          : Colors.grey.withValues(alpha: 0.4),
+                      size: 26,
+                    ),
+                  )
+                      .animate(delay: (i * 80).ms)
+                      .scale(
+                          begin: const Offset(0, 0),
+                          duration: 500.ms,
+                          curve: Curves.elasticOut)
+                      .fadeIn(duration: 300.ms),
+                  const SizedBox(height: 6),
+                  Text(
+                    _badges[i].$3,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: unlocked
+                          ? (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)
+                          : Colors.grey.withValues(alpha: 0.5),
+                    ),
                   ),
-                  child: Icon(_badges[i].$1,
-                      color: _badges[i].$2, size: 26),
-                )
-                    .animate(delay: (i * 80).ms)
-                    .scale(
-                        begin: const Offset(0, 0),
-                        duration: 500.ms,
-                        curve: Curves.elasticOut)
-                    .fadeIn(duration: 300.ms),
-                const SizedBox(height: 6),
-                Text(
-                  _badges[i].$3,
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+                ],
+              );
+            },
           ),
         ),
       ],

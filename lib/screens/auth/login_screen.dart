@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
@@ -63,9 +64,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(loginProvider);
+    final authState    = ref.watch(loginProvider);
+    final googleState  = ref.watch(googleSignInProvider);
 
-    // Réagir aux changements d'état
+    // Réagir au login email
     ref.listen(loginProvider, (_, next) {
       if (next.status == AuthStatus.loading) {
         _leafCtrl.repeat();
@@ -84,7 +86,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       _prevStatus = next.status;
     });
 
-    final isLoading = authState.status == AuthStatus.loading;
+    // Réagir au login Google
+    ref.listen(googleSignInProvider, (_, next) {
+      if (next.status == AuthStatus.success) {
+        context.go('/home');
+      }
+      if (next.status == AuthStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(next.errorMessage ?? 'Erreur Google Sign-In'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
+
+    final isLoading = authState.status == AuthStatus.loading ||
+                      googleState.status == AuthStatus.loading;
     final isDark    = Theme.of(context).brightness == Brightness.dark;
     final size      = MediaQuery.of(context).size;
 
@@ -226,7 +243,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    final email = _emailCtrl.text.trim();
+                                    if (email.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Entrez votre email pour réinitialiser le mot de passe'),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    try {
+                                      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Email de réinitialisation envoyé ✅'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    } on FirebaseAuthException catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(e.message ?? 'Erreur lors de l\'envoi'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 4),
@@ -306,7 +354,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const SizedBox(height: 18),
 
                         // ── Bouton Google Sign-In ────────────────────────
-                        _GoogleButton(onTap: () {})
+                        _GoogleButton(
+                          isLoading: googleState.status == AuthStatus.loading,
+                          onTap: isLoading
+                              ? null
+                              : () => ref
+                                  .read(googleSignInProvider.notifier)
+                                  .signIn(),
+                        )
                             .animate()
                             .fadeIn(duration: 400.ms, delay: 650.ms)
                             .slideY(begin: 0.1),
@@ -605,8 +660,9 @@ class _AnimatedDivider extends StatelessWidget {
 
 // ── Bouton Google ─────────────────────────────────────────────────────────────
 class _GoogleButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _GoogleButton({required this.onTap});
+  final VoidCallback? onTap;
+  final bool isLoading;
+  const _GoogleButton({required this.onTap, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -629,23 +685,29 @@ class _GoogleButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Cercle coloré simulant le logo Google
-            _GoogleLogo(),
-            const SizedBox(width: 12),
-            Text(
-              'Continuer avec Google',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? AppColors.darkText : AppColors.textPrimary,
+        child: isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.5, color: AppColors.primary),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _GoogleLogo(),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Continuer avec Google',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

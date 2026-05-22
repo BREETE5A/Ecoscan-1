@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,11 +154,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Security section
+                    _Section(
+                      title: 'Sécurité',
+                      isDark: isDark,
+                      delay: 350,
+                      children: [
+                        _ActionRow(
+                          icon: Icons.lock_reset_rounded,
+                          label: 'Changer le mot de passe',
+                          color: AppColors.primary,
+                          isDark: isDark,
+                          onTap: () => context.push('/change-password'),
+                        ),
+                        _ActionRow(
+                          icon: Icons.email_rounded,
+                          label: 'Changer l\'email',
+                          color: AppColors.info,
+                          isDark: isDark,
+                          onTap: () => context.push('/change-email'),
+                        ),
+                        _ActionRow(
+                          icon: Icons.phone_android_rounded,
+                          label: 'Double authentification',
+                          color: AppColors.teal,
+                          isDark: isDark,
+                          onTap: () => context.push('/two-factor-setup'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
                     // Privacy section
                     _Section(
                       title: s.privacy,
                       isDark: isDark,
-                      delay: 350,
+                      delay: 450,
                       children: [
                         _ToggleRow(
                           icon: Icons.location_on_rounded,
@@ -191,7 +223,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _Section(
                       title: s.about,
                       isDark: isDark,
-                      delay: 450,
+                      delay: 550,
                       children: [
                         _ActionRow(
                           icon: Icons.info_outline_rounded,
@@ -244,7 +276,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                       ),
-                    ).animate(delay: 550.ms).fadeIn(duration: 400.ms),
+                    ).animate(delay: 650.ms).fadeIn(duration: 400.ms),
                     const SizedBox(height: 90),
                   ],
                 ),
@@ -257,34 +289,89 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _confirmDelete(BuildContext context) {
+    final passCtrl = TextEditingController();
+    bool obscure = true;
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Supprimer le compte',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Cette action est irréversible. Toutes vos données seront supprimées.',
-          style: TextStyle(fontFamily: 'Poppins', fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler',
-                style: TextStyle(fontFamily: 'Poppins')),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Supprimer le compte',
+            style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
           ),
-          ElevatedButton(
-            onPressed: () {},
-            style:
-                ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-            child: const Text('Supprimer',
-                style: TextStyle(fontFamily: 'Poppins')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Cette action est irréversible. Confirmez avec votre mot de passe.',
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passCtrl,
+                obscureText: obscure,
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: '••••••••',
+                  hintStyle: const TextStyle(fontFamily: 'Poppins'),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  suffixIcon: IconButton(
+                    icon: Icon(obscure
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                        size: 18),
+                    onPressed: () => setDlgState(() => obscure = !obscure),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler',
+                  style: TextStyle(fontFamily: 'Poppins')),
+            ),
+            ElevatedButton(
+              onPressed: () => _deleteAccount(ctx, passCtrl.text),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              child: const Text('Supprimer',
+                  style: TextStyle(
+                      fontFamily: 'Poppins', color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _deleteAccount(BuildContext dlgCtx, String password) async {
+    Navigator.pop(dlgCtx);
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      if (user.providerData.any((p) => p.providerId == 'password')) {
+        final cred = EmailAuthProvider.credential(
+          email: user.email!,
+          password: password,
+        );
+        await user.reauthenticateWithCredential(cred);
+      }
+      await user.delete();
+      if (mounted) context.go('/login');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final msg = e.code == 'wrong-password' || e.code == 'invalid-credential'
+          ? 'Mot de passe incorrect.'
+          : 'Erreur : ${e.message}';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        backgroundColor: AppColors.danger,
+      ));
+    }
   }
 }
 

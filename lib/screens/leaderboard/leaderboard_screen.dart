@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 
-class LeaderboardScreen extends StatefulWidget {
+class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key});
 
   @override
-  State<LeaderboardScreen> createState() => _LeaderboardScreenState();
+  ConsumerState<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends State<LeaderboardScreen>
+class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
   int _tabIdx = 0;
@@ -127,7 +128,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                       (i) => _RankRow(
                         player: rest[i],
                         isDark: isDark,
-                        isMe: rest[i].name == 'Amine Benali',
+                        isMe: rest[i].rank == 4,
                       )
                           .animate(delay: (200 + i * 70).ms)
                           .fadeIn(duration: 350.ms)
@@ -155,7 +156,7 @@ class _Podium extends StatelessWidget {
     if (top3.length < 3) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 220,
+      height: 300,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -163,8 +164,8 @@ class _Podium extends StatelessWidget {
           // 2nd
           _PodiumSlot(
             player: top3[1],
-            height: 120,
-            avatarSize: 56,
+            height: 110,
+            avatarSize: 52,
             delay: 200,
             isDark: isDark,
           ),
@@ -172,8 +173,8 @@ class _Podium extends StatelessWidget {
           // 1st
           _PodiumSlot(
             player: top3[0],
-            height: 160,
-            avatarSize: 68,
+            height: 150,
+            avatarSize: 62,
             delay: 100,
             isDark: isDark,
             showCrown: true,
@@ -182,8 +183,8 @@ class _Podium extends StatelessWidget {
           // 3rd
           _PodiumSlot(
             player: top3[2],
-            height: 90,
-            avatarSize: 50,
+            height: 80,
+            avatarSize: 46,
             delay: 300,
             isDark: isDark,
           ),

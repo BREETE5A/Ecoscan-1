@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(adb devices *)",
+      "Bash(ipconfig)",
+      "Bash(findstr \"IPv4\")"
+    ]
+  }
+}

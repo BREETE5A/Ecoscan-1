@@ -10,7 +10,7 @@ final scanHistoryProvider =
 final currentScanProvider = StateProvider<ScanEntry?>((ref) => null);
 
 class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
-  ScanHistoryNotifier() : super(ScanEntry.seedData);
+  ScanHistoryNotifier() : super([]);
 
   void addScan(ScanEntry entry) {
     state = [entry, ...state];

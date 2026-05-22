@@ -77,6 +77,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     final idx = _selectedIndex(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navBg = isDark ? AppColors.darkSurface : Colors.white;
+    final loc = GoRouterState.of(context).uri.path;
+    final showBotFab = !loc.startsWith('/chat') && !loc.startsWith('/scan') && !loc.startsWith('/map');
 
     return Scaffold(
       body: Stack(
@@ -93,10 +95,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
             ),
         ],
       ),
-      floatingActionButton: _EcoBotFab(
-        scaleAnim: _botScale,
-        onTap: () => _openEcoBot(context),
-      ),
+      floatingActionButton: showBotFab
+          ? _EcoBotFab(
+              scaleAnim: _botScale,
+              onTap: () => _openEcoBot(context),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -255,7 +259,7 @@ class _EcoBotFabState extends State<_EcoBotFab>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 72),
+      padding: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
         onTapDown: (_) => _tap.forward(),
         onTapUp: (_) {

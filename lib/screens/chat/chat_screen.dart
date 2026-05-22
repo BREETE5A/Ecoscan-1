@@ -1,40 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
+import '../../models/chat_message.dart';
+import '../../providers/chat_provider.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
+class _ChatScreenState extends ConsumerState<ChatScreen>
+    with TickerProviderStateMixin {
   final _ctrl = TextEditingController();
   final _scroll = ScrollController();
-  bool _isTyping = false;
+  bool _sending = false;
 
   late AnimationController _dot1, _dot2, _dot3;
-
-  final List<_Msg> _messages = [
-    _Msg('Bonjour ! Je suis EcoBot 🌿 Votre assistant de tri intelligent. Comment puis-je vous aider ?', true),
-    _Msg('Où mettre les cartons de pizza ?', false),
-    _Msg('Les cartons de pizza légèrement souillés doivent aller dans le composteur ou la poubelle ordinaire. Si propre, le bac bleu (papier/carton) est parfait ! 🍕♻', true),
-    _Msg('Et les bouteilles d\'huile vides ?', false),
-    _Msg('Les bouteilles en plastique d\'huile vides peuvent aller dans le bac jaune. Pensez à les rincer rapidement avant ! 🫙', true),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _dot1 = AnimationController(vsync: this, duration: 600.ms)..repeat(reverse: true);
-    _dot2 = AnimationController(vsync: this, duration: 600.ms)
+    _dot1 = AnimationController(vsync: this, duration: 600.ms)
       ..repeat(reverse: true);
-    _dot3 = AnimationController(vsync: this, duration: 600.ms)
-      ..repeat(reverse: true);
-
-    Future.delayed(150.ms, () { if (mounted) _dot2.forward(); });
-    Future.delayed(300.ms, () { if (mounted) _dot3.forward(); });
+    _dot2 = AnimationController(vsync: this, duration: 600.ms);
+    _dot3 = AnimationController(vsync: this, duration: 600.ms);
+    Future.delayed(150.ms, () { if (mounted) _dot2.repeat(reverse: true); });
+    Future.delayed(300.ms, () { if (mounted) _dot3.repeat(reverse: true); });
   }
 
   @override
@@ -49,29 +44,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   Future<void> _send() async {
     final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      _messages.add(_Msg(text, false));
-      _isTyping = true;
-    });
+    if (text.isEmpty || _sending) return;
+
     _ctrl.clear();
+    setState(() => _sending = true);
     _scrollToBottom();
 
-    await Future.delayed(const Duration(milliseconds: 1600));
-    if (!mounted) return;
+    await ref.read(chatProvider.notifier).sendMessage(text);
 
-    const replies = [
-      'Bonne question ! Pour ce type de déchet, je recommande de vérifier la consigne locale sur l\'application. Chaque ville peut avoir des règles spécifiques. 🌍',
-      'Ce déchet va dans le bac jaune s\'il est en plastique recyclable (regardez le symbole ♻), sinon dans la poubelle ordinaire.',
-      'Excellent réflexe ! Le tri sélectif peut réduire jusqu\'à 30% de vos déchets résiduels. Continuez comme ça ! 💚',
-      'Je suggère de l\'apporter à la déchetterie la plus proche. Consultez la carte dans l\'application pour la localiser !',
-    ];
-    final reply = replies[_messages.length % replies.length];
-
-    setState(() {
-      _isTyping = false;
-      _messages.add(_Msg(reply, true));
-    });
+    if (mounted) setState(() => _sending = false);
     _scrollToBottom();
   }
 
@@ -80,369 +61,247 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       if (_scroll.hasClients) {
         _scroll.animateTo(
           _scroll.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 350),
           curve: Curves.easeOut,
         );
       }
     });
   }
 
-  static const _quickReplies = [
-    'Où recycler les piles ?',
-    'Comment trier le verre ?',
-    'Plastique ou compost ?',
-  ];
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final messages = ref.watch(chatProvider);
+    final hasLoading = messages.any((m) => m.isLoading);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : const Color(0xFFF5F5F5),
       body: Column(
         children: [
-            // Header
-            Container(
-              padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 14, 20, 14),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // EcoBot avatar with pulse
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 1.0, end: 1.06),
-                    duration: const Duration(milliseconds: 1000),
-                    builder: (_, v, child) => Transform.scale(scale: v, child: child),
-                    child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppColors.goldGradient,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.4),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.smart_toy_rounded,
-                          color: Colors.white, size: 24),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'EcoBot',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.accent,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            const Text(
-                              'En ligne — Assistant IA',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert_rounded,
-                        color: AppColors.textSecondary),
-                    onSelected: (value) {
-                      if (value == 'clear') {
-                        setState(() {
-                          _messages.clear();
-                          _messages.add(_Msg(
-                            'Bonjour ! Je suis EcoBot 🌿 Votre assistant de tri intelligent. Comment puis-je vous aider ?',
-                            true,
-                          ));
-                        });
-                      } else if (value == 'about') {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20)),
-                            title: const Text('À propos de EcoBot',
-                                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-                            content: const Text(
-                              'EcoBot est votre assistant IA spécialisé dans le tri des déchets et le recyclage. Posez vos questions sur comment trier, où déposer vos déchets, et réduire votre empreinte carbone.',
-                              style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('OK',
-                                    style: TextStyle(color: AppColors.accent, fontFamily: 'Poppins')),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(
-                        value: 'clear',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                            SizedBox(width: 10),
-                            Text('Effacer la conversation',
-                                style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'about',
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 20),
-                            SizedBox(width: 10),
-                            Text('À propos de EcoBot',
-                                style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05),
-
-            // Messages
-            Expanded(
-              child: ListView.builder(
-                controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                itemCount: _messages.length + (_isTyping ? 1 : 0),
-                itemBuilder: (_, i) {
-                  if (_isTyping && i == _messages.length) {
-                    return _TypingBubble(
-                      dot1: _dot1,
-                      dot2: _dot2,
-                      dot3: _dot3,
-                      isDark: isDark,
-                    ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1);
-                  }
-                  final msg = _messages[i];
-                  return _MessageBubble(
-                    msg: msg,
-                    isDark: isDark,
-                  )
-                      .animate(delay: i < 5 ? (i * 80).ms : 0.ms)
+          _Header(isDark: isDark, onClear: () {
+            ref.read(chatProvider.notifier).clearChat();
+          }),
+          Expanded(
+            child: ListView.builder(
+              controller: _scroll,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              itemCount: messages.length,
+              itemBuilder: (_, i) {
+                final msg = messages[i];
+                if (msg.isLoading) {
+                  return _TypingBubble(dot1: _dot1, dot2: _dot2, dot3: _dot3,
+                          isDark: isDark)
+                      .animate()
                       .fadeIn(duration: 300.ms)
-                      .slideX(begin: msg.isBot ? -0.1 : 0.1);
-                },
-              ),
+                      .slideX(begin: -0.1);
+                }
+                return _ChatBubble(msg: msg, isDark: isDark)
+                    .animate(delay: i < 6 ? (i * 50).ms : 0.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideX(begin: msg.isUser ? 0.1 : -0.1);
+              },
             ),
-
-            // Quick replies
-            if (!_isTyping)
-              SizedBox(
-                height: 42,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _quickReplies.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (_, i) => GestureDetector(
-                    onTap: () {
-                      _ctrl.text = _quickReplies[i];
-                      _send();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: AppColors.accent.withValues(alpha: 0.25)),
-                      ),
-                      child: Text(
-                        _quickReplies[i],
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12,
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  )
-                      .animate(delay: (i * 60).ms)
-                      .fadeIn(duration: 300.ms)
-                      .slideX(begin: 0.1),
-                ),
-              ),
-            const SizedBox(height: 8),
-
-            // Input bar
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkInput
-                            : AppColors.inputBg,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _ctrl,
-                        onSubmitted: (_) => _send(),
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 14,
-                          color: isDark
-                              ? AppColors.darkText
-                              : AppColors.textPrimary,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Posez votre question...',
-                          filled: false,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: _send,
-                    child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.goldGradient,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.send_rounded,
-                          color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        ),
+          ),
+          _InputBar(
+            ctrl: _ctrl,
+            sending: _sending || hasLoading,
+            isDark: isDark,
+            onSend: _send,
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
+      ),
     );
   }
 }
 
-class _MessageBubble extends StatelessWidget {
-  final _Msg msg;
+// ── Header ────────────────────────────────────────────────────────────────────
+
+class _Header extends StatelessWidget {
   final bool isDark;
-  const _MessageBubble({required this.msg, required this.isDark});
+  final VoidCallback onClear;
+  const _Header({required this.isDark, required this.onClear});
 
   @override
   Widget build(BuildContext context) {
-    final isBot = msg.isBot;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          20, MediaQuery.of(context).padding.top + 14, 20, 14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+            blurRadius: 8,
+          ),
+        ],
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment:
-            isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
-          if (isBot) ...[
-            Container(
-              width: 32,
-              height: 32,
-              margin: const EdgeInsets.only(right: 8),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: AppColors.goldGradient,
-              ),
-              child: const Icon(Icons.smart_toy_rounded,
-                  color: Colors.white, size: 16),
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.primaryGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.4),
+                  blurRadius: 10,
+                ),
+              ],
             ),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isBot
-                    ? (isDark ? AppColors.darkCard : Colors.white)
-                    : AppColors.accent,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isBot ? 4 : 18),
-                  bottomRight: Radius.circular(isBot ? 18 : 4),
+            child: const Icon(Icons.smart_toy_rounded,
+                color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('EcoBot',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                    )),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Text('Assistant RAG — Gemini',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        )),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isBot ? Colors.black : AppColors.accent)
-                        .withValues(alpha: isBot ? 0.06 : 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert_rounded,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+            onSelected: (v) {
+              if (v == 'clear') onClear();
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'clear',
+                child: Row(children: [
+                  Icon(Icons.delete_outline_rounded,
+                      color: Colors.redAccent, size: 20),
+                  SizedBox(width: 10),
+                  Text('Effacer la conversation',
+                      style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                ]),
               ),
-              child: Text(
-                msg.text,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isBot
-                      ? (isDark ? AppColors.darkText : AppColors.textPrimary)
-                      : Colors.white,
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05);
+  }
+}
+
+// ── Chat bubble ───────────────────────────────────────────────────────────────
+
+class _ChatBubble extends StatelessWidget {
+  final ChatMessage msg;
+  final bool isDark;
+  const _ChatBubble({required this.msg, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final isBot = !msg.isUser;
+    final timeStr = DateFormat('HH:mm').format(msg.timestamp);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment:
+            isBot ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment:
+                isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
+            children: [
+              if (isBot) ...[
+                Container(
+                  width: 32,
+                  height: 32,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppColors.primaryGradient,
+                  ),
+                  child: const Icon(Icons.smart_toy_rounded,
+                      color: Colors.white, size: 16),
                 ),
+              ],
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isBot
+                        ? (isDark ? AppColors.darkCard : Colors.white)
+                        : AppColors.primary,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: Radius.circular(isBot ? 4 : 18),
+                      bottomRight: Radius.circular(isBot ? 18 : 4),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isBot ? Colors.black : AppColors.primary)
+                            .withValues(alpha: isBot ? 0.06 : 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    msg.text,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      height: 1.55,
+                      color: isBot
+                          ? (isDark
+                              ? AppColors.darkText
+                              : AppColors.textPrimary)
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+                left: isBot ? 48 : 0, right: isBot ? 0 : 4, top: 4),
+            child: Text(
+              timeStr,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 10,
+                color: isDark
+                    ? AppColors.darkTextSecondary.withValues(alpha: 0.6)
+                    : AppColors.textLight,
               ),
             ),
           ),
@@ -451,6 +310,8 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 }
+
+// ── Typing indicator ──────────────────────────────────────────────────────────
 
 class _TypingBubble extends StatelessWidget {
   final AnimationController dot1, dot2, dot3;
@@ -464,7 +325,7 @@ class _TypingBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -474,10 +335,10 @@ class _TypingBubble extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.goldGradient,
+              gradient: AppColors.primaryGradient,
             ),
-            child: const Icon(Icons.smart_toy_rounded,
-                color: Colors.white, size: 16),
+            child:
+                const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 16),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -491,9 +352,7 @@ class _TypingBubble extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                ),
+                    color: Colors.black.withValues(alpha: 0.06), blurRadius: 8),
               ],
             ),
             child: Row(
@@ -506,7 +365,8 @@ class _TypingBubble extends StatelessWidget {
                     width: 7,
                     height: 7 + ctrl.value * 5,
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.6 + ctrl.value * 0.4),
+                      color: AppColors.primary
+                          .withValues(alpha: 0.5 + ctrl.value * 0.5),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -520,8 +380,104 @@ class _TypingBubble extends StatelessWidget {
   }
 }
 
-class _Msg {
-  final String text;
-  final bool isBot;
-  const _Msg(this.text, this.isBot);
+// ── Input bar ─────────────────────────────────────────────────────────────────
+
+class _InputBar extends StatelessWidget {
+  final TextEditingController ctrl;
+  final bool sending;
+  final bool isDark;
+  final VoidCallback onSend;
+  const _InputBar(
+      {required this.ctrl,
+      required this.sending,
+      required this.isDark,
+      required this.onSend});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkInput : AppColors.inputBg,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: TextField(
+                controller: ctrl,
+                enabled: !sending,
+                onSubmitted: (_) => onSend(),
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: sending
+                      ? 'EcoBot réfléchit...'
+                      : 'Posez votre question sur le recyclage...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 13,
+                    color: isDark
+                        ? AppColors.darkTextSecondary.withValues(alpha: 0.5)
+                        : AppColors.textLight,
+                  ),
+                  filled: false,
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: sending ? null : onSend,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                gradient: sending
+                    ? const LinearGradient(
+                        colors: [Colors.grey, Colors.grey])
+                    : AppColors.primaryGradient,
+                shape: BoxShape.circle,
+                boxShadow: sending
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+              ),
+              child: sending
+                  ? const Padding(
+                      padding: EdgeInsets.all(13),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

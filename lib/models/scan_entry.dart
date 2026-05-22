@@ -25,109 +25,32 @@ class ScanEntry {
     required this.mode,
   });
 
-  static const _samples = [
-    (
-      name: 'Bouteille PET',
-      category: 'Plastique',
-      recyclable: true,
-      dangerous: false,
-      points: 15,
-      co2Saved: 45.0,
-      recyclability: 0.92,
-      binColor: 'Jaune',
-      mode: 'cloud',
-    ),
-    (
-      name: 'Boîte de conserve',
-      category: 'Métal',
-      recyclable: true,
-      dangerous: false,
-      points: 20,
-      co2Saved: 80.0,
-      recyclability: 0.97,
-      binColor: 'Jaune',
-      mode: 'cloud',
-    ),
-    (
-      name: 'Journal',
-      category: 'Papier',
-      recyclable: true,
-      dangerous: false,
-      points: 10,
-      co2Saved: 30.0,
-      recyclability: 0.85,
-      binColor: 'Bleu',
-      mode: 'local',
-    ),
-    (
-      name: 'Bouteille en verre',
-      category: 'Verre',
-      recyclable: true,
-      dangerous: false,
-      points: 25,
-      co2Saved: 55.0,
-      recyclability: 1.0,
-      binColor: 'Vert',
-      mode: 'cloud',
-    ),
-    (
-      name: 'Pile alcaline',
-      category: 'DEEE',
-      recyclable: true,
-      dangerous: true,
-      points: 40,
-      co2Saved: 0.0,
-      recyclability: 0.6,
-      binColor: 'Point de collecte',
-      mode: 'cloud',
-    ),
-    (
-      name: 'Emballage alimentaire',
-      category: 'Plastique',
-      recyclable: false,
-      dangerous: false,
-      points: 5,
-      co2Saved: 0.0,
-      recyclability: 0.15,
-      binColor: 'Noir',
-      mode: 'local',
-    ),
-  ];
+  static const _categoryData = {
+    'Plastique':    (name: 'Plastique recyclable', recyclable: true,  dangerous: false, points: 15, co2Saved: 45.0, recyclability: 0.92, binColor: 'Jaune'),
+    'Verre':        (name: 'Verre recyclable',     recyclable: true,  dangerous: false, points: 25, co2Saved: 55.0, recyclability: 1.0,  binColor: 'Vert'),
+    'Métal':        (name: 'Métal recyclable',     recyclable: true,  dangerous: false, points: 20, co2Saved: 80.0, recyclability: 0.97, binColor: 'Jaune'),
+    'Papier':       (name: 'Papier recyclable',    recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.85, binColor: 'Bleu'),
+    'Organique':    (name: 'Déchet organique',     recyclable: true,  dangerous: false, points: 8,  co2Saved: 20.0, recyclability: 0.90, binColor: 'Marron'),
+    'Électronique': (name: 'Appareil DEEE',        recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'Éco-point'),
+    'Textile':      (name: 'Déchet textile',       recyclable: true,  dangerous: false, points: 12, co2Saved: 35.0, recyclability: 0.80, binColor: 'Borne textile'),
+    'Dangereux':    (name: 'Déchet dangereux',     recyclable: false, dangerous: true,  points: 30, co2Saved: 0.0,  recyclability: 0.0,  binColor: 'Déchetterie spécialisée'),
+  };
 
-  static List<ScanEntry> get seedData {
-    final now = DateTime.now();
-    return List.generate(_samples.length, (i) {
-      final s = _samples[i];
-      return ScanEntry(
-        id: 'seed_$i',
-        name: s.name,
-        category: s.category,
-        recyclable: s.recyclable,
-        dangerous: s.dangerous,
-        points: s.points,
-        co2Saved: s.co2Saved,
-        recyclability: s.recyclability,
-        binColor: s.binColor,
-        scannedAt: now.subtract(Duration(hours: i * 5 + 2)),
-        mode: s.mode,
-      );
-    });
-  }
-
-  static ScanEntry random() {
-    final s = _samples[DateTime.now().millisecond % _samples.length];
+  static ScanEntry fromClassification(String label, double confidence) {
+    final data = _categoryData[label] ?? _categoryData['Plastique']!;
     return ScanEntry(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: s.name,
-      category: s.category,
-      recyclable: s.recyclable,
-      dangerous: s.dangerous,
-      points: s.points,
-      co2Saved: s.co2Saved,
-      recyclability: s.recyclability,
-      binColor: s.binColor,
+      name: data.name,
+      category: label,
+      recyclable: data.recyclable,
+      dangerous: data.dangerous,
+      points: (data.points * confidence).round().clamp(data.points ~/ 2, data.points),
+      co2Saved: data.co2Saved * confidence,
+      recyclability: data.recyclability * confidence,
+      binColor: data.binColor,
       scannedAt: DateTime.now(),
-      mode: s.mode,
+      mode: 'local',
     );
   }
+
 }

@@ -3,8 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../models/user_model.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/did_you_know_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +20,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _counterCtrl;
   late Animation<double> _counterAnim;
+  final _scrollCtrl = ScrollController();
+  bool _headerCollapsed = false;
 
   @override
   void initState() {
@@ -26,11 +31,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(milliseconds: 900),
     )..forward();
     _counterAnim = CurvedAnimation(parent: _counterCtrl, curve: Curves.easeOut);
+    _scrollCtrl.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // expandedHeight(180) - kToolbarHeight(56) = 124
+    final collapsed = _scrollCtrl.offset > 124;
+    if (collapsed != _headerCollapsed) {
+      setState(() => _headerCollapsed = collapsed);
+    }
   }
 
   @override
   void dispose() {
     _counterCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -39,6 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final lang = ref.watch(localeProvider).languageCode;
     final s    = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = ref.watch(userProvider);
 
     final quickActions = [
       (Icons.emoji_events_rounded,    s.qaBadges,       '/badges',      const Color(0xFFF39C12)),
@@ -53,105 +69,143 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       body: CustomScrollView(
+        controller: _scrollCtrl,
         slivers: [
           // ── AppBar ──────────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 180,
             floating: false,
             pinned: true,
             backgroundColor:
                 isDark ? AppColors.darkBackground : AppColors.background,
+            // Logo visible uniquement quand la barre est collapsée (scroll)
+            title: _headerCollapsed
+                ? ClipOval(
+                    child: Image.asset(
+                      'assets/icons/app_icon.png',
+                      width: 34,
+                      height: 34,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : null,
+            centerTitle: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ── Logo + Bonjour + icônes sur la même ligne ──────
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${s.greetingPrefix}, Amine 🌿',
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ).animate().fadeIn(duration: 350.ms).slideX(begin: -0.1),
-                                Text(
-                                  s.readySubtitle,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 13,
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                  ),
-                                ).animate().fadeIn(duration: 350.ms, delay: 80.ms),
-                              ],
+                            // Logo
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.2),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(
+                                  'assets/icons/app_icon.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ).animate().fadeIn(duration: 400.ms).scale(
+                              begin: const Offset(0.7, 0.7),
+                              duration: 400.ms,
+                              curve: Curves.easeOut,
                             ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () => context.go('/notifications'),
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.2),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                            Icons.notifications_outlined,
-                                            color: Colors.white, size: 22),
-                                      ),
-                                      Positioned(
-                                        top: 8, right: 8,
-                                        child: Container(
-                                          width: 9, height: 9,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFFF6B6B),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                GestureDetector(
-                                  onTap: () => context.go('/profile'),
-                                  child: Container(
-                                    width: 44, height: 44,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.white.withValues(alpha: 0.3),
-                                      border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.5),
-                                          width: 2),
+                            const SizedBox(width: 10),
+                            // Bonjour + sous-titre
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${s.greetingPrefix}, ${user.name.split(' ').first} 🌿',
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
-                                    child: const Icon(Icons.person_rounded,
-                                        color: Colors.white, size: 24),
+                                  ).animate().fadeIn(duration: 350.ms).slideX(begin: -0.1),
+                                  Text(
+                                    s.readySubtitle,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 11,
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ).animate().fadeIn(duration: 350.ms, delay: 80.ms),
+                                ],
+                              ),
+                            ),
+                            // Icônes
+                            GestureDetector(
+                              onTap: () => context.go('/notifications'),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(9),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                        Icons.notifications_outlined,
+                                        color: Colors.white, size: 20),
                                   ),
+                                  Positioned(
+                                    top: 7, right: 7,
+                                    child: Container(
+                                      width: 8, height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFF6B6B),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => context.go('/profile'),
+                              child: Container(
+                                width: 40, height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.5),
+                                      width: 2),
                                 ),
-                              ],
+                                child: const Icon(Icons.person_rounded,
+                                    color: Colors.white, size: 22),
+                              ),
                             ),
                           ],
-                        ),
+                        ).animate().fadeIn(duration: 350.ms),
                         const SizedBox(height: 16),
+                        // ── Stats mini ─────────────────────────────────────
                         Row(
                           children: [
-                            _MiniStat(label: s.points,    value: 1240, anim: _counterAnim),
+                            _MiniStat(label: s.points,     value: user.points,          anim: _counterAnim),
                             const SizedBox(width: 16),
-                            _MiniStat(label: s.scans,     value: 47,   anim: _counterAnim),
+                            _MiniStat(label: s.scans,      value: user.scans,           anim: _counterAnim),
                             const SizedBox(width: 16),
-                            _MiniStat(label: s.co2Avoided, value: 870, anim: _counterAnim),
+                            _MiniStat(label: s.co2Avoided, value: user.co2Saved.toInt(), anim: _counterAnim),
                           ],
                         ),
                       ],
@@ -159,15 +213,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ),
                 ),
               ),
-            ),
-            title: Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: AppColors.primaryGradient,
-              ),
-              child: const Icon(Icons.eco_rounded, color: Colors.white, size: 20),
             ),
           ),
 
@@ -177,17 +222,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               delegate: SliverChildListDelegate([
 
                 // ── Objectif hebdomadaire ──────────────────────────────
-                _WeeklyCard(counterAnim: _counterAnim, s: s)
+                _WeeklyCard(counterAnim: _counterAnim, s: s, user: user)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 130.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 16),
 
                 // ── Impact environnemental (3 cartes) ──────────────────
-                _ImpactRow(anim: _counterAnim)
+                _ImpactRow(anim: _counterAnim, user: user)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 180.ms)
                     .slideY(begin: 0.08),
+                const SizedBox(height: 16),
+
+                // ── Le saviez-vous ? ───────────────────────────────────
+                const DidYouKnowCard()
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 200.ms)
+                    .slideY(begin: 0.06),
                 const SizedBox(height: 20),
 
                 // ── Bouton Scan CTA ────────────────────────────────────
@@ -271,25 +323,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   List<Widget> _buildActivities(AppStrings s, bool isDark) {
-    final activities = [
-      (Icons.recycling_rounded,      AppColors.primary,          lang == 'en' ? 'PET Bottle Scan' : lang == 'ar' ? 'مسح زجاجة PET' : 'Scan Bouteille PET',     lang == 'en' ? 'Yesterday, 18:42' : lang == 'ar' ? 'أمس، 18:42' : 'Hier, 18:42',    '+15 pts'),
-      (Icons.compost_rounded,        const Color(0xFF795548),    lang == 'en' ? 'Compost deposit' : lang == 'ar' ? 'إيداع سماد' : 'Dépôt Compost',              lang == 'en' ? '24 Oct, 10:15' : lang == 'ar' ? '24 أكت، 10:15' : '24 Oct, 10:15',  '+50 pts'),
-      (Icons.delete_outline_rounded, const Color(0xFF3498DB),    lang == 'en' ? 'Plastic sort' : lang == 'ar' ? 'فرز البلاستيك' : 'Tri Plastique',               lang == 'en' ? '22 Oct, 09:00' : lang == 'ar' ? '22 أكت، 09:00' : '22 Oct, 09:00',  '+30 pts'),
-      (Icons.emoji_events_rounded,   const Color(0xFFF39C12),    lang == 'en' ? 'Badge unlocked!' : lang == 'ar' ? 'تم فتح شارة!' : 'Badge débloqué !',          lang == 'en' ? 'Oct 20' : lang == 'ar' ? '20 أكت' : '20 Oct',                     s.completed),
-    ];
-    return List.generate(
-      activities.length,
-      (i) => Padding(
+    final scans = ref.watch(userProvider).recentScans;
+    if (scans.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Center(
+            child: Text(
+              'Aucune activité — scannez votre premier déchet !',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 13,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    const catIcons = <String, IconData>{
+      'Plastique':    Icons.opacity_rounded,
+      'Verre':        Icons.local_bar_outlined,
+      'Métal':        Icons.hardware_rounded,
+      'Papier':       Icons.article_outlined,
+      'Organique':    Icons.compost_rounded,
+      'Électronique': Icons.electrical_services_rounded,
+      'Textile':      Icons.checkroom_rounded,
+      'Dangereux':    Icons.warning_amber_rounded,
+    };
+    const catColors = <String, Color>{
+      'Plastique':    AppColors.plastic,
+      'Verre':        AppColors.glass,
+      'Métal':        AppColors.metal,
+      'Papier':       AppColors.paper,
+      'Organique':    Color(0xFF795548),
+      'Électronique': AppColors.electronics,
+      'Textile':      Color(0xFF9B59B6),
+      'Dangereux':    Color(0xFFE74C3C),
+    };
+
+    return List.generate(scans.length, (i) {
+      final scan = scans[i];
+      final cat = scan['category'] as String? ?? 'Inconnu';
+      final date = scan['scanned_at'] != null
+          ? DateTime.tryParse(scan['scanned_at'] as String)
+          : null;
+      final dateStr = date != null
+          ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
+          : '';
+      return Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: _ActivityItem(
-          icon: activities[i].$1,
-          color: activities[i].$2,
-          title: activities[i].$3,
-          date: activities[i].$4,
-          points: activities[i].$5,
+          icon: catIcons[cat] ?? Icons.recycling_rounded,
+          color: catColors[cat] ?? AppColors.primary,
+          title: 'Scan $cat',
+          date: dateStr,
+          points: '+10 pts',
         ).animate(delay: (460 + i * 60).ms).fadeIn(duration: 280.ms).slideX(begin: 0.08),
-      ),
-    );
+      );
+    });
   }
 
   String get lang => ref.read(localeProvider).languageCode;
@@ -344,7 +438,8 @@ class _MiniStat extends StatelessWidget {
 class _WeeklyCard extends StatelessWidget {
   final Animation<double> counterAnim;
   final AppStrings s;
-  const _WeeklyCard({required this.counterAnim, required this.s});
+  final UserModel user;
+  const _WeeklyCard({required this.counterAnim, required this.s, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +488,7 @@ class _WeeklyCard extends StatelessWidget {
           AnimatedBuilder(
             animation: counterAnim,
             builder: (_, _) => Text(
-              '${(12.5 * counterAnim.value).toStringAsFixed(1)} kg',
+              '${(user.weeklyGoalKg * user.weeklyProgress * counterAnim.value).toStringAsFixed(1)} kg',
               style: const TextStyle(
                 fontFamily: 'Poppins', fontSize: 38,
                 fontWeight: FontWeight.bold, color: Colors.white,
@@ -413,7 +508,7 @@ class _WeeklyCard extends StatelessWidget {
             child: AnimatedBuilder(
               animation: counterAnim,
               builder: (_, _) => LinearProgressIndicator(
-                value: 0.75 * counterAnim.value,
+                value: user.weeklyProgress * counterAnim.value,
                 backgroundColor: Colors.white.withValues(alpha: 0.25),
                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 minHeight: 8,
@@ -422,7 +517,7 @@ class _WeeklyCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '75% ${s.ofGoal}',
+            '${(user.weeklyProgress * 100).toInt()}% ${s.ofGoal}',
             style: TextStyle(
               fontFamily: 'Poppins', fontSize: 12,
               color: Colors.white.withValues(alpha: 0.7),
@@ -437,15 +532,17 @@ class _WeeklyCard extends StatelessWidget {
 // ── Impact environnemental (3 mini-cartes) ────────────────────────────────────
 class _ImpactRow extends StatelessWidget {
   final Animation<double> anim;
-  const _ImpactRow({required this.anim});
+  final UserModel user;
+  const _ImpactRow({required this.anim, required this.user});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final co2 = user.co2Saved;
     final items = [
-      (Icons.cloud_outlined,      '2.4 kg', 'CO₂ évité',   const Color(0xFF27AE60)),
-      (Icons.park_outlined,       '0.3',    'Arbres éq.',   const Color(0xFF2E7D32)),
-      (Icons.water_drop_outlined, '40 L',   'Eau éco.',     const Color(0xFF1ABC9C)),
+      (Icons.cloud_outlined,      '${(co2 / 1000).toStringAsFixed(1)} kg', 'CO₂ évité',  const Color(0xFF27AE60)),
+      (Icons.park_outlined,       (co2 / 8000).toStringAsFixed(2),         'Arbres éq.', const Color(0xFF2E7D32)),
+      (Icons.water_drop_outlined, '${(co2 * 0.05).toStringAsFixed(0)} L',  'Eau éco.',   const Color(0xFF1ABC9C)),
     ];
     return Row(
       children: [
@@ -762,6 +859,76 @@ class _CategoriesRow extends StatelessWidget {
   }
 }
 
+// ── Daily eco-facts (60 facts, one per day) ───────────────────────────────────
+const _kHomeFacts = [
+  'Un sac plastique met 400 ans à se dégrader dans la nature.',
+  "Recycler une canette d'aluminium économise 95 % d'énergie par rapport à la production neuve.",
+  'Chaque tonne de papier recyclé sauve 17 arbres et économise 2,5 tonnes de CO₂.',
+  'Le Maroc produit environ 5 millions de tonnes de déchets solides par an.',
+  'Une bouteille en verre peut être recyclée à l\'infini sans perdre sa pureté.',
+  'Les déchets électroniques représentent 70 % des toxines dans les décharges mondiales.',
+  'Recycler une bouteille en verre économise l\'énergie pour alimenter une ampoule 4 heures.',
+  'Le plastique PET (bouteilles d\'eau) peut être recyclé en fibres textiles pour les vêtements.',
+  'Un téléphone portable contient de l\'or, de l\'argent et du cuivre récupérables.',
+  'Les emballages représentent 30 % des déchets ménagers au Maroc.',
+  'La décomposition des déchets organiques produit du méthane, 25 × plus puissant que le CO₂.',
+  'Composter 1 kg de déchets organiques réduit les émissions de 0,5 kg de CO₂.',
+  'Le verre met 4 000 ans à se décomposer dans la nature.',
+  'Une pile bouton peut contaminer 400 000 litres d\'eau si mal éliminée.',
+  'Le Plan National des Déchets du Maroc vise 100 % de collecte d\'ici 2030.',
+  'Les textiles non recyclés représentent 10 % des émissions mondiales de carbone.',
+  '1 tonne d\'aluminium recyclé économise 4 tonnes de bauxite.',
+  'Les déchets alimentaires représentent un tiers de tous les aliments produits dans le monde.',
+  'Un journal peut être recyclé jusqu\'à 7 fois avant que ses fibres ne soient trop courtes.',
+  'Les bouteilles en plastique mettent entre 400 et 1 000 ans à se dégrader.',
+  'Le Maroc est le premier pays africain à interdire les sacs plastiques à usage unique (2016).',
+  'Recycler 1 tonne de plastique économise 1,8 tonne de pétrole.',
+  'Les piles usagées contiennent du mercure, du cadmium et du plomb – métaux lourds très toxiques.',
+  'La production d\'une voiture génère autant de CO₂ que la conduite pendant 2 ans.',
+  'Trier vos déchets augmente le taux de recyclage et réduit les coûts de traitement.',
+  'Le carton peut être recyclé jusqu\'à 5 fois avant de perdre ses propriétés.',
+  'En recyclant vos DEEE, vous récupérez des matières premières rares et précieuses.',
+  '80 % des matériaux d\'un smartphone peuvent être récupérés et réutilisés.',
+  'Un seul arbre peut absorber jusqu\'à 22 kg de CO₂ par an.',
+  'Les déchets ménagers marocains contiennent 60–70 % de déchets organiques.',
+  'La production d\'une tonne de papier vierge consomme 100 000 litres d\'eau.',
+  'Le recyclage du verre réduit les émissions de CO₂ de 20 % par rapport au neuf.',
+  'L\'économie circulaire pourrait créer 4 millions d\'emplois en Afrique d\'ici 2030.',
+  'Les micro-plastiques ont été retrouvés dans le sang humain et dans l\'Himalaya.',
+  'Chaque Marocain produit en moyenne 0,8 kg de déchets par jour.',
+  'Le compostage réduit de 30 % la quantité de déchets envoyés en décharge.',
+  'Les cannettes recyclées peuvent être de retour sur les étagères en 60 jours.',
+  'Le plastique PVC (n°3) est difficile à recycler et libère des toxines à l\'incinération.',
+  '91 % du plastique produit dans le monde n\'a jamais été recyclé.',
+  'Racheter une bouteille d\'eau coûte 1 000 fois plus que l\'eau du robinet.',
+  'Le Maroc ambitionne d\'atteindre 52 % d\'énergies renouvelables d\'ici 2030.',
+  'Une boîte de conserve en acier met 50 ans à se dégrader dans la nature.',
+  'Le plastique oxodégradable n\'est PAS biodégradable – il se fragmente en micro-plastiques.',
+  'Les huiles usagées ne doivent jamais être versées dans les égouts.',
+  '1 litre d\'huile de moteur peut contaminer 1 million de litres d\'eau.',
+  'Les médicaments périmés doivent être rapportés en pharmacie, jamais dans les toilettes.',
+  'Le bois traité (vernis, peint) ne peut pas être composté ni brûlé sans filtres.',
+  'Les magazines glacés sont plus difficiles à recycler que le papier ordinaire.',
+  'L\'impression recto-verso économise 50 % de papier.',
+  'Un foyer marocain jette en moyenne 30 % de sa nourriture achetée.',
+  'La fast fashion produit 20 % de la pollution des eaux mondiales.',
+  'Réparer plutôt que remplacer réduit de 80 % l\'empreinte carbone d\'un appareil.',
+  'Acheter en vrac élimine jusqu\'à 40 % des emballages plastiques.',
+  'Un sac en toile doit être utilisé au moins 50 fois pour compenser son impact de production.',
+  'Le recyclage d\'une tonne de plastique évite l\'émission de 1,5 tonne de CO₂.',
+  'Les décharges sauvages coûtent 3 × plus cher à nettoyer qu\'une collecte organisée.',
+  '76 000 tonnes de plastique entrent dans la Méditerranée chaque année.',
+  'Marrakech a recyclé 15 000 tonnes de déchets en 2022, une première pour le Maroc.',
+  'Le tri sélectif est un geste citoyen qui bénéficie à toute la planète.',
+  'Chaque canette recyclée économise assez d\'énergie pour alimenter une TV pendant 3 heures.',
+  'Le papier d\'aluminium peut être recyclé avec les métaux si bien nettoyé.',
+];
+
+String get _todayHomeFact {
+  final dayIndex = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+  return _kHomeFacts[dayIndex % _kHomeFacts.length];
+}
+
 // ── Conseil éco ───────────────────────────────────────────────────────────────
 class _EcoTipBanner extends StatelessWidget {
   final AppStrings s;
@@ -804,7 +971,7 @@ class _EcoTipBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  s.ecoTipText,
+                  _todayHomeFact,
                   style: TextStyle(
                     fontFamily: 'Poppins', fontSize: 12, height: 1.4,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
