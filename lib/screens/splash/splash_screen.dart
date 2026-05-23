@@ -1,9 +1,9 @@
 // Premier écran au lancement — 4 phases, fond vert uni, logo seul, skip sur tap.
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -112,9 +112,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   void _navigateNext() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    final user = ref.read(currentUserProvider);
-    if (user != null) {
-      context.go('/welcome');
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      context.go('/home');
     } else {
       context.go('/login');
     }
