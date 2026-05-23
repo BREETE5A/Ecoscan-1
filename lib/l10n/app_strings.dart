@@ -4,10 +4,11 @@ class AppStrings {
 
   static AppStrings of(String locale) => AppStrings(locale);
 
-  String _t(String fr, String en, String ar) {
+  String _t(String fr, String en, String ar, [String? es]) {
     switch (_locale) {
       case 'en': return en;
       case 'ar': return ar;
+      case 'es': return es ?? fr;
       default:   return fr;
     }
   }

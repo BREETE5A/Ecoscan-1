@@ -11,6 +11,7 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 import '../legal/privacy_policy_screen.dart';
 import '../legal/terms_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -102,6 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       }
     });
 
+    final l10n      = AppLocalizations.of(context)!;
     final isLoading = authState.status == AuthStatus.loading ||
                       googleState.status == AuthStatus.loading;
     final isDark    = Theme.of(context).brightness == Brightness.dark;
@@ -173,7 +175,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             children: [
                               // Titre
                               Text(
-                                'Bon retour !',
+                                l10n.welcomeBack,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 22,
@@ -192,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               // Email
                               CustomTextField(
                                 controller: _emailCtrl,
-                                label: 'Email',
+                                label: l10n.email,
                                 hint: 'exemple@email.com',
                                 prefixIcon: Icons.email_outlined,
                                 keyboardType: TextInputType.emailAddress,
@@ -215,7 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               // Mot de passe
                               CustomTextField(
                                 controller: _passCtrl,
-                                label: 'Mot de passe',
+                                label: l10n.password,
                                 hint: '••••••••',
                                 prefixIcon: Icons.lock_outline_rounded,
                                 obscureText: _obscure,
@@ -283,9 +285,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                     tapTargetSize:
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  child: const Text(
-                                    'Mot de passe oublié ?',
-                                    style: TextStyle(
+                                  child: Text(
+                                    l10n.forgotPassword,
+                                    style: const TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 12,
                                       color: AppColors.primary,
@@ -382,7 +384,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Pas encore de compte ? ',
+                              l10n.noAccount,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 13,
@@ -393,9 +395,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                             GestureDetector(
                               onTap: () => context.go('/register'),
-                              child: const Text(
-                                "S'inscrire",
-                                style: TextStyle(
+                              child: Text(
+                                l10n.register,
+                                style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -416,8 +418,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               onTap: () => Navigator.push(context,
                                 MaterialPageRoute(
                                     builder: (_) => const PrivacyPolicyScreen())),
-                              child: const Text(
-                                'Politique de confidentialité',
+                              child: Text(
+                                l10n.privacyPolicy,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   color: Color(0xFF2D6A4F),
@@ -435,8 +437,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               onTap: () => Navigator.push(context,
                                 MaterialPageRoute(
                                     builder: (_) => const TermsScreen())),
-                              child: const Text(
-                                'Conditions d\'utilisation',
+                              child: Text(
+                                l10n.termsOfUse,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   color: Color(0xFF2D6A4F),
@@ -622,9 +624,9 @@ class _LoadingButton extends StatelessWidget {
           child: Center(
             child: isLoading
                 ? _OrbitingLeaves(ctrl: leafCtrl)
-                : const Text(
-                    'Se connecter',
-                    style: TextStyle(
+                : Text(
+                    AppLocalizations.of(context)!.login,
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -744,7 +746,7 @@ class _GoogleButton extends StatelessWidget {
                   _GoogleLogo(),
                   const SizedBox(width: 12),
                   Text(
-                    'Continuer avec Google',
+                    AppLocalizations.of(context)!.continueWithGoogle,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 14,

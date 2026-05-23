@@ -10,6 +10,7 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 import '../legal/privacy_policy_screen.dart';
 import '../legal/terms_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 // ── Villes marocaines pour l'autocomplétion ───────────────────────────────────
 const _moroccanCities = [
@@ -183,6 +184,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   @override
   Widget build(BuildContext context) {
     final regState = ref.watch(registerProvider);
+    final l10n     = AppLocalizations.of(context)!;
     final isDark   = Theme.of(context).brightness == Brightness.dark;
     final step     = regState.step;
     final isLoading = regState.status == AuthStatus.loading;
@@ -312,7 +314,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Déjà un compte ? ',
+                            l10n.alreadyAccount,
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 13,
@@ -323,9 +325,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           ),
                           GestureDetector(
                             onTap: () => context.go('/login'),
-                            child: const Text(
-                              'Se connecter',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.login,
+                              style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -432,7 +434,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     Expanded(
                       child: CustomTextField(
                         controller: _firstCtrl,
-                        label: 'Prénom',
+                        label: AppLocalizations.of(context)!.firstName,
                         hint: 'Fatima',
                         prefixIcon: Icons.person_outline_rounded,
                         isDark: isDark,
@@ -444,7 +446,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     Expanded(
                       child: CustomTextField(
                         controller: _lastCtrl,
-                        label: 'Nom',
+                        label: AppLocalizations.of(context)!.lastName,
                         hint: 'Benali',
                         prefixIcon: Icons.badge_outlined,
                         isDark: isDark,
@@ -494,7 +496,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 // Email
                 CustomTextField(
                   controller: _emailCtrl,
-                  label: 'Email',
+                  label: AppLocalizations.of(context)!.email,
                   hint: 'exemple@email.com',
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
@@ -507,7 +509,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 // Mot de passe
                 CustomTextField(
                   controller: _passCtrl,
-                  label: 'Mot de passe',
+                  label: AppLocalizations.of(context)!.password,
                   hint: '••••••••',
                   prefixIcon: Icons.lock_outline_rounded,
                   obscureText: _obscurePass,
@@ -535,7 +537,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 // Confirmation mot de passe
                 CustomTextField(
                   controller: _confirmCtrl,
-                  label: 'Confirmer le mot de passe',
+                  label: AppLocalizations.of(context)!.confirmPassword,
                   hint: '••••••••',
                   prefixIcon: Icons.lock_outline_rounded,
                   obscureText: _obscureConfirm,
@@ -609,7 +611,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 // Champ ville avec dropdown expand animé
                 CustomTextField(
                   controller: _cityCtrl,
-                  label: 'Ville',
+                  label: AppLocalizations.of(context)!.city,
                   hint: 'Ex : Casablanca',
                   prefixIcon: Icons.location_city_rounded,
                   isDark: isDark,

@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_strings.dart';
+import 'language_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -22,8 +23,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _weeklyReport = true;
   String _city = 'Alger';
 
-  static const _langCodes = ['fr', 'en', 'ar'];
-  static const _langLabels = ['Français', 'English', 'العربية'];
+  static const _langCodes = ['fr', 'en', 'ar', 'es'];
+  static const _langLabels = ['Français', 'English', 'العربية', 'Español'];
   static const _cities = ['Alger', 'Oran', 'Constantine', 'Annaba', 'Tlemcen'];
 
   @override
@@ -33,7 +34,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final darkEnabled = themeMode == ThemeMode.dark;
     final currentLang = ref.watch(localeProvider).languageCode;
     final s = AppStrings.of(currentLang);
-    final currentLangLabel = _langLabels[_langCodes.indexOf(currentLang)];
+    final langIdx = _langCodes.indexOf(currentLang);
+    final currentLangLabel = langIdx >= 0 ? _langLabels[langIdx] : 'Français';
 
     return Scaffold(
       body: SafeArea(
@@ -89,20 +91,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onChanged: (_) =>
                               ref.read(themeProvider.notifier).toggle(),
                         ),
-                        _DropdownRow(
+                        _ActionRow(
                           icon: Icons.language_rounded,
                           label: s.language,
-                          value: currentLangLabel,
-                          items: _langLabels,
                           color: AppColors.info,
                           isDark: isDark,
-                          onChanged: (v) {
-                            final idx = _langLabels.indexOf(v);
-                            if (idx >= 0) {
-                              ref.read(localeProvider.notifier)
-                                  .setLocale(Locale(_langCodes[idx]));
-                            }
-                          },
+                          trailing: Text(
+                            currentLangLabel,
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const LanguageScreen()),
+                          ),
                         ),
                         _DropdownRow(
                           icon: Icons.location_city_rounded,
