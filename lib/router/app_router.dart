@@ -5,6 +5,8 @@ import '../screens/splash/welcome_splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
+import '../screens/legal/privacy_policy_screen.dart';
+import '../screens/legal/terms_screen.dart';
 import '../screens/auth/verify_email_screen.dart';
 import '../screens/settings/change_password_screen.dart';
 import '../screens/settings/change_email_screen.dart';
@@ -73,6 +75,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/register',
       pageBuilder: (c, s) => _fadeSlide(c, s, const RegisterScreen()),
+    ),
+    GoRoute(
+      path: '/privacy-policy',
+      pageBuilder: (c, s) => _fadeSlide(c, s, const PrivacyPolicyScreen()),
+    ),
+    GoRoute(
+      path: '/terms',
+      pageBuilder: (c, s) => _fadeSlide(c, s, const TermsScreen()),
     ),
     GoRoute(
       path: '/verify-email',

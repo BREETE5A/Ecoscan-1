@@ -9,6 +9,8 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
+import '../legal/privacy_policy_screen.dart';
+import '../legal/terms_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -403,6 +405,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                           ],
                         ).animate().fadeIn(duration: 400.ms, delay: 800.ms),
+
+                        const SizedBox(height: 24),
+
+                        // ── Liens légaux ─────────────────────────────────
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.push(context,
+                                MaterialPageRoute(
+                                    builder: (_) => const PrivacyPolicyScreen())),
+                              child: const Text(
+                                'Politique de confidentialité',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  color: Color(0xFF2D6A4F),
+                                  fontSize: 12,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            const Text(
+                              ' • ',
+                              style: TextStyle(
+                                  color: Colors.grey, fontSize: 12),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.push(context,
+                                MaterialPageRoute(
+                                    builder: (_) => const TermsScreen())),
+                              child: const Text(
+                                'Conditions d\'utilisation',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  color: Color(0xFF2D6A4F),
+                                  fontSize: 12,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(duration: 400.ms, delay: 900.ms),
+
+                        const SizedBox(height: 16),
 
                         const SizedBox(height: 100),
                       ],

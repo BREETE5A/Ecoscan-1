@@ -8,6 +8,8 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
+import '../legal/privacy_policy_screen.dart';
+import '../legal/terms_screen.dart';
 
 // ── Villes marocaines pour l'autocomplétion ───────────────────────────────────
 const _moroccanCities = [
@@ -843,24 +845,24 @@ class _TermsCheckbox extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => onChanged(!agreed),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              AnimatedContainer(
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => onChanged(!agreed),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color:
-                      agreed ? AppColors.primary : Colors.transparent,
+                  color: agreed ? AppColors.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color:
-                        agreed ? AppColors.primary : AppColors.textSecondary,
+                    color: agreed
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                     width: 1.5,
                   ),
                 ),
@@ -869,10 +871,16 @@ class _TermsCheckbox extends StatelessWidget {
                         color: Colors.white, size: 14)
                     : null,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: RichText(
-                  text: TextSpan(
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Wrap(
+                children: [
+                  Text(
+                    "J'accepte les ",
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
@@ -880,32 +888,56 @@ class _TermsCheckbox extends StatelessWidget {
                           ? AppColors.darkTextSecondary
                           : AppColors.textSecondary,
                     ),
-                    children: const [
-                      TextSpan(text: "J'accepte les "),
-                      TextSpan(
-                        text: "Conditions d'utilisation",
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      TextSpan(text: ' et la '),
-                      TextSpan(
-                        text: 'Politique de confidentialité',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const TermsScreen()),
+                    ),
+                    child: const Text(
+                      "Conditions d'utilisation",
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    ' et la ',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PrivacyPolicyScreen()),
+                    ),
+                    child: const Text(
+                      'Politique de confidentialité',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
 }
 
