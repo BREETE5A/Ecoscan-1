@@ -96,6 +96,11 @@ class StorageService {
         (jsonDecode(raw) as List).map((e) => Map<String, dynamic>.from(e as Map)));
   }
 
+  static Future<void> clearHistory() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_keyHistory);
+  }
+
   static Future<void> reset() async {
     final p = await SharedPreferences.getInstance();
     await p.remove(_keyScans);

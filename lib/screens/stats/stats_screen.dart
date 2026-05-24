@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/scan_history_provider.dart';
 
@@ -72,7 +74,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
   late TabController _tab;
   int _tabIndex = 0;
 
-  static const _periods = ['Semaine', 'Mois', 'Année'];
 
   static const _weekData = [4.0, 7.5, 5.0, 9.0, 6.5, 12.5, 8.0];
   static const _monthData = [28.0, 35.0, 22.0, 48.0];
@@ -100,13 +101,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
     }
   }
 
-  static const _categories = [
-    ('Plastique', 0.38, AppColors.plastic),
-    ('Organique', 0.24, Color(0xFF795548)),
-    ('Papier', 0.18, AppColors.paper),
-    ('Verre', 0.12, AppColors.glass),
-    ('Métal', 0.08, AppColors.metal),
-  ];
 
   @override
   void initState() {
@@ -123,6 +117,15 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final periods = [s.periodWeek, s.periodMonth, s.periodYear];
+    final categories = [
+      (s.catPlastic,  0.38, AppColors.plastic),
+      (s.catOrganic,  0.24, const Color(0xFF795548)),
+      (s.catPaper,    0.18, AppColors.paper),
+      (s.catGlass,    0.12, AppColors.glass),
+      (s.catMetal,    0.08, AppColors.metal),
+    ];
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final history = ref.watch(scanHistoryProvider);
     final notifier = ref.read(scanHistoryProvider.notifier);
@@ -145,7 +148,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Mes Statistiques',
+                    s.myStats,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 24,
@@ -154,7 +157,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                     ),
                   ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
                   Text(
-                    'Votre impact environnemental',
+                    s.impactSubtitle,
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 13,
@@ -175,7 +178,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                 children: [
                   _SummaryCard(
                     icon: Icons.scale_rounded,
-                    label: 'Recyclé',
+                    label: s.recycledLabel,
                     value: '${kgRecycled.toStringAsFixed(1)} kg',
                     color: AppColors.primary,
                     isDark: isDark,
@@ -183,7 +186,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                   const SizedBox(width: 12),
                   _SummaryCard(
                     icon: Icons.co2_rounded,
-                    label: 'CO₂ évité',
+                    label: s.co2AvoidedLabel,
                     value: '${(totalCo2 / 1000).toStringAsFixed(1)} kg',
                     color: AppColors.teal,
                     isDark: isDark,
@@ -191,7 +194,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                   const SizedBox(width: 12),
                   _SummaryCard(
                     icon: Icons.stars_rounded,
-                    label: 'Points',
+                    label: s.points,
                     value: '$totalPts pts',
                     color: AppColors.accent,
                     isDark: isDark,
@@ -199,7 +202,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                   const SizedBox(width: 12),
                   _SummaryCard(
                     icon: Icons.recycling_rounded,
-                    label: 'Taux tri',
+                    label: s.sortingRate,
                     value: '${(recycleRate * 100).round()}%',
                     color: AppColors.info,
                     isDark: isDark,
@@ -220,7 +223,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                 ),
                 child: TabBar(
                   controller: _tab,
-                  tabs: _periods.map((p) => Tab(text: p)).toList(),
+                  tabs: periods.map((p) => Tab(text: p)).toList(),
                   indicator: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10),
@@ -343,7 +346,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                       children: [
                         Expanded(
                           child: _CircularGauge(
-                            label: 'Kg triés',
+                            label: s.kgSorted,
                             value: kgRecycled,
                             max: 50,
                             unit: 'kg',
@@ -354,7 +357,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                         const SizedBox(width: 12),
                         Expanded(
                           child: _CircularGauge(
-                            label: 'CO₂ évité',
+                            label: s.co2AvoidedLabel,
                             value: totalCo2 / 1000,
                             max: 20,
                             unit: 'kg',
@@ -365,7 +368,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                         const SizedBox(width: 12),
                         Expanded(
                           child: _CircularGauge(
-                            label: 'Points',
+                            label: s.points,
                             value: totalPts.toDouble(),
                             max: 1000,
                             unit: 'pts',
@@ -383,6 +386,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                       totalPts: totalPts,
                       kgRecycled: kgRecycled,
                       isDark: isDark,
+                      title: s.badgesUnlocked,
+                      obtainedLabel: (a, b) => s.badgeObtained(a, b),
+                      s: s,
                     ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
                     const SizedBox(height: 20),
 
@@ -390,6 +396,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                     _LeaderboardSection(
                       isDark: isDark,
                       userPoints: totalPts,
+                      title: s.weeklyLeaderboard,
+                      topLabel: s.top5,
+                      youText: s.youLabel,
                     ).animate().fadeIn(duration: 500.ms, delay: 450.ms),
                     const SizedBox(height: 20),
 
@@ -411,7 +420,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Par catégorie',
+                            s.byCategory,
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 15,
@@ -423,13 +432,13 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                           ),
                           const SizedBox(height: 14),
                           ...List.generate(
-                            _categories.length,
+                            categories.length,
                             (i) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: _CatBar(
-                                label: _categories[i].$1,
-                                value: _categories[i].$2,
-                                color: _categories[i].$3,
+                                label: categories[i].$1,
+                                value: categories[i].$2,
+                                color: categories[i].$3,
                                 delay: 300 + i * 80,
                                 isDark: isDark,
                               ),
@@ -683,22 +692,29 @@ class _BadgesSection extends StatelessWidget {
   final int totalPts;
   final double kgRecycled;
   final bool isDark;
+  final String title;
+  final String Function(int, int) obtainedLabel;
+
+  final AppStrings s;
 
   const _BadgesSection({
     required this.totalScans,
     required this.totalPts,
     required this.kgRecycled,
     required this.isDark,
+    required this.title,
+    required this.obtainedLabel,
+    required this.s,
   });
 
-  static const _allBadges = [
-    ('Premier scan', '🌱', 1, 'scans'),
-    ('10 scans', '♻️', 10, 'scans'),
-    ('Éco-guerrier', '🏆', 50, 'scans'),
-    ('100 pts', '⭐', 100, 'pts'),
-    ('500 pts', '💎', 500, 'pts'),
-    ('1 kg trié', '⚖️', 1, 'kg'),
-    ('10 kg triés', '🌍', 10, 'kg'),
+  List<(String, String, int, String)> _badges() => [
+    (s.badgeFirstScan,  '🌱', 1,   'scans'),
+    (s.badge10Scans,    '♻️', 10,  'scans'),
+    (s.badgeEcoWarrior, '🏆', 50,  'scans'),
+    (s.badge100pts,     '⭐', 100, 'pts'),
+    (s.badge500pts,     '💎', 500, 'pts'),
+    (s.badge1kgSorted,  '⚖️', 1,  'kg'),
+    (s.badge10kgSorted, '🌍', 10, 'kg'),
   ];
 
   bool _unlocked(int threshold, String type) {
@@ -728,7 +744,7 @@ class _BadgesSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Badges débloqués',
+            title,
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 15,
@@ -740,7 +756,7 @@ class _BadgesSection extends StatelessWidget {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _allBadges.map((b) {
+            children: _badges().map((b) {
               final unlocked = _unlocked(b.$3, b.$4);
               return Tooltip(
                 message: b.$1,
@@ -781,7 +797,7 @@ class _BadgesSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '${_allBadges.where((b) => _unlocked(b.$3, b.$4)).length}/${_allBadges.length} obtenus',
+            obtainedLabel(_badges().where((b) => _unlocked(b.$3, b.$4)).length, _badges().length),
             style: const TextStyle(
               fontFamily: 'Poppins',
               fontSize: 12,
@@ -798,8 +814,17 @@ class _BadgesSection extends StatelessWidget {
 class _LeaderboardSection extends StatelessWidget {
   final bool isDark;
   final int userPoints;
+  final String title;
+  final String topLabel;
+  final String youText;
 
-  const _LeaderboardSection({required this.isDark, required this.userPoints});
+  const _LeaderboardSection({
+    required this.isDark,
+    required this.userPoints,
+    required this.title,
+    required this.topLabel,
+    required this.youText,
+  });
 
   static const _leaders = [
     ('Fatima B.', 1240, '🥇'),
@@ -829,7 +854,7 @@ class _LeaderboardSection extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Classement semaine',
+                title,
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 15,
@@ -844,8 +869,8 @@ class _LeaderboardSection extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Top 5',
+                child: Text(
+                  topLabel,
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,
@@ -921,10 +946,10 @@ class _LeaderboardSection extends StatelessWidget {
               children: [
                 const Text('👤', style: TextStyle(fontSize: 18)),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Vous',
-                    style: TextStyle(
+                    youText,
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

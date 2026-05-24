@@ -1,13 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../models/scan_result_model.dart';
 import '../services/storage_service.dart';
 
-final userProvider = StateNotifierProvider<UserNotifier, UserModel>(
-  (ref) => UserNotifier()..loadFromStorage(),
-);
+final userProvider = StateNotifierProvider<UserNotifier, UserModel>((ref) {
+  final notifier = UserNotifier();
+  final fbUser = FirebaseAuth.instance.currentUser;
+  if (fbUser != null) {
+    notifier.loadFromStorage(
+      firebaseName: fbUser.displayName?.trim().isNotEmpty == true
+          ? fbUser.displayName
+          : fbUser.email?.split('@').first,
+      firebaseUid: fbUser.uid,
+    );
+  } else {
+    notifier.loadFromStorage();
+  }
+  return notifier;
+});
 
 class UserNotifier extends StateNotifier<UserModel> {
   UserNotifier() : super(UserModel.empty());
@@ -30,8 +43,10 @@ class UserNotifier extends StateNotifier<UserModel> {
           final fsPoints = (data['ecoPoints']  as num?)?.toInt()    ?? 0;
           final fsScans  = (data['scansCount'] as num?)?.toInt()    ?? 0;
           final fsCo2    = (data['co2Saved']   as num?)?.toDouble() ?? 0.0;
-          final fsName   = (data['displayName'] as String?)         ?? firebaseName ?? 'Utilisateur';
-          final fsCity   = (data['city']        as String?)         ?? firebaseCity ?? 'Maroc';
+          final rawName  = ((data['displayName'] as String?) ?? '').trim();
+          final fsName   = rawName.isNotEmpty ? rawName : (firebaseName?.trim().isNotEmpty == true ? firebaseName!.trim() : 'Utilisateur');
+          final rawCity  = ((data['city'] as String?) ?? '').trim();
+          final fsCity   = rawCity.isNotEmpty ? rawCity : (firebaseCity?.trim().isNotEmpty == true ? firebaseCity!.trim() : 'Maroc');
 
           // Synchroniser SharedPreferences avec Firestore
           await StorageService.setPoints(fsPoints);
@@ -71,8 +86,8 @@ class UserNotifier extends StateNotifier<UserModel> {
 
     state = UserModel(
       id:             firebaseUid ?? 'local_user',
-      name:           firebaseName ?? 'Utilisateur',
-      city:           firebaseCity ?? 'Maroc',
+      name:           (firebaseName?.trim().isNotEmpty == true) ? firebaseName!.trim() : 'Utilisateur',
+      city:           (firebaseCity?.trim().isNotEmpty == true) ? firebaseCity!.trim() : 'Maroc',
       points:         points,
       scans:          scans,
       badges:         _computeBadges(scans, points),
@@ -95,6 +110,10 @@ class UserNotifier extends StateNotifier<UserModel> {
       firebaseUid:  uid,
       firebaseCity: state.city,
     );
+  }
+
+  void reset() {
+    state = UserModel.empty();
   }
 
   void updateProfile({String? name, String? city}) {

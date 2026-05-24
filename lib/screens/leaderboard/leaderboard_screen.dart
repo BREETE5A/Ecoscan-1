@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
 
 class LeaderboardScreen extends ConsumerStatefulWidget {
@@ -35,8 +38,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     _Player('Hassan Moukhliss', 1100, 6, AppColors.purple, Icons.person_rounded),
   ];
 
-  List<_Player> get _players => _tabIdx == 0 ? _cityPlayers : _nationPlayers;
-
   @override
   void initState() {
     super.initState();
@@ -53,8 +54,17 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final top3 = _players.take(3).toList();
-    final rest = _players.skip(3).toList();
+    final user = ref.watch(userProvider);
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+
+    // Replace hardcoded "me" entry (rank 4) with real user data
+    List<_Player> buildPlayers(List<_Player> base) => base.map((p) =>
+      p.rank == 4 ? _Player(user.name, user.points, 4, AppColors.primary, Icons.person_rounded) : p
+    ).toList();
+
+    final players = buildPlayers(_tabIdx == 0 ? _cityPlayers : _nationPlayers);
+    final top3 = players.take(3).toList();
+    final rest = players.skip(3).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -67,7 +77,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Classement',
+                    s.leaderboard,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 24,
@@ -76,7 +86,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                     ),
                   ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
                   Text(
-                    'Les meilleurs éco-citoyens',
+                    s.bestEcoCitizens,
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 13,
@@ -93,7 +103,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                     ),
                     child: TabBar(
                       controller: _tab,
-                      tabs: const [Tab(text: 'Ma Ville'), Tab(text: 'National')],
+                      tabs: [Tab(text: s.myCity), Tab(text: s.national)],
                       indicator: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(10),
@@ -367,23 +377,7 @@ class _RankRow extends StatelessWidget {
               ),
             ),
             if (isMe)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'Vous',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 10,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              _YouBadge(isDark: isDark),
             Text(
               '${player.points} pts',
               style: const TextStyle(
@@ -407,4 +401,31 @@ class _Player {
   final Color color;
   final IconData icon;
   const _Player(this.name, this.points, this.rank, this.color, this.icon);
+}
+
+class _YouBadge extends ConsumerWidget {
+  final bool isDark;
+  const _YouBadge({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      margin: const EdgeInsets.only(right: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        s.youLabel,
+        style: const TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 10,
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }

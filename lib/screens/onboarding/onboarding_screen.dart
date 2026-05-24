@@ -1,60 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
   int? _quizAnswer;
   bool _quizSubmitted = false;
 
-  static const _pages = [
+  List<_OBData> _getPages(AppStrings s) => [
     _OBData(
       type: _PageType.intro,
       icon: Icons.qr_code_scanner_rounded,
       bgIcon: Icons.recycling,
-      title: 'Scannez & Identifiez',
-      subtitle:
-          'Photographiez n\'importe quel déchet et notre IA l\'identifie instantanément pour vous indiquer la bonne poubelle.',
-      gradient: [Color(0xFF27AE60), Color(0xFF1ABC9C)],
+      title: s.obTitle1,
+      subtitle: s.obSubtitle1,
+      gradient: const [Color(0xFF27AE60), Color(0xFF1ABC9C)],
     ),
     _OBData(
       type: _PageType.categories,
       icon: Icons.category_rounded,
       bgIcon: Icons.grid_view_rounded,
-      title: 'Les 6 Catégories',
-      subtitle: 'Apprenez les 6 grandes familles de déchets pour bien trier.',
-      gradient: [Color(0xFF1ABC9C), Color(0xFF3498DB)],
+      title: s.obTitle2,
+      subtitle: s.obSubtitle2,
+      gradient: const [Color(0xFF1ABC9C), Color(0xFF3498DB)],
     ),
     _OBData(
       type: _PageType.rewards,
       icon: Icons.emoji_events_rounded,
       bgIcon: Icons.star,
-      title: 'Gagnez des Récompenses',
-      subtitle:
-          'Chaque action éco-responsable vous rapporte des points. Grimpez dans le classement et débloquez des badges exclusifs.',
-      gradient: [Color(0xFF9B59B6), Color(0xFF27AE60)],
+      title: s.obTitle3,
+      subtitle: s.obSubtitle3,
+      gradient: const [Color(0xFF9B59B6), Color(0xFF27AE60)],
     ),
     _OBData(
       type: _PageType.quiz,
       icon: Icons.quiz_rounded,
       bgIcon: Icons.lightbulb,
-      title: 'Quiz Rapide',
-      subtitle: 'Testez vos connaissances avant de commencer !',
-      gradient: [Color(0xFFFF6B35), Color(0xFFFFD700)],
+      title: s.obTitle4,
+      subtitle: s.obSubtitle4,
+      gradient: const [Color(0xFFFF6B35), Color(0xFFFFD700)],
     ),
   ];
 
-  void _next() {
-    if (_page == _pages.length - 1) {
+  void _next(List<_OBData> pages) {
+    if (_page == pages.length - 1) {
       context.go('/login');
     } else {
       _controller.nextPage(
@@ -63,8 +64,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  bool get _canProceed {
-    if (_pages[_page].type == _PageType.quiz) return _quizSubmitted;
+  bool _canProceed(List<_OBData> pages) {
+    if (pages[_page].type == _PageType.quiz) return _quizSubmitted;
     return true;
   }
 
@@ -76,8 +77,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final pages = _getPages(s);
     final size = MediaQuery.of(context).size;
-    final grad = _pages[_page].gradient;
+    final grad = pages[_page].gradient;
 
     return Scaffold(
       body: Stack(
@@ -99,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               child: Icon(
-                _pages[_page].bgIcon,
+                pages[_page].bgIcon,
                 key: ValueKey(_page),
                 size: 280,
                 color: Colors.white.withValues(alpha: 0.08),
@@ -116,9 +119,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _quizAnswer = null;
                     _quizSubmitted = false;
                   }),
-                  itemCount: _pages.length,
+                  itemCount: pages.length,
                   itemBuilder: (_, i) {
-                    final data = _pages[i];
+                    final data = pages[i];
                     if (data.type == _PageType.categories) {
                       return _CategoriesPage(data: data);
                     } else if (data.type == _PageType.quiz) {
@@ -141,7 +144,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        _pages.length,
+                        pages.length,
                         (i) => AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -161,7 +164,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _canProceed ? _next : null,
+                        onPressed: _canProceed(pages) ? () => _next(pages) : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: grad[0],
@@ -178,21 +181,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                         child: Text(
-                          _page == _pages.length - 1
-                              ? 'Commencer'
-                              : _pages[_page].type == _PageType.quiz &&
+                          _page == pages.length - 1
+                              ? s.startBtn
+                              : pages[_page].type == _PageType.quiz &&
                                       !_quizSubmitted
-                                  ? 'Répondre d\'abord'
-                                  : 'Suivant',
+                                  ? s.answerFirst
+                                  : s.nextBtn,
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (_page < _pages.length - 1)
+                    if (_page < pages.length - 1)
                       TextButton(
                         onPressed: () => context.go('/login'),
                         child: Text(
-                          'Passer',
+                          s.skipBtn,
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             color: Colors.white.withValues(alpha: 0.7),
@@ -285,21 +288,21 @@ class _PageContent extends StatelessWidget {
   }
 }
 
-class _CategoriesPage extends StatelessWidget {
+class _CategoriesPage extends ConsumerWidget {
   final _OBData data;
   const _CategoriesPage({required this.data});
 
-  static const _cats = [
-    ('♻️', 'Plastique', 'Bac jaune'),
-    ('📄', 'Papier', 'Bac bleu'),
-    ('🍶', 'Verre', 'Bac vert'),
-    ('🥫', 'Métal', 'Bac jaune'),
-    ('🌿', 'Organique', 'Compost'),
-    ('📱', 'DEEE', 'Point collecte'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final cats = [
+      ('♻️', s.catPlastic,  s.binYellow),
+      ('📄', s.catPaper,    s.binBlue),
+      ('🍶', s.catGlass,    s.binGreen),
+      ('🥫', s.catMetal,    s.binYellow),
+      ('🌿', s.catOrganic,  s.catCompost),
+      ('📱', s.catDeee,     s.collectPoint),
+    ];
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -333,7 +336,7 @@ class _CategoriesPage extends StatelessWidget {
                 crossAxisSpacing: 12,
                 childAspectRatio: 1.0,
                 physics: const NeverScrollableScrollPhysics(),
-                children: _cats.asMap().entries.map((e) {
+                children: cats.asMap().entries.map((e) {
                   final i = e.key;
                   final c = e.value;
                   return Container(
@@ -385,7 +388,7 @@ class _CategoriesPage extends StatelessWidget {
   }
 }
 
-class _QuizPage extends StatelessWidget {
+class _QuizPage extends ConsumerWidget {
   final _OBData data;
   final int? selectedAnswer;
   final bool submitted;
@@ -400,12 +403,13 @@ class _QuizPage extends StatelessWidget {
     required this.onSubmit,
   });
 
-  static const _question = 'Dans quel bac met-on une bouteille en verre ?';
-  static const _options = ['Bac jaune', 'Bac vert', 'Bac noir', 'Compost'];
   static const _correct = 1;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final question = s.obQuizQuestion;
+    final options = [s.binYellow, s.binGreen, s.binBlack, s.catCompost];
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
@@ -441,7 +445,7 @@ class _QuizPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                _question,
+                question,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Poppins',
@@ -453,7 +457,7 @@ class _QuizPage extends StatelessWidget {
               ),
             ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: 16),
-            ...List.generate(_options.length, (i) {
+            ...List.generate(options.length, (i) {
               final isSelected = selectedAnswer == i;
               final isCorrect = i == _correct;
               Color bg;
@@ -505,7 +509,7 @@ class _QuizPage extends StatelessWidget {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Text(
-                            _options[i],
+                            options[i],
                             style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 14,
@@ -543,8 +547,8 @@ class _QuizPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text('Valider',
-                      style: TextStyle(
+                  child: Text(s.validateBtn,
+                      style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.bold)),
                 ),
@@ -571,8 +575,8 @@ class _QuizPage extends StatelessWidget {
                     Expanded(
                       child: Text(
                         selectedAnswer == _correct
-                            ? 'Bravo ! Le verre va bien dans le bac vert.'
-                            : 'Pas tout à fait ! Le verre va dans le bac vert.',
+                            ? s.obQuizCorrect
+                            : s.obQuizWrong,
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 13,

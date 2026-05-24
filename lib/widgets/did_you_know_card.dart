@@ -1,18 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/did_you_know_data.dart';
+import '../l10n/app_strings.dart';
+import '../providers/locale_provider.dart';
 import '../services/rotation_service.dart';
 import '../theme/app_theme.dart';
 
-class DidYouKnowCard extends StatefulWidget {
+class DidYouKnowCard extends ConsumerStatefulWidget {
   const DidYouKnowCard({super.key});
 
   @override
-  State<DidYouKnowCard> createState() => _DidYouKnowCardState();
+  ConsumerState<DidYouKnowCard> createState() => _DidYouKnowCardState();
 }
 
-class _DidYouKnowCardState extends State<DidYouKnowCard> {
+class _DidYouKnowCardState extends ConsumerState<DidYouKnowCard> {
   DidYouKnowFact? _fact;
   Timer? _timer;
 
@@ -38,6 +41,8 @@ class _DidYouKnowCardState extends State<DidYouKnowCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
 
     if (_fact == null) {
       return const SizedBox(
@@ -92,7 +97,7 @@ class _DidYouKnowCardState extends State<DidYouKnowCard> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Le saviez-vous ?',
+                      s.didYouKnow,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 10,
@@ -105,7 +110,7 @@ class _DidYouKnowCardState extends State<DidYouKnowCard> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  fact.fact,
+                  fact.factFor(lang),
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,

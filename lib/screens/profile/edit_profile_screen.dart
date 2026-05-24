@@ -1,66 +1,96 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 
-class EditProfileScreen extends StatefulWidget {
+class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameCtrl = TextEditingController(text: 'Amine Benali');
-  final _emailCtrl = TextEditingController(text: 'amine@ecoscan.ma');
-  final _cityCtrl = TextEditingController(text: 'Oujda');
-  final _bioCtrl = TextEditingController(
-      text: 'Passionné par l\'environnement et le recyclage.');
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _bioCtrl;
   bool _saving = false;
-  String _title = 'Éco-Warrior';
+  String _title = '';
 
-  final _titles = [
-    'Débutant Vert',
-    'Éco-Citoyen',
-    'Éco-Warrior',
-    'Gardien de la Planète',
-    'Maître du Recyclage',
+  static const _titleKeys = [
+    'beginner', 'citizen', 'warrior', 'guardian', 'master',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    _nameCtrl = TextEditingController(text: user?.displayName ?? '');
+    _bioCtrl = TextEditingController();
+    _title = _titleKeys[2];
+  }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _emailCtrl.dispose();
-    _cityCtrl.dispose();
     _bioCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
+    final s = AppStrings.of(ref.read(localeProvider).languageCode);
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return;
+
     setState(() => _saving = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
-    if (mounted) {
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Profil mis à jour avec succès !',
-            style: TextStyle(fontFamily: 'Poppins'),
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      // 1. Mettre à jour Firebase Auth
+      await user.updateDisplayName(name);
+      // 2. Mettre à jour Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'displayName': name});
+      // 3. Mettre à jour le provider en mémoire (mise à jour immédiate de l'UI)
+      ref.read(userProvider.notifier).updateProfile(name: name);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(s.profileUpdated,
+                style: const TextStyle(fontFamily: 'Poppins')),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
           ),
-          backgroundColor: AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-      context.go('/profile');
+        );
+        context.go('/profile');
+      }
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final user = FirebaseAuth.instance.currentUser;
+
+    final titles = [
+      s.titleBeginner,
+      s.titleCitizen,
+      s.titleWarrior,
+      s.titleGuardian,
+      s.titleMaster,
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -68,13 +98,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onTap: () => context.go('/profile'),
           child: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
-        title: const Text('Modifier le profil'),
+        title: Text(s.editProfile),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Avatar picker
+            // Avatar
             Center(
               child: Stack(
                 children: [
@@ -125,37 +155,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             // Form fields
             _FormSection(
-              title: 'Informations personnelles',
+              title: s.personalInfoSection,
               isDark: isDark,
               children: [
                 _Field(
-                  label: 'Nom complet',
+                  label: s.fullName,
                   ctrl: _nameCtrl,
                   icon: Icons.person_outline_rounded,
                   delay: 100,
                   isDark: isDark,
                 ),
-                _Field(
+                // Email shown read-only — changes via change-email flow
+                _ReadOnlyField(
                   label: 'Email',
-                  ctrl: _emailCtrl,
+                  value: user?.email ?? '',
                   icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
                   delay: 180,
                   isDark: isDark,
+                  onTap: () => context.push('/change-email'),
                 ),
                 _Field(
-                  label: 'Ville',
-                  ctrl: _cityCtrl,
-                  icon: Icons.location_on_outlined,
-                  delay: 260,
-                  isDark: isDark,
-                ),
-                _Field(
-                  label: 'Bio',
+                  label: s.bio,
                   ctrl: _bioCtrl,
                   icon: Icons.info_outline_rounded,
                   maxLines: 3,
-                  delay: 340,
+                  delay: 260,
                   isDark: isDark,
                 ),
               ],
@@ -179,7 +203,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Titre affiché',
+                    s.displayedTitle,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 14,
@@ -191,37 +215,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _titles
-                        .map((t) => GestureDetector(
-                              onTap: () => setState(() => _title = t),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: t == _title
-                                      ? AppColors.primary
-                                      : (isDark
-                                          ? AppColors.darkInput
-                                          : AppColors.inputBg),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  t,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: t == _title
-                                        ? Colors.white
-                                        : (isDark
-                                            ? AppColors.darkText
-                                            : AppColors.textSecondary),
-                                  ),
-                                ),
-                              ),
-                            ))
-                        .toList(),
+                    children: List.generate(titles.length, (i) {
+                      final t = titles[i];
+                      final k = _titleKeys[i];
+                      final selected = k == _title;
+                      return GestureDetector(
+                        onTap: () => setState(() => _title = k),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppColors.primary
+                                : (isDark
+                                    ? AppColors.darkInput
+                                    : AppColors.inputBg),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            t,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: selected
+                                  ? Colors.white
+                                  : (isDark
+                                      ? AppColors.darkText
+                                      : AppColors.textSecondary),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -239,7 +266,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2.5),
                       )
-                    : const Text('Enregistrer les modifications'),
+                    : Text(s.saveChanges),
               ),
             ).animate().fadeIn(duration: 400.ms, delay: 500.ms).slideY(begin: 0.1),
             const SizedBox(height: 32),
@@ -295,7 +322,6 @@ class _Field extends StatelessWidget {
   final TextEditingController ctrl;
   final IconData icon;
   final int maxLines;
-  final TextInputType? keyboardType;
   final int delay;
   final bool isDark;
 
@@ -304,7 +330,6 @@ class _Field extends StatelessWidget {
     required this.ctrl,
     required this.icon,
     this.maxLines = 1,
-    this.keyboardType,
     required this.delay,
     required this.isDark,
   });
@@ -331,9 +356,83 @@ class _Field extends StatelessWidget {
           TextFormField(
             controller: ctrl,
             maxLines: maxLines,
-            keyboardType: keyboardType,
             decoration: InputDecoration(
               prefixIcon: Icon(icon),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms, delay: delay.ms).slideX(begin: -0.05);
+  }
+}
+
+class _ReadOnlyField extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final int delay;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _ReadOnlyField({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.delay,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkInput : AppColors.inputBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : Colors.black12,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 20, color: AppColors.textSecondary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      size: 13, color: AppColors.textLight),
+                ],
+              ),
             ),
           ),
         ],

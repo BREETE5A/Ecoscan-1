@@ -7,6 +7,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../theme/app_theme.dart';
 import '../../models/scan_entry.dart';
 import '../../providers/scan_history_provider.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_strings.dart';
 
 class ScanResultScreen extends ConsumerStatefulWidget {
   const ScanResultScreen({super.key});
@@ -47,6 +49,7 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final entry = ref.watch(currentScanProvider);
 
     // Fallback to a default entry if none
@@ -223,8 +226,8 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                                 icon: const Icon(
                                     Icons.qr_code_scanner_rounded,
                                     size: 18),
-                                label: const Text('Re-scanner',
-                                    style: TextStyle(fontFamily: 'Poppins')),
+                                label: Text(s.rescan,
+                                    style: const TextStyle(fontFamily: 'Poppins')),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(0, 50),
                                   shape: RoundedRectangleBorder(
@@ -237,8 +240,8 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                               child: ElevatedButton.icon(
                                 onPressed: () => context.go('/map'),
                                 icon: const Icon(Icons.map_rounded, size: 18),
-                                label: const Text('Voir carte',
-                                    style: TextStyle(fontFamily: 'Poppins')),
+                                label: Text(s.viewMap,
+                                    style: const TextStyle(fontFamily: 'Poppins')),
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size(0, 50),
                                   shape: RoundedRectangleBorder(
@@ -825,12 +828,13 @@ class _BinCard extends StatelessWidget {
   }
 }
 
-class _NearbyCard extends StatelessWidget {
+class _NearbyCard extends ConsumerWidget {
   final bool isDark;
   const _NearbyCard({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -850,7 +854,7 @@ class _NearbyCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Points de collecte proches',
+                s.nearbyPoints,
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,
@@ -860,9 +864,9 @@ class _NearbyCard extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () => context.go('/map'),
-                child: const Text(
-                  'Voir carte',
-                  style: TextStyle(
+                child: Text(
+                  s.viewMap,
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
                     color: AppColors.primary,

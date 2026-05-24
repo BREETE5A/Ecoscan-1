@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -25,12 +28,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     super.initState();
     _statCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1400));
-    _statAnim =
-        CurvedAnimation(parent: _statCtrl, curve: Curves.easeOut);
+    _statAnim = CurvedAnimation(parent: _statCtrl, curve: Curves.easeOut);
     _statCtrl.forward();
   }
 
-  Future<void> _pickPhoto() async {
+  Future<void> _pickPhoto(AppStrings s) async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -50,14 +52,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
-              title: const Text('Prendre une photo',
-                  style: TextStyle(fontFamily: 'Poppins')),
+              title: Text(s.takePhoto, style: const TextStyle(fontFamily: 'Poppins')),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
-              title: const Text('Choisir depuis la galerie',
-                  style: TextStyle(fontFamily: 'Poppins')),
+              title: Text(s.chooseGallery, style: const TextStyle(fontFamily: 'Poppins')),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             const SizedBox(height: 8),
@@ -81,19 +81,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     super.dispose();
   }
 
-  static const _menuItems = [
-    (Icons.bar_chart_rounded, 'Mes statistiques', '/stats', AppColors.teal),
-    (Icons.emoji_events_rounded, 'Mes badges', '/badges', Color(0xFFF39C12)),
-    (Icons.menu_book_rounded, 'Guide de tri', '/guide', Color(0xFF3498DB)),
-    (Icons.leaderboard_rounded, 'Classement', '/leaderboard', Color(0xFF9B59B6)),
-    (Icons.notifications_outlined, 'Notifications', '/notifications', AppColors.primary),
-    (Icons.settings_outlined, 'Paramètres', '/settings', AppColors.textSecondary),
+  List<(IconData, String, String, Color)> _buildMenuItems(AppStrings s) => [
+    (Icons.edit_rounded,              s.menuEditProfile,    '/profile/edit',  AppColors.primary),
+    (Icons.bar_chart_rounded,         s.menuStats,          '/stats',         AppColors.teal),
+    (Icons.emoji_events_rounded,      s.menuBadges,         '/badges',        const Color(0xFFF39C12)),
+    (Icons.menu_book_rounded,         s.menuGuide,          '/guide',         const Color(0xFF3498DB)),
+    (Icons.leaderboard_rounded,       s.menuLeaderboard,    '/leaderboard',   const Color(0xFF9B59B6)),
+    (Icons.notifications_outlined,    s.menuNotifications,  '/notifications', AppColors.primary),
+    (Icons.settings_outlined,         s.menuSettings,       '/settings',      AppColors.textSecondary),
   ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(userProvider);
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final menuItems = _buildMenuItems(s);
 
     return Scaffold(
       body: CustomScrollView(
@@ -114,7 +117,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      // Avatar
                       Stack(
                         children: [
                           Hero(
@@ -127,12 +129,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 gradient: _avatarPath == null
                                     ? AppColors.darkPrimaryGradient
                                     : null,
-                                border: Border.all(
-                                    color: Colors.white, width: 3),
+                                border: Border.all(color: Colors.white, width: 3),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black
-                                        .withValues(alpha: 0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 16,
                                   ),
                                 ],
@@ -156,7 +156,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             bottom: 2,
                             right: 2,
                             child: GestureDetector(
-                              onTap: _pickPhoto,
+                              onTap: () => _pickPhoto(s),
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
@@ -164,8 +164,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.15),
+                                        color: Colors.black.withValues(alpha: 0.15),
                                         blurRadius: 6),
                                   ],
                                 ),
@@ -187,7 +186,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ),
                       ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
                       Text(
-                        'Niveau ${user.level} • ${user.city}',
+                        s.levelCity(user.level, user.city),
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 13,
@@ -195,26 +194,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ),
                       ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
                       const SizedBox(height: 20),
-                      // Stats row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _StatItem(label: 'Points', value: user.points, anim: _statAnim),
-                          Container(
-                              height: 30,
-                              width: 1,
-                              color: Colors.white.withValues(alpha: 0.3)),
-                          _StatItem(label: 'Scans', value: user.scans, anim: _statAnim),
-                          Container(
-                              height: 30,
-                              width: 1,
-                              color: Colors.white.withValues(alpha: 0.3)),
-                          _StatItem(label: 'Badges', value: user.badges, anim: _statAnim),
-                          Container(
-                              height: 30,
-                              width: 1,
-                              color: Colors.white.withValues(alpha: 0.3)),
-                          _StatItem(label: 'Rang', value: user.rank == 0 ? 1 : user.rank, anim: _statAnim),
+                          _StatItem(label: s.points, value: user.points, anim: _statAnim),
+                          Container(height: 30, width: 1, color: Colors.white.withValues(alpha: 0.3)),
+                          _StatItem(label: s.scans, value: user.scans, anim: _statAnim),
+                          Container(height: 30, width: 1, color: Colors.white.withValues(alpha: 0.3)),
+                          _StatItem(label: s.qaBadges, value: user.badges, anim: _statAnim),
+                          Container(height: 30, width: 1, color: Colors.white.withValues(alpha: 0.3)),
+                          _StatItem(label: s.rank, value: user.rank == 0 ? 1 : user.rank, anim: _statAnim),
                         ],
                       ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
                     ],
@@ -227,20 +216,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             padding: const EdgeInsets.all(20),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Level progress
-                _LevelCard(isDark: isDark, user: user)
+                _LevelCard(isDark: isDark, user: user, s: s)
                     .animate()
                     .fadeIn(duration: 400.ms, delay: 200.ms)
                     .slideY(begin: 0.1),
                 const SizedBox(height: 20),
-                // Recent badges
-                _BadgeRow(isDark: isDark, unlockedCount: user.badges)
+                _BadgeRow(isDark: isDark, unlockedCount: user.badges, s: s)
                     .animate()
                     .fadeIn(duration: 400.ms, delay: 300.ms),
                 const SizedBox(height: 20),
-                // Menu items
                 Text(
-                  'Menu',
+                  s.menu,
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 16,
@@ -250,14 +236,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
                 const SizedBox(height: 12),
                 ...List.generate(
-                  _menuItems.length,
+                  menuItems.length,
                   (i) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _MenuItem(
-                      icon: _menuItems[i].$1,
-                      label: _menuItems[i].$2,
-                      route: _menuItems[i].$3,
-                      color: _menuItems[i].$4,
+                      icon: menuItems[i].$1,
+                      label: menuItems[i].$2,
+                      route: menuItems[i].$3,
+                      color: menuItems[i].$4,
                       isDark: isDark,
                     )
                         .animate(delay: (400 + i * 60).ms)
@@ -267,12 +253,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  onPressed: () => context.go('/login'),
+                  onPressed: () async {
+                    await signOutUser(ref);
+                    if (context.mounted) context.go('/login');
+                  },
                   icon: const Icon(Icons.logout_rounded,
                       color: AppColors.danger, size: 18),
-                  label: const Text(
-                    'Se déconnecter',
-                    style: TextStyle(
+                  label: Text(
+                    s.disconnect,
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       color: AppColors.danger,
                       fontWeight: FontWeight.w600,
@@ -300,8 +289,7 @@ class _StatItem extends StatelessWidget {
   final String label;
   final int value;
   final Animation<double> anim;
-  const _StatItem(
-      {required this.label, required this.value, required this.anim});
+  const _StatItem({required this.label, required this.value, required this.anim});
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +323,8 @@ class _StatItem extends StatelessWidget {
 class _LevelCard extends StatelessWidget {
   final bool isDark;
   final dynamic user;
-  const _LevelCard({required this.isDark, required this.user});
+  final AppStrings s;
+  const _LevelCard({required this.isDark, required this.user, required this.s});
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +346,7 @@ class _LevelCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Niveau ${user.level}',
+                '${s.level} ${user.level}',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,
@@ -371,9 +360,9 @@ class _LevelCard extends StatelessWidget {
                   gradient: AppColors.goldGradient,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Niveau 8 →',
-                  style: TextStyle(
+                child: Text(
+                  s.nextLevelLabel(user.level + 1),
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,
                     color: Colors.white,
@@ -392,8 +381,7 @@ class _LevelCard extends StatelessWidget {
               curve: Curves.easeOut,
               builder: (_, v, _) => LinearProgressIndicator(
                 value: v,
-                backgroundColor:
-                    isDark ? AppColors.darkInput : AppColors.inputBg,
+                backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
                 valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                 minHeight: 10,
               ),
@@ -401,13 +389,11 @@ class _LevelCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${user.xp} / ${user.xpMax} XP pour le prochain niveau',
+            s.xpProgressText(user.xp, user.xpMax),
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 12,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             ),
           ),
         ],
@@ -419,17 +405,18 @@ class _LevelCard extends StatelessWidget {
 class _BadgeRow extends StatelessWidget {
   final bool isDark;
   final int unlockedCount;
-  const _BadgeRow({required this.isDark, required this.unlockedCount});
-
-  static const _badges = [
-    (Icons.recycling_rounded, AppColors.primary, 'Recycleur'),
-    (Icons.water_drop_rounded, AppColors.info, 'Eau pure'),
-    (Icons.forest_rounded, Color(0xFF388E3C), 'Arbre'),
-    (Icons.emoji_events_rounded, Color(0xFFF39C12), 'Champion'),
-  ];
+  final AppStrings s;
+  const _BadgeRow({required this.isDark, required this.unlockedCount, required this.s});
 
   @override
   Widget build(BuildContext context) {
+    final badges = [
+      (Icons.recycling_rounded,   AppColors.primary,           s.badgeRecycleur),
+      (Icons.water_drop_rounded,  AppColors.info,              s.badgeEau),
+      (Icons.forest_rounded,      const Color(0xFF388E3C),     s.badgeArbre),
+      (Icons.emoji_events_rounded, const Color(0xFFF39C12),   s.badgeChampion),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,7 +424,7 @@ class _BadgeRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Badges récents',
+              s.recentBadges,
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 16,
@@ -447,12 +434,10 @@ class _BadgeRow extends StatelessWidget {
             ),
             TextButton(
               onPressed: () => context.go('/badges'),
-              child: const Text(
-                'Voir tout',
-                style: TextStyle(
-                    fontFamily: 'Poppins',
-                    color: AppColors.primary,
-                    fontSize: 13),
+              child: Text(
+                s.seeAll,
+                style: const TextStyle(
+                    fontFamily: 'Poppins', color: AppColors.primary, fontSize: 13),
               ),
             ),
           ],
@@ -460,56 +445,51 @@ class _BadgeRow extends StatelessWidget {
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(
-            _badges.length,
-            (i) {
-              final unlocked = i < unlockedCount;
-              return Column(
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: unlocked
-                          ? _badges[i].$2.withValues(alpha: 0.15)
-                          : Colors.grey.withValues(alpha: 0.1),
-                      border: Border.all(
-                          color: unlocked
-                              ? _badges[i].$2.withValues(alpha: 0.4)
-                              : Colors.grey.withValues(alpha: 0.3),
-                          width: 2),
-                    ),
-                    child: Icon(
-                      unlocked ? _badges[i].$1 : Icons.lock_outline_rounded,
-                      color: unlocked
-                          ? _badges[i].$2
-                          : Colors.grey.withValues(alpha: 0.4),
-                      size: 26,
-                    ),
-                  )
-                      .animate(delay: (i * 80).ms)
-                      .scale(
-                          begin: const Offset(0, 0),
-                          duration: 500.ms,
-                          curve: Curves.elasticOut)
-                      .fadeIn(duration: 300.ms),
-                  const SizedBox(height: 6),
-                  Text(
-                    _badges[i].$3,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: unlocked
-                          ? (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)
-                          : Colors.grey.withValues(alpha: 0.5),
-                    ),
+          children: List.generate(badges.length, (i) {
+            final unlocked = i < unlockedCount;
+            return Column(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: unlocked
+                        ? badges[i].$2.withValues(alpha: 0.15)
+                        : Colors.grey.withValues(alpha: 0.1),
+                    border: Border.all(
+                        color: unlocked
+                            ? badges[i].$2.withValues(alpha: 0.4)
+                            : Colors.grey.withValues(alpha: 0.3),
+                        width: 2),
                   ),
-                ],
-              );
-            },
-          ),
+                  child: Icon(
+                    unlocked ? badges[i].$1 : Icons.lock_outline_rounded,
+                    color: unlocked ? badges[i].$2 : Colors.grey.withValues(alpha: 0.4),
+                    size: 26,
+                  ),
+                )
+                    .animate(delay: (i * 80).ms)
+                    .scale(
+                        begin: const Offset(0, 0),
+                        duration: 500.ms,
+                        curve: Curves.elasticOut)
+                    .fadeIn(duration: 300.ms),
+                const SizedBox(height: 6),
+                Text(
+                  badges[i].$3,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: unlocked
+                        ? (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)
+                        : Colors.grey.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            );
+          }),
         ),
       ],
     );
@@ -595,17 +575,11 @@ class _MenuItemState extends State<_MenuItem>
                     fontFamily: 'Poppins',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: widget.isDark
-                        ? AppColors.darkText
-                        : AppColors.textPrimary,
+                    color: widget.isDark ? AppColors.darkText : AppColors.textPrimary,
                   ),
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: AppColors.textLight,
-              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textLight),
             ],
           ),
         ),

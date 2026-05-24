@@ -2,19 +2,22 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen>
+class _MapScreenState extends ConsumerState<MapScreen>
     with TickerProviderStateMixin {
   late AnimationController _markerCtrl;
   late AnimationController _pulseCtrl;
@@ -382,9 +385,24 @@ class _MapScreenState extends State<MapScreen>
     return '${(meters / 1000).toStringAsFixed(1)} km';
   }
 
+  String _filterLabel(String key, AppStrings s) {
+    switch (key) {
+      case 'Tous':        return s.catAll;
+      case 'Plastique':   return s.catPlastic;
+      case 'Verre':       return s.catGlass;
+      case 'Papier':      return s.catPaper;
+      case 'Compost':     return s.catCompost;
+      case 'Piles':       return s.catBatteries;
+      case 'Électronique': return s.catElectronic;
+      case 'Textile':     return s.catTextile;
+      default:            return key;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final visible = _visiblePoints;
     final all = _allPoints;
 
@@ -521,7 +539,7 @@ class _MapScreenState extends State<MapScreen>
                           controller: _search,
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
-                            hintText: 'Rechercher un point de collecte...',
+                            hintText: s.searchCollection,
                             prefixIcon: const Icon(Icons.search_rounded,
                                 color: AppColors.textSecondary),
                             suffixIcon: Row(
@@ -600,7 +618,7 @@ class _MapScreenState extends State<MapScreen>
                                   ],
                                 ),
                                 child: Text(
-                                  f,
+                                  _filterLabel(f, s),
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 12,

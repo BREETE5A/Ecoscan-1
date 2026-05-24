@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/splash/splash_screen.dart';
@@ -49,8 +50,16 @@ CustomTransitionPage<void> _fadeSlide(BuildContext context, GoRouterState state,
   );
 }
 
+const _publicRoutes = {'/splash', '/login', '/register', '/onboarding', '/welcome', '/privacy-policy', '/terms'};
+
 final appRouter = GoRouter(
   initialLocation: '/splash',
+  redirect: (context, state) {
+    final isPublic = _publicRoutes.contains(state.matchedLocation);
+    final isAuthed = FirebaseAuth.instance.currentUser != null;
+    if (!isPublic && !isAuthed) return '/login';
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/splash',

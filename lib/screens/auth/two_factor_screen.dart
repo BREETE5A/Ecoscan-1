@@ -2,20 +2,31 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 
+class _CountryEntry {
+  final String flag;
+  final String name;
+  final String code;
+  const _CountryEntry(this.flag, this.name, this.code);
+  String get display => '$flag $code';
+}
+
 enum _Step { phone, otp, done }
 
-class TwoFactorScreen extends StatefulWidget {
+class TwoFactorScreen extends ConsumerStatefulWidget {
   const TwoFactorScreen({super.key});
 
   @override
-  State<TwoFactorScreen> createState() => _TwoFactorScreenState();
+  ConsumerState<TwoFactorScreen> createState() => _TwoFactorScreenState();
 }
 
-class _TwoFactorScreenState extends State<TwoFactorScreen> {
+class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
   final _phoneCtrl = TextEditingController();
   final _otpCtrl   = TextEditingController();
   final _formKey   = GlobalKey<FormState>();
@@ -23,6 +34,51 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
   _Step _step     = _Step.phone;
   bool  _loading  = false;
   String _verificationId = '';
+  int _countryIndex = 0;
+
+  static const _countries = [
+    _CountryEntry('🇲🇦', 'Maroc',            '+212'),
+    _CountryEntry('🇫🇷', 'France',           '+33'),
+    _CountryEntry('🇩🇿', 'Algérie',          '+213'),
+    _CountryEntry('🇹🇳', 'Tunisie',          '+216'),
+    _CountryEntry('🇸🇦', 'Arabie Saoudite',  '+966'),
+    _CountryEntry('🇦🇪', 'Émirats',          '+971'),
+    _CountryEntry('🇬🇧', 'Royaume-Uni',      '+44'),
+    _CountryEntry('🇺🇸', 'États-Unis',       '+1'),
+    _CountryEntry('🇪🇸', 'Espagne',          '+34'),
+    _CountryEntry('🇧🇪', 'Belgique',         '+32'),
+    _CountryEntry('🇨🇦', 'Canada',           '+1'),
+    _CountryEntry('🇸🇳', 'Sénégal',          '+221'),
+  ];
+
+  String get _prefix => _countries[_countryIndex].code;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPhone();
+  }
+
+  Future<void> _loadSavedPhone() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final saved = (doc.data()?['phoneNumber'] as String?)?.trim() ?? '';
+      if (saved.isNotEmpty && mounted) {
+        // Trouver le bon indicatif et pré-remplir le numéro
+        for (int i = 0; i < _countries.length; i++) {
+          if (saved.startsWith(_countries[i].code)) {
+            setState(() {
+              _countryIndex = i;
+              _phoneCtrl.text = saved.substring(_countries[i].code.length);
+            });
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -31,24 +87,43 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
     super.dispose();
   }
 
+  String _formatPhone(String prefix, String number) {
+    number = number.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (number.startsWith('0')) number = number.substring(1);
+    return '$prefix$number';
+  }
+
+  Future<void> _handleDone() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .update({'phoneVerified': true, 'twoFactorEnabled': true});
+    } catch (_) {}
+    if (mounted) context.pop();
+  }
+
   Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
+    final formatted = _formatPhone(_prefix, _phoneCtrl.text.trim());
+    debugPrint('Sending SMS to: $formatted');
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: _phoneCtrl.text.trim(),
+        phoneNumber: formatted,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential cred) async {
           await _linkPhoneCredential(cred);
         },
         verificationFailed: (FirebaseAuthException e) {
           if (!mounted) return;
+          final s = AppStrings.of(ref.read(localeProvider).languageCode);
           setState(() => _loading = false);
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
               e.code == 'invalid-phone-number'
-                  ? 'Numéro de téléphone invalide.'
-                  : 'Erreur : ${e.message}',
+                  ? s.invalidPhone
+                  : s.errorMsg(e.message ?? ''),
               style: const TextStyle(fontFamily: 'Poppins'),
             ),
             backgroundColor: AppColors.danger,
@@ -65,15 +140,24 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
         codeAutoRetrievalTimeout: (_) {},
       );
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      final s = AppStrings.of(ref.read(localeProvider).languageCode);
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s.errorMsg(e.toString())),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _verifyOtp() async {
     if (_otpCtrl.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Entrez le code à 6 chiffres.',
-            style: TextStyle(fontFamily: 'Poppins')),
+      final s = AppStrings.of(ref.read(localeProvider).languageCode);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(s.enterSixDigits,
+            style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: AppColors.danger,
       ));
       return;
@@ -87,12 +171,13 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
       await _linkPhoneCredential(cred);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
+      final s = AppStrings.of(ref.read(localeProvider).languageCode);
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
           e.code == 'invalid-verification-code'
-              ? 'Code incorrect. Réessayez.'
-              : 'Erreur : ${e.message}',
+              ? s.wrongOtp
+              : s.errorMsg(e.message ?? ''),
           style: const TextStyle(fontFamily: 'Poppins'),
         ),
         backgroundColor: AppColors.danger,
@@ -115,12 +200,13 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
       });
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
+      final s = AppStrings.of(ref.read(localeProvider).languageCode);
       setState(() => _loading = false);
       final msg = e.code == 'credential-already-in-use'
-          ? 'Ce numéro est lié à un autre compte.'
+          ? s.phoneLinkedOther
           : e.code == 'provider-already-linked'
-              ? 'Un numéro est déjà lié à ce compte.'
-              : 'Erreur : ${e.message}';
+              ? s.phoneAlreadyLinked
+              : s.errorMsg(e.message ?? '');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: AppColors.danger,
@@ -131,6 +217,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
 
     return Scaffold(
       backgroundColor:
@@ -146,7 +233,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
               : () => context.pop(),
         ),
         title: Text(
-          'Double authentification',
+          s.twoFactorTitle,
           style: TextStyle(
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,
@@ -165,6 +252,10 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                 isDark: isDark,
                 loading: _loading,
                 onSend: _sendOtp,
+                countryIndex: _countryIndex,
+                countries: _countries,
+                onCountryChanged: (i) => setState(() => _countryIndex = i),
+                s: s,
               ),
             _Step.otp => _OtpStep(
                 ctrl: _otpCtrl,
@@ -176,8 +267,9 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                   setState(() => _step = _Step.phone);
                   _sendOtp();
                 },
+                s: s,
               ),
-            _Step.done => _DoneStep(onBack: () => context.pop()),
+            _Step.done => _DoneStep(onBack: () { _handleDone(); }, s: s),
           },
         ),
       ),
@@ -191,6 +283,10 @@ class _PhoneStep extends StatelessWidget {
   final bool isDark;
   final bool loading;
   final VoidCallback onSend;
+  final int countryIndex;
+  final List<_CountryEntry> countries;
+  final ValueChanged<int> onCountryChanged;
+  final AppStrings s;
 
   const _PhoneStep({
     required this.formKey,
@@ -198,6 +294,10 @@ class _PhoneStep extends StatelessWidget {
     required this.isDark,
     required this.loading,
     required this.onSend,
+    required this.countryIndex,
+    required this.countries,
+    required this.onCountryChanged,
+    required this.s,
   });
 
   @override
@@ -218,9 +318,9 @@ class _PhoneStep extends StatelessWidget {
                 color: AppColors.teal, size: 38),
           ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
           const SizedBox(height: 24),
-          const Text(
-            'Liez votre numéro de téléphone',
-            style: TextStyle(
+          Text(
+            s.twoFactorSub,
+            style: const TextStyle(
               fontFamily: 'Poppins',
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -228,8 +328,8 @@ class _PhoneStep extends StatelessWidget {
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 150.ms),
           const SizedBox(height: 8),
-          const Text(
-            'Un SMS de vérification sera envoyé à ce numéro.',
+          Text(
+            s.twoFactorDesc,
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 13,
@@ -238,18 +338,115 @@ class _PhoneStep extends StatelessWidget {
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 200.ms),
           const SizedBox(height: 32),
-          CustomTextField(
-            controller: ctrl,
-            label: 'Numéro de téléphone',
-            hint: '+212 6XX XXX XXX',
-            prefixIcon: Icons.phone_rounded,
-            isDark: isDark,
-            keyboardType: TextInputType.phone,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Requis';
-              if (!v.trim().startsWith('+')) return 'Inclure l\'indicatif (+212...)';
-              return null;
-            },
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark ? Colors.white12 : Colors.black12,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    DropdownButton<int>(
+                      value: countryIndex,
+                      items: List.generate(
+                        countries.length,
+                        (i) => DropdownMenuItem(
+                          value: i,
+                          child: Text(
+                            countries[i].display,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      onChanged: (v) =>
+                          v != null ? onCountryChanged(v) : null,
+                      underline: const SizedBox.shrink(),
+                      icon: Icon(
+                        Icons.expand_more_rounded,
+                        size: 16,
+                        color: isDark
+                            ? Colors.white54
+                            : AppColors.textSecondary,
+                      ),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 12),
+                      dropdownColor: isDark
+                          ? const Color(0xFF2C2C2C)
+                          : Colors.white,
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: isDark ? Colors.white12 : Colors.black12,
+                    ),
+                    Expanded(
+                      child: TextFormField(
+                        controller: ctrl,
+                        keyboardType: TextInputType.phone,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          color: isDark
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '6XX XXX XXX',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: isDark
+                                ? Colors.white38
+                                : AppColors.textSecondary,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 14),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return s.fieldRequired;
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: ctrl,
+                builder: (_, value, _) {
+                  String n = value.text
+                      .replaceAll(RegExp(r'[\s\-\(\)]'), '');
+                  if (n.startsWith('0')) n = n.substring(1);
+                  if (n.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: Text(
+                      s.finalNumber('${countries[countryIndex].code}$n'),
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05),
           const SizedBox(height: 32),
           SizedBox(
@@ -268,9 +465,9 @@ class _PhoneStep extends StatelessWidget {
                       height: 22,
                       child: CircularProgressIndicator(
                           strokeWidth: 2.5, color: Colors.white))
-                  : const Text(
-                      'Envoyer le code SMS',
-                      style: TextStyle(
+                  : Text(
+                      s.sendSmsCode,
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -292,6 +489,7 @@ class _OtpStep extends StatelessWidget {
   final bool loading;
   final VoidCallback onVerify;
   final VoidCallback onResend;
+  final AppStrings s;
 
   const _OtpStep({
     required this.ctrl,
@@ -300,6 +498,7 @@ class _OtpStep extends StatelessWidget {
     required this.loading,
     required this.onVerify,
     required this.onResend,
+    required this.s,
   });
 
   @override
@@ -317,9 +516,9 @@ class _OtpStep extends StatelessWidget {
           child: const Icon(Icons.sms_rounded, color: AppColors.primary, size: 38),
         ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
         const SizedBox(height: 24),
-        const Text(
-          'Entrez le code SMS',
-          style: TextStyle(
+        Text(
+          s.enterSmsCode,
+          style: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -328,7 +527,7 @@ class _OtpStep extends StatelessWidget {
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 8),
         Text(
-          'Code envoyé au $phone',
+          s.codeSentTo(phone),
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
@@ -339,7 +538,7 @@ class _OtpStep extends StatelessWidget {
         const SizedBox(height: 32),
         CustomTextField(
           controller: ctrl,
-          label: 'Code de vérification',
+          label: s.verifyCodeTitle,
           hint: '123456',
           prefixIcon: Icons.pin_rounded,
           isDark: isDark,
@@ -362,9 +561,9 @@ class _OtpStep extends StatelessWidget {
                     height: 22,
                     child: CircularProgressIndicator(
                         strokeWidth: 2.5, color: Colors.white))
-                : const Text(
-                    'Vérifier',
-                    style: TextStyle(
+                : Text(
+                    s.verifyCode,
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -376,9 +575,9 @@ class _OtpStep extends StatelessWidget {
         const SizedBox(height: 16),
         TextButton(
           onPressed: loading ? null : onResend,
-          child: const Text(
-            'Renvoyer le code',
-            style: TextStyle(
+          child: Text(
+            s.resendCode,
+            style: const TextStyle(
               fontFamily: 'Poppins',
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -392,7 +591,8 @@ class _OtpStep extends StatelessWidget {
 
 class _DoneStep extends StatelessWidget {
   final VoidCallback onBack;
-  const _DoneStep({required this.onBack});
+  final AppStrings s;
+  const _DoneStep({required this.onBack, required this.s});
 
   @override
   Widget build(BuildContext context) {
@@ -410,9 +610,9 @@ class _DoneStep extends StatelessWidget {
               color: AppColors.primary, size: 44),
         ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
         const SizedBox(height: 24),
-        const Text(
-          'Double authentification activée !',
-          style: TextStyle(
+        Text(
+          s.twoFactorDone,
+          style: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -420,8 +620,8 @@ class _DoneStep extends StatelessWidget {
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 200.ms),
         const SizedBox(height: 12),
-        const Text(
-          'Votre compte est maintenant protégé par une vérification en deux étapes.',
+        Text(
+          s.twoFactorDoneDesc,
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 14,
@@ -440,9 +640,9 @@ class _DoneStep extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text(
-              'Retour aux paramètres',
-              style: TextStyle(
+            child: Text(
+              s.continueHome,
+              style: const TextStyle(
                 fontFamily: 'Poppins',
                 color: Colors.white,
                 fontWeight: FontWeight.w600,

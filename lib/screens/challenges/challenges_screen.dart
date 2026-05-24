@@ -26,9 +26,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Scanner 3 déchets',
       titleEn: 'Scan 3 items',
       titleAr: 'امسح 3 عناصر',
+      titleEs: 'Escanear 3 residuos',
       desc: 'Utilisez le scanner pour identifier 3 types de déchets différents',
       descEn: 'Use the scanner to identify 3 different waste types',
       descAr: 'استخدم الماسح الضوئي لتحديد 3 أنواع مختلفة من النفايات',
+      descEs: 'Usa el escáner para identificar 3 tipos diferentes de residuos',
       points: 50,
       progress: 0.67,
       current: 2,
@@ -41,9 +43,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Recycler du plastique',
       titleEn: 'Recycle plastic',
       titleAr: 'إعادة تدوير البلاستيك',
+      titleEs: 'Reciclar plástico',
       desc: "Recyclez au moins 500g de plastique aujourd'hui",
       descEn: 'Recycle at least 500g of plastic today',
       descAr: 'أعد تدوير ما لا يقل عن 500 جرام من البلاستيك اليوم',
+      descEs: 'Recicla al menos 500g de plástico hoy',
       points: 30,
       progress: 1.0,
       current: 1,
@@ -56,9 +60,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Partager un conseil',
       titleEn: 'Share a tip',
       titleAr: 'شارك نصيحة',
+      titleEs: 'Compartir un consejo',
       desc: 'Partagez un conseil écologique avec un ami',
       descEn: 'Share an eco tip with a friend',
       descAr: 'شارك نصيحة بيئية مع صديق',
+      descEs: 'Comparte un consejo ecológico con un amigo',
       points: 20,
       progress: 0.0,
       current: 0,
@@ -71,9 +77,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Consulter le guide',
       titleEn: 'Check the guide',
       titleAr: 'راجع الدليل',
+      titleEs: 'Consultar la guía',
       desc: 'Lisez 5 fiches du guide de tri des déchets',
       descEn: 'Read 5 items from the waste sorting guide',
       descAr: 'اقرأ 5 بطاقات من دليل فرز النفايات',
+      descEs: 'Lee 5 fichas de la guía de clasificación de residuos',
       points: 15,
       progress: 0.4,
       current: 2,
@@ -86,9 +94,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Scanner un déchet organique',
       titleEn: 'Scan organic waste',
       titleAr: 'امسح نفايات عضوية',
+      titleEs: 'Escanear residuo orgánico',
       desc: 'Identifiez et triez un déchet organique (restes alimentaires, épluchures)',
       descEn: 'Identify and sort one organic waste item (food scraps, peels)',
       descAr: 'حدد نفاية عضوية واحدة وافرزها (بقايا طعام، قشور)',
+      descEs: 'Identifica y clasifica un residuo orgánico (restos de comida, pieles)',
       points: 25,
       progress: 0.0,
       current: 0,
@@ -101,9 +111,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Trouver un centre de tri',
       titleEn: 'Find a recycling center',
       titleAr: 'ابحث عن مركز الفرز',
+      titleEs: 'Encontrar un centro de reciclaje',
       desc: 'Ouvrez la carte et repérez un centre de recyclage près de chez vous',
       descEn: 'Open the map and locate a recycling center near you',
       descAr: 'افتح الخريطة وحدد مركز إعادة التدوير بالقرب منك',
+      descEs: 'Abre el mapa y localiza un centro de reciclaje cerca de ti',
       points: 20,
       progress: 0.0,
       current: 0,
@@ -116,9 +128,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Utiliser EcoBot',
       titleEn: 'Use EcoBot',
       titleAr: 'استخدم EcoBot',
+      titleEs: 'Usar EcoBot',
       desc: "Posez une question à l'assistant EcoBot sur le recyclage",
       descEn: 'Ask the EcoBot assistant a recycling question',
       descAr: 'اطرح سؤالاً على مساعد EcoBot حول إعادة التدوير',
+      descEs: 'Haz una pregunta al asistente EcoBot sobre el reciclaje',
       points: 15,
       progress: 0.0,
       current: 0,
@@ -131,9 +145,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Scanner un DEEE',
       titleEn: 'Scan e-waste',
       titleAr: 'امسح نفايات إلكترونية',
+      titleEs: 'Escanear residuo electrónico',
       desc: "Identifiez un déchet électronique et trouvez le bon point de collecte",
       descEn: 'Identify an electronic waste item and find the right drop-off point',
       descAr: 'حدد جهازًا إلكترونيًا وابحث عن نقطة التجميع الصحيحة',
+      descEs: 'Identifica un residuo electrónico y encuentra el punto de recogida correcto',
       points: 40,
       progress: 0.0,
       current: 0,
@@ -146,9 +162,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Éviter le sac plastique',
       titleEn: 'Avoid plastic bag',
       titleAr: 'تجنب الكيس البلاستيكي',
+      titleEs: 'Evitar la bolsa de plástico',
       desc: 'Utilisez un sac réutilisable lors de vos achats aujourd\'hui',
       descEn: 'Use a reusable bag for your shopping today',
       descAr: 'استخدم حقيبة قابلة لإعادة الاستخدام لمشترياتك اليوم',
+      descEs: 'Usa una bolsa reutilizable en tus compras de hoy',
       points: 25,
       progress: 0.0,
       current: 0,
@@ -161,9 +179,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Lire 3 faits éco',
       titleEn: 'Read 3 eco facts',
       titleAr: 'اقرأ 3 حقائق بيئية',
+      titleEs: 'Leer 3 datos ecológicos',
       desc: 'Découvrez 3 faits "Le saviez-vous?" dans l\'application',
       descEn: 'Discover 3 "Did you know?" facts in the app',
       descAr: 'اكتشف 3 حقائق "هل تعلم؟" في التطبيق',
+      descEs: 'Descubre 3 datos "¿Sabías que?" en la aplicación',
       points: 10,
       progress: 0.33,
       current: 1,
@@ -176,9 +196,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Trier 5 types différents',
       titleEn: 'Sort 5 different types',
       titleAr: 'افرز 5 أنواع مختلفة',
+      titleEs: 'Clasificar 5 tipos distintos',
       desc: 'Identifiez 5 types de déchets distincts dans votre journée',
       descEn: 'Identify 5 distinct waste types throughout your day',
       descAr: 'حدد 5 أنواع مختلفة من النفايات خلال يومك',
+      descEs: 'Identifica 5 tipos distintos de residuos durante tu día',
       points: 60,
       progress: 0.0,
       current: 0,
@@ -191,9 +213,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Geste zéro déchet',
       titleEn: 'Zero-waste action',
       titleAr: 'فعل صفر نفايات',
+      titleEs: 'Acción cero residuos',
       desc: 'Effectuez un geste zéro déchet : compostage, vrac, contenant réutilisable',
       descEn: 'Do one zero-waste action: composting, bulk shopping, or reusable container',
       descAr: 'قم بفعل صفر نفايات: تسميد، شراء بالجملة، أو حاوية قابلة للتدوير',
+      descEs: 'Haz una acción cero residuos: compostaje, compra a granel o envase reutilizable',
       points: 35,
       progress: 0.0,
       current: 0,
@@ -209,9 +233,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Streak 7 jours',
       titleEn: '7-day streak',
       titleAr: '7 أيام متتالية',
+      titleEs: 'Racha de 7 días',
       desc: 'Scannez au moins un déchet chaque jour pendant 7 jours',
       descEn: 'Scan at least one item every day for 7 days',
       descAr: 'امسح عنصرًا واحدًا على الأقل كل يوم لمدة 7 أيام',
+      descEs: 'Escanea al menos un residuo cada día durante 7 días',
       points: 200,
       progress: 0.71,
       current: 5,
@@ -224,9 +250,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Zéro déchet électronique',
       titleEn: 'Zero e-waste',
       titleAr: 'صفر نفايات إلكترونية',
+      titleEs: 'Cero residuos electrónicos',
       desc: 'Déposez 3 appareils électroniques dans les bons bacs',
       descEn: 'Drop off 3 electronic devices at the right bins',
       descAr: 'ضع 3 أجهزة إلكترونية في الحاويات الصحيحة',
+      descEs: 'Deposita 3 dispositivos electrónicos en los contenedores correctos',
       points: 150,
       progress: 0.33,
       current: 1,
@@ -239,9 +267,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Éco-ambassadeur',
       titleEn: 'Eco-ambassador',
       titleAr: 'سفير بيئي',
+      titleEs: 'Eco-embajador',
       desc: 'Invitez 2 amis à rejoindre EcoScan',
       descEn: 'Invite 2 friends to join EcoScan',
       descAr: 'ادعُ 2 من الأصدقاء للانضمام إلى EcoScan',
+      descEs: 'Invita a 2 amigos a unirse a EcoScan',
       points: 100,
       progress: 0.5,
       current: 1,
@@ -254,9 +284,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Scanner 20 déchets',
       titleEn: 'Scan 20 waste items',
       titleAr: 'امسح 20 نفاية',
+      titleEs: 'Escanear 20 residuos',
       desc: 'Atteignez 20 scans cette semaine pour booster votre impact',
       descEn: 'Reach 20 scans this week to boost your impact',
       descAr: 'حقق 20 مسحًا هذا الأسبوع لتعزيز تأثيرك',
+      descEs: 'Alcanza 20 escaneos esta semana para potenciar tu impacto',
       points: 250,
       progress: 0.4,
       current: 8,
@@ -269,9 +301,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Visiter 2 centres de tri',
       titleEn: 'Visit 2 recycling centers',
       titleAr: 'زُر مركزَي فرز',
+      titleEs: 'Visitar 2 centros de reciclaje',
       desc: 'Rendez-vous dans 2 centres de recyclage différents cette semaine',
       descEn: 'Visit 2 different recycling centers this week',
       descAr: 'توجه إلى مركزَي إعادة تدوير مختلفَين هذا الأسبوع',
+      descEs: 'Ve a 2 centros de reciclaje diferentes esta semana',
       points: 180,
       progress: 0.5,
       current: 1,
@@ -284,9 +318,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Économiser 2 kg plastique',
       titleEn: 'Save 2 kg of plastic',
       titleAr: 'وفر 2 كغ من البلاستيك',
+      titleEs: 'Ahorrar 2 kg de plástico',
       desc: 'Recyclez ou évitez 2 kg de plastique cette semaine',
       descEn: 'Recycle or avoid 2 kg of plastic this week',
       descAr: 'أعد تدوير أو تجنب 2 كيلوغرام من البلاستيك هذا الأسبوع',
+      descEs: 'Recicla o evita 2 kg de plástico esta semana',
       points: 300,
       progress: 0.0,
       current: 0,
@@ -299,9 +335,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Partager 5 conseils éco',
       titleEn: 'Share 5 eco tips',
       titleAr: 'شارك 5 نصائح بيئية',
+      titleEs: 'Compartir 5 consejos eco',
       desc: 'Diffusez 5 conseils de tri à vos amis ou sur les réseaux sociaux',
       descEn: 'Share 5 sorting tips with friends or on social media',
       descAr: 'شارك 5 نصائح الفرز مع أصدقائك أو على وسائل التواصل الاجتماعي',
+      descEs: 'Comparte 5 consejos de clasificación con amigos o en redes sociales',
       points: 120,
       progress: 0.4,
       current: 2,
@@ -314,9 +352,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Composter 3 fois',
       titleEn: 'Compost 3 times',
       titleAr: 'قم بالتسميد 3 مرات',
+      titleEs: 'Compostar 3 veces',
       desc: 'Déposez vos déchets organiques en composteur 3 fois cette semaine',
       descEn: 'Add to compost 3 times this week',
       descAr: 'أضف نفاياتك العضوية إلى السماد 3 مرات هذا الأسبوع',
+      descEs: 'Añade residuos orgánicos al compostador 3 veces esta semana',
       points: 150,
       progress: 0.0,
       current: 0,
@@ -329,9 +369,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Terminer le guide complet',
       titleEn: 'Complete the full guide',
       titleAr: 'أكمل الدليل الكامل',
+      titleEs: 'Completar la guía completa',
       desc: 'Lisez toutes les catégories du guide de tri des déchets',
       descEn: 'Read all categories of the waste sorting guide',
       descAr: 'اقرأ جميع فئات دليل فرز النفايات',
+      descEs: 'Lee todas las categorías de la guía de clasificación de residuos',
       points: 200,
       progress: 0.22,
       current: 2,
@@ -344,9 +386,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       title: 'Inviter 3 amis',
       titleEn: 'Invite 3 friends',
       titleAr: 'ادعُ 3 أصدقاء',
+      titleEs: 'Invitar a 3 amigos',
       desc: 'Partagez EcoScan avec 3 amis et aidez-les à commencer à trier',
       descEn: 'Share EcoScan with 3 friends and help them start sorting',
       descAr: 'شارك EcoScan مع 3 أصدقاء وساعدهم على البدء في الفرز',
+      descEs: 'Comparte EcoScan con 3 amigos y ayúdalos a empezar a clasificar',
       points: 200,
       progress: 0.33,
       current: 1,
@@ -411,9 +455,9 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(s, isDark),
-            _buildStreakBanner(isDark),
+            _buildStreakBanner(isDark, s),
             const SizedBox(height: 12),
-            _buildTabBar(isDark),
+            _buildTabBar(isDark, s),
             const SizedBox(height: 4),
             Expanded(
               child: TabBarView(
@@ -487,7 +531,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     );
   }
 
-  Widget _buildStreakBanner(bool isDark) {
+  Widget _buildStreakBanner(bool isDark, AppStrings s) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Container(
@@ -515,9 +559,9 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Série de 5 jours !',
-                    style: TextStyle(
+                  Text(
+                    s.streakDays(5),
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -525,7 +569,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
                     ),
                   ),
                   Text(
-                    'Continuez pour débloquer un badge spécial',
+                    s.streakBadge,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
@@ -541,9 +585,9 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
                 color: Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
-                '2 de plus',
-                style: TextStyle(
+              child: Text(
+                s.streakMore(2),
+                style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -557,7 +601,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     ).animate(delay: 150.ms).fadeIn(duration: 500.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildTabBar(bool isDark) {
+  Widget _buildTabBar(bool isDark, AppStrings s) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -568,9 +612,9 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
         ),
         child: TabBar(
           controller: _tab,
-          tabs: const [
-            Tab(text: 'Quotidiens'),
-            Tab(text: 'Hebdomadaires'),
+          tabs: [
+            Tab(text: s.challengeTabDaily),
+            Tab(text: s.challengeTabWeekly),
           ],
           indicator: BoxDecoration(
             gradient: AppColors.primaryGradient,
@@ -632,17 +676,23 @@ class _ChallengeCard extends StatelessWidget {
     required this.delay,
   });
 
-  String get _title => lang == 'en'
-      ? data.titleEn
-      : lang == 'ar'
-          ? data.titleAr
-          : data.title;
+  String get _title {
+    switch (lang) {
+      case 'en': return data.titleEn;
+      case 'ar': return data.titleAr;
+      case 'es': return data.titleEs.isEmpty ? data.title : data.titleEs;
+      default:   return data.title;
+    }
+  }
 
-  String get _desc => lang == 'en'
-      ? data.descEn
-      : lang == 'ar'
-          ? data.descAr
-          : data.desc;
+  String get _desc {
+    switch (lang) {
+      case 'en': return data.descEn;
+      case 'ar': return data.descAr;
+      case 'es': return data.descEs.isEmpty ? data.desc : data.descEs;
+      default:   return data.desc;
+    }
+  }
 
   bool get _completed => data.progress >= 1.0;
 
@@ -783,11 +833,10 @@ class _ChallengeCard extends StatelessWidget {
                       color: data.color, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    lang == 'en'
-                        ? 'Completed!'
-                        : lang == 'ar'
-                            ? 'مكتمل!'
-                            : 'Complété !',
+                    lang == 'en' ? 'Completed!'
+                        : lang == 'ar' ? 'مكتمل!'
+                        : lang == 'es' ? '¡Completado!'
+                        : 'Complété !',
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
@@ -814,9 +863,11 @@ class _ChallengeData {
   final String title;
   final String titleEn;
   final String titleAr;
+  final String titleEs;
   final String desc;
   final String descEn;
   final String descAr;
+  final String descEs;
   final int points;
   final double progress;
   final int current;
@@ -829,9 +880,11 @@ class _ChallengeData {
     required this.title,
     required this.titleEn,
     required this.titleAr,
+    this.titleEs = '',
     required this.desc,
     required this.descEn,
     required this.descAr,
+    this.descEs = '',
     required this.points,
     required this.progress,
     required this.current,

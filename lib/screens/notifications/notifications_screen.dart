@@ -1,35 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/notification_service.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final List<_Notif> _notifs = [
-    _Notif(Icons.emoji_events_rounded, 'Badge débloqué !',
-        'Vous avez obtenu le badge "Champion" 🏆', '2 min', NotifType.achievement),
-    _Notif(Icons.recycling_rounded, 'Objectif hebdo atteint',
-        'Bravo ! Vous avez recyclé 15 kg cette semaine.', '1h', NotifType.success),
-    _Notif(Icons.map_rounded, 'Nouveau point de collecte',
-        'Un centre de tri a ouvert près de chez vous.', '3h', NotifType.info),
-    _Notif(Icons.star_rounded, '+50 points gagnés',
-        'Dépôt compost validé — 50 points ajoutés.', '5h', NotifType.points),
-    _Notif(Icons.warning_amber_rounded, 'Rappel de tri',
-        'Jeudi c\'est la collecte ! Préparez vos bacs.', 'Hier', NotifType.warning),
-    _Notif(Icons.leaderboard_rounded, 'Nouveau rang',
-        'Vous êtes passé au rang 4 dans votre ville !', 'Hier', NotifType.success),
-    _Notif(Icons.smart_toy_rounded, 'Conseil EcoBot',
-        'Pensez à rincer vos bouteilles avant de les recycler.', '2j', NotifType.info),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
 
     return Scaffold(
       body: SafeArea(
@@ -38,50 +21,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Notifications',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? AppColors.darkText
-                              : AppColors.textPrimary,
-                        ),
-                      ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
-                      Text(
-                        '${_notifs.length} nouvelles',
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() => _notifs.clear()),
-                    child: const Text(
-                      'Tout effacer',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        color: AppColors.danger,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-                ],
-              ),
+              child: Text(
+                s.notifications,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                ),
+              ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
             ),
             Expanded(
-              child: _notifs.isEmpty
-                  ? Center(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: NotificationService.getNotifications(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final notifs = snapshot.data ?? [];
+                  if (notifs.isEmpty) {
+                    return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -91,9 +50,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             color: AppColors.textLight.withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'Aucune notification',
-                            style: TextStyle(
+                          Text(
+                            s.noNotifications,
+                            style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 16,
                               color: AppColors.textSecondary,
@@ -101,142 +60,83 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           ),
                         ],
                       ).animate().fadeIn(duration: 400.ms),
-                    )
-                  : ListView.separated(
-                      padding:
-                          const EdgeInsets.fromLTRB(20, 0, 20, 90),
-                      itemCount: _notifs.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) => Dismissible(
-                        key: ValueKey(_notifs[i].title + i.toString()),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (_) =>
-                            setState(() => _notifs.removeAt(i)),
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 90),
+                    itemCount: notifs.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      final n = notifs[i];
+                      final isRead = n['read'] == true;
+                      return GestureDetector(
+                        onTap: () => NotificationService.markAsRead(n['id'] as String),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.danger.withValues(alpha: 0.15),
+                            color: isDark ? AppColors.darkCard : Colors.white,
                             borderRadius: BorderRadius.circular(16),
+                            border: Border(
+                              left: BorderSide(
+                                color: isRead ? Colors.grey.shade300 : AppColors.primary,
+                                width: 3,
+                              ),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
+                                blurRadius: 8,
+                              ),
+                            ],
                           ),
-                          child: const Icon(Icons.delete_rounded,
-                              color: AppColors.danger),
-                        ),
-                        child: _NotifCard(
-                          notif: _notifs[i],
-                          isDark: isDark,
-                        )
-                            .animate(delay: (i * 60).ms)
-                            .fadeIn(duration: 350.ms)
-                            .slideX(begin: 0.08),
-                      ),
-                    ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: isRead
+                                    ? Colors.grey.shade200
+                                    : AppColors.primary.withValues(alpha: 0.12),
+                                child: const Text('🌿'),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      n['title'] as String? ?? '',
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 13,
+                                        fontWeight: isRead ? FontWeight.normal : FontWeight.w700,
+                                        color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      n['body'] as String? ?? '',
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate(delay: (i * 60).ms).fadeIn(duration: 350.ms).slideX(begin: 0.08),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-class _NotifCard extends StatelessWidget {
-  final _Notif notif;
-  final bool isDark;
-  const _NotifCard({required this.notif, required this.isDark});
-
-  Color get _color {
-    switch (notif.type) {
-      case NotifType.achievement: return AppColors.accent;
-      case NotifType.success: return AppColors.primary;
-      case NotifType.warning: return AppColors.warning;
-      case NotifType.points: return AppColors.teal;
-      case NotifType.info: return AppColors.info;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: _color, width: 3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(notif.icon, color: _color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      notif.title,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? AppColors.darkText
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      notif.time,
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  notif.body,
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-enum NotifType { achievement, success, warning, points, info }
-
-class _Notif {
-  final IconData icon;
-  final String title;
-  final String body;
-  final String time;
-  final NotifType type;
-  const _Notif(this.icon, this.title, this.body, this.time, this.type);
 }

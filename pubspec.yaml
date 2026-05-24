@@ -37,6 +37,8 @@ dependencies:
   tflite_flutter: ^0.12.1
   image: ^4.8.0
   dio: ^5.8.0
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^17.2.4
 
 dev_dependencies:
   flutter_test:

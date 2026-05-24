@@ -43,4 +43,10 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   void clearChat() {
     state = [ChatMessage.welcome];
   }
+
+  void updateWelcomeMessage(String greeting) {
+    if (state.length == 1 && !state.first.isUser) {
+      state = [ChatMessage.bot(greeting)];
+    }
+  }
 }

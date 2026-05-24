@@ -4,6 +4,9 @@ import '../theme/app_theme.dart';
 class DidYouKnowFact {
   final String id;
   final String fact;
+  final String factEn;
+  final String factAr;
+  final String factEs;
   final String category; // 'plastique' | 'verre' | 'papier' | 'metal' | 'organique' | 'general' | 'maroc'
   final IconData icon;
   final Color color;
@@ -11,10 +14,22 @@ class DidYouKnowFact {
   const DidYouKnowFact({
     required this.id,
     required this.fact,
+    this.factEn = '',
+    this.factAr = '',
+    this.factEs = '',
     required this.category,
     required this.icon,
     required this.color,
   });
+
+  String factFor(String lang) {
+    switch (lang) {
+      case 'en': return factEn.isEmpty ? fact : factEn;
+      case 'ar': return factAr.isEmpty ? fact : factAr;
+      case 'es': return factEs.isEmpty ? fact : factEs;
+      default:   return fact;
+    }
+  }
 }
 
 const List<DidYouKnowFact> allFacts = [
@@ -22,6 +37,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f01',
     fact: 'Une bouteille plastique met 400 ans à se décomposer dans la nature.',
+    factEn: 'A plastic bottle takes 400 years to decompose in nature.',
+    factAr: 'تستغرق زجاجة بلاستيكية 400 سنة للتحلل في الطبيعة.',
+    factEs: 'Una botella de plástico tarda 400 años en descomponerse en la naturaleza.',
     category: 'plastique',
     icon: Icons.opacity_rounded,
     color: AppColors.plastic,
@@ -29,6 +47,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f02',
     fact: 'Le Maroc a interdit les sacs plastique oxodégradables en 2016 avec la Loi 77-15.',
+    factEn: 'Morocco banned oxo-degradable plastic bags in 2016 with Law 77-15.',
+    factAr: 'حظر المغرب الأكياس البلاستيكية القابلة للتحلل الأكسيدي عام 2016 بموجب القانون 77-15.',
+    factEs: 'Marruecos prohibió las bolsas plásticas oxodegradables en 2016 con la Ley 77-15.',
     category: 'maroc',
     icon: Icons.gavel_rounded,
     color: Color(0xFFEF5350),
@@ -36,6 +57,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f03',
     fact: 'Recycler 1 tonne de plastique économise 5 800 kWh d\'énergie.',
+    factEn: 'Recycling 1 tonne of plastic saves 5,800 kWh of energy.',
+    factAr: 'إعادة تدوير طن واحد من البلاستيك يوفر 5800 كيلوواط ساعة من الطاقة.',
+    factEs: 'Reciclar 1 tonelada de plástico ahorra 5.800 kWh de energía.',
     category: 'plastique',
     icon: Icons.bolt_rounded,
     color: AppColors.accent,
@@ -43,6 +67,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f04',
     fact: 'Chaque année, 8 millions de tonnes de plastique finissent dans les océans.',
+    factEn: 'Every year, 8 million tonnes of plastic end up in the oceans.',
+    factAr: 'كل عام، ينتهي 8 ملايين طن من البلاستيك في المحيطات.',
+    factEs: 'Cada año, 8 millones de toneladas de plástico acaban en los océanos.',
     category: 'plastique',
     icon: Icons.water_rounded,
     color: Color(0xFF0288D1),
@@ -50,6 +77,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f05',
     fact: 'Un bouchon plastique recyclé peut devenir un nouveau stylo ou un pot de fleur.',
+    factEn: 'A recycled plastic cap can become a new pen or a flowerpot.',
+    factAr: 'يمكن أن يصبح غطاء بلاستيكي معاد تدويره قلمًا جديدًا أو وعاء زهور.',
+    factEs: 'Un tapón de plástico reciclado puede convertirse en un nuevo bolígrafo o maceta.',
     category: 'plastique',
     icon: Icons.recycling_rounded,
     color: AppColors.primary,
@@ -59,6 +89,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f06',
     fact: 'Le verre met 4 000 ans à se décomposer. Il est recyclable à 100% indéfiniment.',
+    factEn: 'Glass takes 4,000 years to decompose. It is 100% recyclable indefinitely.',
+    factAr: 'يستغرق الزجاج 4000 سنة للتحلل. وهو قابل لإعادة التدوير بنسبة 100% إلى الأبد.',
+    factEs: 'El vidrio tarda 4.000 años en descomponerse. Es reciclable al 100% indefinidamente.',
     category: 'verre',
     icon: Icons.local_bar_outlined,
     color: AppColors.glass,
@@ -66,6 +99,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f07',
     fact: 'Recycler 1 tonne de verre économise 300 kg de CO₂ et 1,2 tonne de matières premières.',
+    factEn: 'Recycling 1 tonne of glass saves 300 kg of CO₂ and 1.2 tonnes of raw materials.',
+    factAr: 'إعادة تدوير طن واحد من الزجاج يوفر 300 كغ من ثاني أكسيد الكربون و1.2 طن من المواد الخام.',
+    factEs: 'Reciclar 1 tonelada de vidrio ahorra 300 kg de CO₂ y 1,2 toneladas de materias primas.',
     category: 'verre',
     icon: Icons.air_rounded,
     color: Color(0xFF29B6F6),
@@ -73,6 +109,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f08',
     fact: 'Une bouteille en verre recyclée économise assez d\'énergie pour alimenter une ampoule LED 4 heures.',
+    factEn: 'A recycled glass bottle saves enough energy to power an LED bulb for 4 hours.',
+    factAr: 'توفر زجاجة زجاجية معاد تدويرها طاقة كافية لتشغيل مصباح LED لمدة 4 ساعات.',
+    factEs: 'Una botella de vidrio reciclada ahorra suficiente energía para alimentar una bombilla LED 4 horas.',
     category: 'verre',
     icon: Icons.lightbulb_rounded,
     color: Color(0xFFF9A825),
@@ -80,6 +119,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f09',
     fact: 'Le miroir et le verre trempé ne vont PAS dans le bac à verre — ils fondent à des températures différentes.',
+    factEn: 'Mirrors and tempered glass do NOT go in the glass bin — they melt at different temperatures.',
+    factAr: 'المرايا والزجاج المقسى لا تذهب في حاوية الزجاج — فهي تذوب عند درجات حرارة مختلفة.',
+    factEs: 'Los espejos y el vidrio templado NO van al contenedor de vidrio — se funden a temperaturas distintas.',
     category: 'verre',
     icon: Icons.do_not_disturb_alt_rounded,
     color: Color(0xFFEF5350),
@@ -89,6 +131,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f10',
     fact: 'Pour produire 1 tonne de papier neuf, il faut 17 arbres. Recyclez-le !',
+    factEn: 'To produce 1 tonne of new paper, 17 trees are needed. Recycle it!',
+    factAr: 'لإنتاج طن واحد من الورق الجديد، نحتاج إلى 17 شجرة. أعد تدويره!',
+    factEs: 'Para producir 1 tonelada de papel nuevo se necesitan 17 árboles. ¡Recíclalo!',
     category: 'papier',
     icon: Icons.article_outlined,
     color: AppColors.paper,
@@ -96,6 +141,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f11',
     fact: 'Le ticket de caisse contient du Bisphénol A (BPA) — ne le recyclez pas, il contamine.',
+    factEn: 'Cash register receipts contain Bisphenol A (BPA) — do not recycle them, they contaminate.',
+    factAr: 'تحتوي إيصالات الصراف على البيسفينول أ (BPA) — لا تعيد تدويرها، فهي تلوث.',
+    factEs: 'Los tickets de caja contienen Bisfenol A (BPA) — no los recicles, contaminan.',
     category: 'papier',
     icon: Icons.receipt_rounded,
     color: Color(0xFFFF7043),
@@ -103,6 +151,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f12',
     fact: 'La CMCP (papeterie marocaine) traite chaque année des milliers de tonnes de carton recyclé.',
+    factEn: 'CMCP (Moroccan paper mill) processes thousands of tonnes of recycled cardboard each year.',
+    factAr: 'تعالج CMCP (مطبعة مغربية) آلاف الأطنان من الكرتون المعاد تدويره كل عام.',
+    factEs: 'La CMCP (papelera marroquí) procesa miles de toneladas de cartón reciclado cada año.',
     category: 'maroc',
     icon: Icons.factory_rounded,
     color: Color(0xFF795548),
@@ -110,6 +161,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f13',
     fact: 'Un journal recyclé peut redevenir du papier en seulement 7 jours.',
+    factEn: 'A recycled newspaper can become paper again in just 7 days.',
+    factAr: 'يمكن لجريدة معاد تدويرها أن تصبح ورقًا مجددًا في 7 أيام فقط.',
+    factEs: 'Un periódico reciclado puede volver a ser papel en solo 7 días.',
     category: 'papier',
     icon: Icons.newspaper_rounded,
     color: AppColors.paper,
@@ -119,6 +173,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f14',
     fact: 'L\'aluminium peut être recyclé en 60 jours, de la poubelle au rayon supermarché.',
+    factEn: 'Aluminium can be recycled in 60 days, from the bin back to the supermarket shelf.',
+    factAr: 'يمكن إعادة تدوير الألمنيوم في 60 يومًا، من السلة إلى رف السوبرماركت.',
+    factEs: 'El aluminio puede reciclarse en 60 días, del contenedor de vuelta a la estantería del supermercado.',
     category: 'metal',
     icon: Icons.hardware_rounded,
     color: AppColors.metal,
@@ -126,6 +183,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f15',
     fact: 'Recycler 1 kg d\'aluminium économise 8 kg de CO₂ et 95% de l\'énergie de production.',
+    factEn: 'Recycling 1 kg of aluminium saves 8 kg of CO₂ and 95% of production energy.',
+    factAr: 'إعادة تدوير كيلوغرام واحد من الألمنيوم يوفر 8 كغ من ثاني أكسيد الكربون و95% من طاقة الإنتاج.',
+    factEs: 'Reciclar 1 kg de aluminio ahorra 8 kg de CO₂ y el 95% de la energía de producción.',
     category: 'metal',
     icon: Icons.energy_savings_leaf_rounded,
     color: AppColors.primary,
@@ -133,6 +193,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f16',
     fact: 'Une canette d\'aluminium met 200 à 500 ans à se décomposer dans la nature.',
+    factEn: 'An aluminium can takes 200 to 500 years to decompose in nature.',
+    factAr: 'تستغرق علبة الألمنيوم من 200 إلى 500 سنة للتحلل في الطبيعة.',
+    factEs: 'Una lata de aluminio tarda entre 200 y 500 años en descomponerse en la naturaleza.',
     category: 'metal',
     icon: Icons.timelapse_rounded,
     color: Color(0xFF607D8B),
@@ -140,6 +203,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f17',
     fact: 'Une boîte de conserve peut devenir une pièce de vélo, une chaise ou un pont en acier.',
+    factEn: 'A tin can can become a bicycle part, a chair or a steel bridge.',
+    factAr: 'يمكن أن تصبح علبة الحفظ قطعة دراجة هوائية أو كرسيًا أو جسرًا فولاذيًا.',
+    factEs: 'Una lata de conserva puede convertirse en una pieza de bicicleta, una silla o un puente de acero.',
     category: 'metal',
     icon: Icons.construction_rounded,
     color: AppColors.metal,
@@ -149,6 +215,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f18',
     fact: 'Au Maroc, 65% des déchets ménagers sont organiques et peuvent être compostés.',
+    factEn: 'In Morocco, 65% of household waste is organic and can be composted.',
+    factAr: 'في المغرب، 65% من النفايات المنزلية عضوية ويمكن تحويلها إلى سماد.',
+    factEs: 'En Marruecos, el 65% de los residuos domésticos son orgánicos y pueden compostarse.',
     category: 'maroc',
     icon: Icons.pie_chart_rounded,
     color: Color(0xFF66BB6A),
@@ -156,6 +225,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f19',
     fact: 'Le marc de café repoussé les escargots et fertilise les plantes — ne le jetez pas !',
+    factEn: 'Coffee grounds repel snails and fertilise plants — don\'t throw them away!',
+    factAr: 'تطرد تفل القهوة الحلزونات وتخصّب النباتات — لا ترميها!',
+    factEs: 'Los posos de café repelen a los caracoles y fertilizan las plantas — ¡no los tires!',
     category: 'organique',
     icon: Icons.coffee_rounded,
     color: Color(0xFF795548),
@@ -163,6 +235,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f20',
     fact: 'Un composteur familial réduit de 30% le volume de vos poubelles.',
+    factEn: 'A home composter reduces your bin volume by 30%.',
+    factAr: 'يقلل جهاز التسميد المنزلي حجم قمامتك بنسبة 30%.',
+    factEs: 'Un compostador doméstico reduce el volumen de tu basura en un 30%.',
     category: 'organique',
     icon: Icons.compost_rounded,
     color: Color(0xFF2E7D32),
@@ -170,6 +245,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f21',
     fact: 'Les épluchures d\'orange compostées améliorent la structure du sol en argile.',
+    factEn: 'Composted orange peel improves the structure of clay soil.',
+    factAr: 'تحسّن قشور البرتقال المسمّدة بنية التربة الطينية.',
+    factEs: 'Las cáscaras de naranja compostadas mejoran la estructura del suelo arcilloso.',
     category: 'organique',
     icon: Icons.eco_rounded,
     color: Color(0xFFFF7043),
@@ -179,6 +257,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f22',
     fact: 'Le Décret 2-12-695 oblige les producteurs à collecter les appareils DEEE au Maroc.',
+    factEn: 'Decree 2-12-695 requires producers to collect WEEE devices in Morocco.',
+    factAr: 'يُلزم المرسوم 2-12-695 المنتجين بجمع الأجهزة الإلكترونية المهملة في المغرب.',
+    factEs: 'El Decreto 2-12-695 obliga a los productores a recoger los aparatos RAEE en Marruecos.',
     category: 'maroc',
     icon: Icons.gavel_rounded,
     color: AppColors.electronics,
@@ -186,6 +267,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f23',
     fact: 'Un smartphone contient de l\'or, de l\'argent, du cobalt et du lithium recyclables.',
+    factEn: 'A smartphone contains recyclable gold, silver, cobalt and lithium.',
+    factAr: 'يحتوي الهاتف الذكي على ذهب وفضة وكوبالت وليثيوم قابلة لإعادة التدوير.',
+    factEs: 'Un smartphone contiene oro, plata, cobalto y litio reciclables.',
     category: 'general',
     icon: Icons.smartphone_rounded,
     color: Color(0xFF5C6BC0),
@@ -193,6 +277,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f24',
     fact: 'ECOVAL dispose de 500+ éco-points au Maroc pour déposer vos appareils DEEE.',
+    factEn: 'ECOVAL has 500+ eco-points across Morocco where you can drop off your WEEE devices.',
+    factAr: 'تمتلك ECOVAL أكثر من 500 نقطة بيئية في المغرب لإيداع أجهزتك الإلكترونية.',
+    factEs: 'ECOVAL dispone de más de 500 ecopuntos en Marruecos para depositar sus aparatos RAEE.',
     category: 'maroc',
     icon: Icons.location_on_rounded,
     color: AppColors.primary,
@@ -200,6 +287,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f25',
     fact: 'Un réfrigérateur contient des gaz fluorés très nuisibles à l\'ozone — ne le cassez pas !',
+    factEn: 'A refrigerator contains fluorinated gases very harmful to the ozone — do not break it!',
+    factAr: 'يحتوي الثلاجة على غازات فلورية ضارة جدًا بطبقة الأوزون — لا تكسرها!',
+    factEs: 'Un frigorífico contiene gases fluorados muy nocivos para el ozono — ¡no lo rompas!',
     category: 'general',
     icon: Icons.kitchen_rounded,
     color: Color(0xFF0277BD),
@@ -209,6 +299,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f26',
     fact: 'Recycler une tonne de déchets crée 10x plus d\'emplois que l\'incinération.',
+    factEn: 'Recycling one tonne of waste creates 10x more jobs than incineration.',
+    factAr: 'إعادة تدوير طن واحد من النفايات يخلق 10 أضعاف فرص العمل مقارنة بالحرق.',
+    factEs: 'Reciclar una tonelada de residuos crea 10 veces más empleos que la incineración.',
     category: 'general',
     icon: Icons.people_rounded,
     color: AppColors.primary,
@@ -216,6 +309,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f27',
     fact: 'Le Programme National de Déchets Ménagers (PNDM) vise 100% de mise en décharge contrôlée d\'ici 2030.',
+    factEn: 'The National Household Waste Programme (PNDM) targets 100% controlled landfill by 2030.',
+    factAr: 'يستهدف البرنامج الوطني للنفايات المنزلية (PNDM) نسبة 100% من الدفن المنضبط بحلول 2030.',
+    factEs: 'El Programa Nacional de Residuos Domésticos (PNDM) apunta al 100% de vertedero controlado para 2030.',
     category: 'maroc',
     icon: Icons.flag_rounded,
     color: Color(0xFF1565C0),
@@ -223,6 +319,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f28',
     fact: 'Une pile alcaline mal jetée peut contaminer 1 m³ de sol et 1 000 L d\'eau.',
+    factEn: 'An improperly disposed alkaline battery can contaminate 1 m³ of soil and 1,000 L of water.',
+    factAr: 'يمكن لبطارية قلوية مرمية بشكل خاطئ أن تلوث متر مكعب واحد من التربة و1000 لتر من الماء.',
+    factEs: 'Una pila alcalina mal desechada puede contaminar 1 m³ de suelo y 1.000 L de agua.',
     category: 'general',
     icon: Icons.battery_alert_rounded,
     color: Color(0xFFEF5350),
@@ -230,6 +329,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f29',
     fact: 'Recycler diminue les émissions de gaz à effet de serre équivalentes à retirer des millions de voitures.',
+    factEn: 'Recycling reduces greenhouse gas emissions equivalent to removing millions of cars from the road.',
+    factAr: 'تقليل إعادة التدوير انبعاثات الغازات الدفيئة يعادل إزالة ملايين السيارات من الطرق.',
+    factEs: 'Reciclar reduce las emisiones de gases de efecto invernadero equivalentes a retirar millones de coches.',
     category: 'general',
     icon: Icons.directions_car_rounded,
     color: Color(0xFF546E7A),
@@ -237,6 +339,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f30',
     fact: 'L\'association Zéro Zbel organise des clean-ups dans les plages marocaines chaque mois.',
+    factEn: 'The Zéro Zbel association organises beach clean-ups across Morocco every month.',
+    factAr: 'تنظم جمعية "زيرو زبل" حملات تنظيف في الشواطئ المغربية كل شهر.',
+    factEs: 'La asociación Zéro Zbel organiza limpiezas en las playas marroquíes cada mes.',
     category: 'maroc',
     icon: Icons.beach_access_rounded,
     color: Color(0xFF00BCD4),
@@ -246,6 +351,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f31',
     fact: 'Recycler 1 tonne de plastique économise 5 000 à 6 000 litres d\'eau.',
+    factEn: 'Recycling 1 tonne of plastic saves 5,000 to 6,000 litres of water.',
+    factAr: 'إعادة تدوير طن واحد من البلاستيك يوفر من 5000 إلى 6000 لتر من الماء.',
+    factEs: 'Reciclar 1 tonelada de plástico ahorra entre 5.000 y 6.000 litros de agua.',
     category: 'plastique',
     icon: Icons.water_drop_rounded,
     color: AppColors.info,
@@ -253,6 +361,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f32',
     fact: 'Produire du papier recyclé consomme 60% moins d\'eau que du papier vierge.',
+    factEn: 'Producing recycled paper uses 60% less water than virgin paper.',
+    factAr: 'إنتاج الورق المعاد تدويره يستهلك 60% أقل من الماء مقارنة بالورق البكر.',
+    factEs: 'Producir papel reciclado consume un 60% menos de agua que el papel virgen.',
     category: 'papier',
     icon: Icons.water_rounded,
     color: Color(0xFF0288D1),
@@ -260,6 +371,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f33',
     fact: 'Le recyclage du verre nécessite 40% moins d\'énergie que la fabrication à partir de sable.',
+    factEn: 'Recycling glass requires 40% less energy than manufacturing from sand.',
+    factAr: 'إعادة تدوير الزجاج تتطلب 40% طاقة أقل من التصنيع من الرمل.',
+    factEs: 'El reciclaje del vidrio requiere un 40% menos de energía que la fabricación a partir de arena.',
     category: 'verre',
     icon: Icons.bolt_rounded,
     color: AppColors.accent,
@@ -269,6 +383,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f34',
     fact: 'Une veste en polyester recyclée nécessite 70% moins d\'énergie que du polyester neuf.',
+    factEn: 'A recycled polyester jacket requires 70% less energy than new polyester.',
+    factAr: 'تتطلب سترة البوليستر المعاد تدويرها 70% طاقة أقل من البوليستر الجديد.',
+    factEs: 'Una chaqueta de poliéster reciclado requiere un 70% menos de energía que el poliéster nuevo.',
     category: 'general',
     icon: Icons.checkroom_rounded,
     color: Color(0xFF7986CB),
@@ -276,6 +393,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f35',
     fact: 'Au Maroc, les souks de fripe (vêtements de seconde main) sont une forme de recyclage textile ancestrale.',
+    factEn: 'In Morocco, fripe souks (second-hand clothes markets) are an ancestral form of textile recycling.',
+    factAr: 'في المغرب، أسواق الفريبة (ملابس مستعملة) شكل تقليدي قديم لإعادة تدوير المنسوجات.',
+    factEs: 'En Marruecos, los zocos de ropa de segunda mano son una forma ancestral de reciclaje textil.',
     category: 'maroc',
     icon: Icons.store_rounded,
     color: Color(0xFFAB47BC),
@@ -285,6 +405,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f36',
     fact: 'Rincer un bocal avant de le recycler réduit les risques de contamination du lot entier.',
+    factEn: 'Rinsing a jar before recycling reduces the risk of contaminating the entire batch.',
+    factAr: 'شطف البرطمان قبل إعادة التدوير يقلل من خطر تلوث الدفعة بأكملها.',
+    factEs: 'Enjuagar un tarro antes de reciclarlo reduce el riesgo de contaminar todo el lote.',
     category: 'general',
     icon: Icons.cleaning_services_rounded,
     color: AppColors.primary,
@@ -292,6 +415,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f37',
     fact: 'Un emballage gras ou souillé contamine et rend les autres déchets non recyclables.',
+    factEn: 'A greasy or soiled package contaminates and makes other waste non-recyclable.',
+    factAr: 'التغليف الدهني أو الملوث يلوث ويجعل النفايات الأخرى غير قابلة لإعادة التدوير.',
+    factEs: 'Un envase grasiento o sucio contamina y hace que otros residuos no sean reciclables.',
     category: 'general',
     icon: Icons.warning_amber_rounded,
     color: Color(0xFFF39C12),
@@ -299,6 +425,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f38',
     fact: 'Aplatir les boîtes et bouteilles avant de les trier libère de la place dans les bacs.',
+    factEn: 'Flattening boxes and bottles before sorting frees up space in the bins.',
+    factAr: 'تسطيح الصناديق والزجاجات قبل الفرز يحرر مساحة في الحاويات.',
+    factEs: 'Aplastar cajas y botellas antes de clasificarlas libera espacio en los contenedores.',
     category: 'general',
     icon: Icons.compress_rounded,
     color: AppColors.primary,
@@ -306,6 +435,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f39',
     fact: 'Les médicaments périmés doivent être rapportés en pharmacie — pas dans les poubelles.',
+    factEn: 'Expired medications must be returned to the pharmacy — not in the bin.',
+    factAr: 'يجب إعادة الأدوية المنتهية الصلاحية إلى الصيدلية — وليس في القمامة.',
+    factEs: 'Los medicamentos caducados deben devolverse a la farmacia — no en la basura.',
     category: 'general',
     icon: Icons.medication_rounded,
     color: Color(0xFF26A69A),
@@ -313,6 +445,9 @@ const List<DidYouKnowFact> allFacts = [
   DidYouKnowFact(
     id: 'f40',
     fact: 'EcoScan vous aide à identifier les bons bacs de tri selon les normes ECOVAL au Maroc.',
+    factEn: 'EcoScan helps you identify the right sorting bins according to ECOVAL standards in Morocco.',
+    factAr: 'تساعدك EcoScan على تحديد حاويات الفرز الصحيحة وفق معايير ECOVAL في المغرب.',
+    factEs: 'EcoScan te ayuda a identificar los contenedores de clasificación correctos según las normas ECOVAL en Marruecos.',
     category: 'maroc',
     icon: Icons.document_scanner_rounded,
     color: AppColors.primary,

@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/scan_entry.dart';
 import '../../models/scan_result_model.dart';
@@ -14,8 +16,6 @@ import '../../services/classifier_service.dart';
 
 enum _DetectionState { idle, analyzing, recyclable, dangerous }
 
-// ── Catégories affichées dans le badge de mode ────────────────────────────────
-const _kModeLabel = 'Analyse locale';
 
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
@@ -62,19 +62,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     }
   }
 
-  String get _statusLabel {
-    if (!_modelLoaded) return '⏳  Chargement du modèle IA...';
+  String _statusLabelStr(AppStrings s) {
+    if (!_modelLoaded) return '⏳  ${s.loadingModel}';
     switch (_state) {
       case _DetectionState.recyclable:
-        return '♻️  Recyclable détecté !';
+        return '♻️  ${s.recyclableDetected}';
       case _DetectionState.dangerous:
-        return '⚠️  Déchet dangereux détecté';
+        return '⚠️  ${s.dangerousWaste}';
       case _DetectionState.analyzing:
-        return '🔍  Analyse en cours...';
+        return '🔍  ${s.analyzing}';
       case _DetectionState.idle:
-        return _galleryImage != null
-            ? 'Image chargée — appuyez pour analyser'
-            : 'Centrez le déchet dans le cadre';
+        return _galleryImage != null ? s.imageLoaded : s.centerWaste;
     }
   }
 
@@ -117,9 +115,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       debugPrint('TFLite load error: $e');
       if (mounted) {
         setState(() => _modelLoaded = false);
+        final s = AppStrings.of(ref.read(localeProvider).languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur chargement modèle IA : $e',
+            content: Text(s.modelLoadError(e.toString()),
                 style: const TextStyle(fontFamily: 'Poppins')),
             backgroundColor: Colors.red.shade700,
             duration: const Duration(seconds: 5),
@@ -133,7 +132,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        setState(() => _cameraError = 'Aucune caméra disponible');
+        final s = AppStrings.of(ref.read(localeProvider).languageCode);
+        setState(() => _cameraError = s.noCameraAvailable);
         return;
       }
       final back = cameras.firstWhere(
@@ -152,7 +152,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
         _cameraReady = true;
       });
     } catch (_) {
-      if (mounted) setState(() => _cameraError = 'Caméra non disponible');
+      if (mounted) {
+        final s = AppStrings.of(ref.read(localeProvider).languageCode);
+        setState(() => _cameraError = s.noCameraAvailable);
+      }
     }
   }
 
@@ -196,7 +199,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     if (_scanning) return;
 
     if (!_modelLoaded) {
-      _showError('Modèle IA non chargé. Vérifiez l\'installation de l\'app.');
+      _showError(AppStrings.of(ref.read(localeProvider).languageCode).modelNotLoaded);
       return;
     }
 
@@ -212,13 +215,13 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
         final xFile = await _cameraCtrl!.takePicture();
         imageToClassify = File(xFile.path);
       } catch (e) {
-        _showError('Impossible de capturer la photo : $e');
+        _showError(AppStrings.of(ref.read(localeProvider).languageCode).captureError(e.toString()));
         return;
       }
     }
 
     if (imageToClassify == null) {
-      _showError('Aucune image disponible. Utilisez la caméra ou la galerie.');
+      _showError(AppStrings.of(ref.read(localeProvider).languageCode).noImageAvailable);
       return;
     }
 
@@ -231,7 +234,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       entry = ScanEntry.fromClassification(result.label, result.confidence);
     } catch (e) {
       debugPrint('Classify error: $e');
-      _showError('Erreur d\'analyse : $e');
+      _showError(AppStrings.of(ref.read(localeProvider).languageCode).analysisError(e.toString()));
       return;
     }
 
@@ -248,6 +251,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     if (!mounted) return;
 
     // Panneau debug — scores de toutes les classes
+    final s = AppStrings.of(ref.read(localeProvider).languageCode);
     await showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1A1A2E),
@@ -303,7 +307,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent,
                     foregroundColor: Colors.black),
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Continuer', style: TextStyle(fontFamily: 'Poppins')),
+                child: Text(s.continueBtn, style: const TextStyle(fontFamily: 'Poppins')),
               ),
             ),
           ],
@@ -352,6 +356,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final size = MediaQuery.of(context).size;
     const frameSize = 260.0;
     final frameCol = _frameColorValue;
@@ -505,8 +510,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                                     ),
                                     child: Text(
                                       _state == _DetectionState.recyclable
-                                          ? 'RECYCLABLE'
-                                          : 'DANGEREUX',
+                                          ? s.recyclableLabel
+                                          : s.dangerousLabel,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 13,
@@ -557,14 +562,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                         border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.5)),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.eco_rounded,
+                          const Icon(Icons.eco_rounded,
                               color: AppColors.primary, size: 13),
-                          SizedBox(width: 4),
-                          Text(_kModeLabel,
-                              style: TextStyle(
+                          const SizedBox(width: 4),
+                          Text(s.scanAnalysisLocal,
+                              style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -597,9 +602,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                           color: Colors.white, size: 22),
                     ),
                   ),
-                  const Text(
-                    'Scanner un déchet',
-                    style: TextStyle(
+                  Text(
+                    s.scanDechet,
+                    style: const TextStyle(
                         fontFamily: 'Poppins',
                         color: Colors.white,
                         fontSize: 16,
@@ -655,7 +660,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                           color: _frameColorValue.withValues(alpha: 0.3)),
                     ),
                     child: Text(
-                      _statusLabel,
+                      _statusLabelStr(s),
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 13,
@@ -713,12 +718,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                     children: [
                       _BottomAction(
                         icon: Icons.photo_library_outlined,
-                        label: 'Galerie',
+                        label: s.gallery,
                         onTap: _pickFromGallery,
                       ),
                       _BottomAction(
                         icon: Icons.history_rounded,
-                        label: 'Historique',
+                        label: s.history_,
                         onTap: () => context.go('/history'),
                       ),
                     ],

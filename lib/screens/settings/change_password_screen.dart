@@ -1,18 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 
-class ChangePasswordScreen extends StatefulWidget {
+class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _currentCtrl = TextEditingController();
   final _newCtrl     = TextEditingController();
   final _confirmCtrl = TextEditingController();
@@ -48,14 +51,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return AppColors.primary;
   }
 
-  String _strengthLabel(double s) {
-    if (s <= 0.25) return 'Faible';
-    if (s <= 0.50) return 'Moyen';
-    if (s <= 0.75) return 'Bon';
-    return 'Fort';
+  String _strengthLabel(double s, AppStrings str) {
+    if (s <= 0.25) return str.strengthWeak;
+    if (s <= 0.50) return str.strengthFair;
+    if (s <= 0.75) return str.strengthGood;
+    return str.strengthStrong;
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(AppStrings s) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
@@ -68,22 +71,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       await user.updatePassword(_newCtrl.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mot de passe modifié avec succès',
-              style: TextStyle(fontFamily: 'Poppins')),
+        SnackBar(
+          content: Text(s.passwordUpdated,
+              style: const TextStyle(fontFamily: 'Poppins')),
           backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
       );
       context.pop();
     } on FirebaseAuthException catch (e) {
       final msg = e.code == 'wrong-password' || e.code == 'invalid-credential'
-          ? 'Mot de passe actuel incorrect.'
-          : 'Erreur : ${e.message}';
+          ? s.wrongPassword
+          : s.errorMsg(e.message ?? '');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
           backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
       );
     } finally {
@@ -94,6 +103,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final strength = _passwordStrength(_newCtrl.text);
 
     return Scaffold(
@@ -108,7 +118,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Changer le mot de passe',
+          s.changePassword,
           style: TextStyle(
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,
@@ -132,15 +142,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.lock_outline_rounded,
+                      const Icon(Icons.lock_outline_rounded,
                           color: AppColors.primary, size: 20),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Pour votre sécurité, entrez d\'abord votre mot de passe actuel.',
-                          style: TextStyle(
+                          s.changePassHint,
+                          style: const TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 13,
                             color: AppColors.primary,
@@ -153,7 +163,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 28),
                 CustomTextField(
                   controller: _currentCtrl,
-                  label: 'Mot de passe actuel',
+                  label: s.currentPassword,
                   hint: '••••••••',
                   prefixIcon: Icons.lock_outline_rounded,
                   obscureText: _obscureCurrent,
@@ -170,12 +180,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         setState(() => _obscureCurrent = !_obscureCurrent),
                   ),
                   validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Requis' : null,
+                      (v == null || v.isEmpty) ? s.fieldRequired : null,
                 ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _newCtrl,
-                  label: 'Nouveau mot de passe',
+                  label: s.newPassword,
                   hint: '••••••••',
                   prefixIcon: Icons.lock_rounded,
                   obscureText: _obscureNew,
@@ -193,9 +203,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         setState(() => _obscureNew = !_obscureNew),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6) {
-                      return 'Minimum 6 caractères';
-                    }
+                    if (v == null || v.length < 6) return s.minPassword;
                     return null;
                   },
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.05),
@@ -216,7 +224,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        _strengthLabel(strength),
+                        _strengthLabel(strength, s),
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 11,
@@ -230,7 +238,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _confirmCtrl,
-                  label: 'Confirmer le nouveau mot de passe',
+                  label: s.confirmNewPassword,
                   hint: '••••••••',
                   prefixIcon: Icons.lock_reset_rounded,
                   obscureText: _obscureConfirm,
@@ -247,9 +255,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
                   validator: (v) {
-                    if (v != _newCtrl.text) {
-                      return 'Les mots de passe ne correspondent pas';
-                    }
+                    if (v != _newCtrl.text) return s.passwordsMismatch;
                     return null;
                   },
                 ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05),
@@ -258,7 +264,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _loading ? null : _submit,
+                    onPressed: _loading ? null : () => _submit(s),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
@@ -270,9 +276,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             height: 22,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2.5, color: Colors.white))
-                        : const Text(
-                            'Mettre à jour',
-                            style: TextStyle(
+                        : Text(
+                            s.update,
+                            style: const TextStyle(
                               fontFamily: 'Poppins',
                               color: Colors.white,
                               fontWeight: FontWeight.w600,

@@ -91,13 +91,13 @@ String _translateFirebaseError(String code) => switch (code) {
       'user-not-found'          => 'Aucun compte avec cet email.',
       'wrong-password'          => 'Mot de passe incorrect.',
       'invalid-credential'      => 'Email ou mot de passe incorrect.',
-      'email-already-in-use'    => 'Cet email est déjà utilisé.',
+      'email-already-in-use'    => 'Cette adresse email est déjà associée à un compte. Connectez-vous ou utilisez une autre adresse.',
       'weak-password'           => 'Mot de passe trop faible (min. 6 caractères).',
       'network-request-failed'  => 'Vérifiez votre connexion internet.',
       'invalid-email'           => 'Adresse email invalide.',
       'too-many-requests'       => 'Trop de tentatives. Réessayez plus tard.',
       'account-exists-with-different-credential' =>
-          'Un compte existe déjà avec cet email.',
+          'Un compte existe déjà avec cette adresse email. Connectez-vous avec votre mot de passe.',
       _ => 'Une erreur est survenue. Réessayez.',
     };
 
@@ -136,6 +136,8 @@ class LoginNotifier extends StateNotifier<AuthState> {
       final user = AppUser.fromFirebase(fbUser, city: city);
       _ref.read(currentUserProvider.notifier).state = user;
       state = state.copyWith(status: AuthStatus.success, user: user);
+      // Réinitialiser avant de charger le nouveau profil
+      _ref.read(userProvider.notifier).reset();
       // Pont : alimenter userProvider avec le vrai profil Firebase
       await _ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: user.displayName,
@@ -302,6 +304,8 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
       final user = AppUser.fromFirebase(fbUser, city: city);
       _ref.read(currentUserProvider.notifier).state = user;
       state = state.copyWith(status: AuthStatus.success, user: user);
+      // Réinitialiser avant de charger le nouveau profil
+      _ref.read(userProvider.notifier).reset();
       // Pont : alimenter userProvider avec le vrai profil Firebase
       await _ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: user.displayName,
@@ -334,6 +338,13 @@ final googleSignInProvider =
 Future<void> signOut(Ref ref) async {
   await _googleSignIn.signOut();
   await _auth.signOut();
+  ref.read(currentUserProvider.notifier).state = null;
+}
+
+Future<void> signOutUser(WidgetRef ref) async {
+  await _googleSignIn.signOut();
+  await _auth.signOut();
+  ref.invalidate(userProvider);
   ref.read(currentUserProvider.notifier).state = null;
 }
 

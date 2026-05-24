@@ -1,13 +1,19 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../l10n/app_strings.dart';
 import 'language_screen.dart';
+import 'theme_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -17,21 +23,13 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _notifEnabled = true;
-  bool _locationEnabled = true;
-  bool _soundEnabled = false;
-  bool _weeklyReport = true;
-  String _city = 'Alger';
-
   static const _langCodes = ['fr', 'en', 'ar', 'es'];
   static const _langLabels = ['Français', 'English', 'العربية', 'Español'];
-  static const _cities = ['Alger', 'Oran', 'Constantine', 'Annaba', 'Tlemcen'];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeMode = ref.watch(themeProvider);
-    final darkEnabled = themeMode == ThemeMode.dark;
     final currentLang = ref.watch(localeProvider).languageCode;
     final s = AppStrings.of(currentLang);
     final langIdx = _langCodes.indexOf(currentLang);
@@ -73,23 +71,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
+                    // Account section
+                    _Section(
+                      title: s.account,
+                      isDark: isDark,
+                      delay: 100,
+                      children: [
+                        _ActionRow(
+                          icon: Icons.edit_rounded,
+                          label: s.menuEditProfile,
+                          color: AppColors.primary,
+                          isDark: isDark,
+                          onTap: () => context.push('/profile/edit'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
                     // Appearance section
                     _Section(
                       title: s.appearance,
                       isDark: isDark,
                       delay: 150,
                       children: [
-                        _ToggleRow(
-                          icon: isDark
+                        _ActionRow(
+                          icon: themeMode == ThemeMode.dark
                               ? Icons.dark_mode_rounded
-                              : Icons.light_mode_rounded,
+                              : themeMode == ThemeMode.light
+                                  ? Icons.light_mode_rounded
+                                  : Icons.brightness_auto_rounded,
                           label: s.darkMode,
-                          subtitle: s.darkModeDesc,
-                          value: darkEnabled,
                           color: isDark ? AppColors.purple : AppColors.accent,
                           isDark: isDark,
-                          onChanged: (_) =>
-                              ref.read(themeProvider.notifier).toggle(),
+                          trailing: Text(
+                            ref.read(themeProvider.notifier).modeLabel,
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          onTap: () => Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => const ThemeScreen())),
                         ),
                         _ActionRow(
                           icon: Icons.language_rounded,
@@ -110,82 +133,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 builder: (_) => const LanguageScreen()),
                           ),
                         ),
-                        _DropdownRow(
-                          icon: Icons.location_city_rounded,
-                          label: s.city,
-                          value: _city,
-                          items: _cities,
-                          color: AppColors.teal,
-                          isDark: isDark,
-                          onChanged: (v) => setState(() => _city = v),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Notifications section
-                    _Section(
-                      title: s.notifications,
-                      isDark: isDark,
-                      delay: 250,
-                      children: [
-                        _ToggleRow(
-                          icon: Icons.notifications_rounded,
-                          label: s.notifPush,
-                          subtitle: s.notifDesc,
-                          value: _notifEnabled,
-                          color: AppColors.primary,
-                          isDark: isDark,
-                          onChanged: (v) => setState(() => _notifEnabled = v),
-                        ),
-                        _ToggleRow(
-                          icon: Icons.volume_up_rounded,
-                          label: s.sound,
-                          subtitle: s.soundDesc,
-                          value: _soundEnabled,
-                          color: AppColors.accent,
-                          isDark: isDark,
-                          onChanged: (v) => setState(() => _soundEnabled = v),
-                        ),
-                        _ToggleRow(
-                          icon: Icons.bar_chart_rounded,
-                          label: s.weeklyReport,
-                          subtitle: s.weeklyReportDesc,
-                          value: _weeklyReport,
-                          color: AppColors.teal,
-                          isDark: isDark,
-                          onChanged: (v) => setState(() => _weeklyReport = v),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
                     // Security section
                     _Section(
-                      title: 'Sécurité',
+                      title: s.security,
                       isDark: isDark,
                       delay: 350,
                       children: [
                         _ActionRow(
                           icon: Icons.lock_reset_rounded,
-                          label: 'Changer le mot de passe',
+                          label: s.changePassword,
                           color: AppColors.primary,
                           isDark: isDark,
                           onTap: () => context.push('/change-password'),
                         ),
                         _ActionRow(
                           icon: Icons.email_rounded,
-                          label: 'Changer l\'email',
+                          label: s.changeEmail,
                           color: AppColors.info,
                           isDark: isDark,
                           onTap: () => context.push('/change-email'),
                         ),
                         _ActionRow(
                           icon: Icons.phone_android_rounded,
-                          label: 'Double authentification',
+                          label: s.twoFactor,
                           color: AppColors.teal,
                           isDark: isDark,
                           onTap: () => context.push('/two-factor-setup'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Tools section
+                    _Section(
+                      title: s.tools,
+                      isDark: isDark,
+                      delay: 420,
+                      children: [
+                        _ActionRow(
+                          icon: Icons.share_rounded,
+                          label: s.shareApp,
+                          color: AppColors.info,
+                          isDark: isDark,
+                          onTap: _shareApp,
+                        ),
+                        _ActionRow(
+                          icon: Icons.delete_sweep_rounded,
+                          label: s.clearHistory,
+                          color: const Color(0xFFF39C12),
+                          isDark: isDark,
+                          onTap: () => _confirmClearHistory(context, s),
+                        ),
+                        _ActionRow(
+                          icon: Icons.feedback_rounded,
+                          label: s.feedbackEmail,
+                          color: AppColors.teal,
+                          isDark: isDark,
+                          onTap: _sendFeedback,
                         ),
                       ],
                     ),
@@ -197,22 +205,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       isDark: isDark,
                       delay: 450,
                       children: [
-                        _ToggleRow(
-                          icon: Icons.location_on_rounded,
-                          label: s.location,
-                          subtitle: s.locationDesc,
-                          value: _locationEnabled,
-                          color: AppColors.danger,
-                          isDark: isDark,
-                          onChanged: (v) => setState(() => _locationEnabled = v),
-                        ),
-                        _ActionRow(
-                          icon: Icons.download_rounded,
-                          label: s.exportData,
-                          color: AppColors.info,
-                          isDark: isDark,
-                          onTap: () {},
-                        ),
                         _ActionRow(
                           icon: Icons.delete_forever_rounded,
                           label: s.deleteAccount,
@@ -223,48 +215,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // About section
-                    _Section(
-                      title: s.about,
-                      isDark: isDark,
-                      delay: 550,
-                      children: [
-                        _ActionRow(
-                          icon: Icons.info_outline_rounded,
-                          label: 'Version 1.0.0',
-                          color: AppColors.textSecondary,
-                          isDark: isDark,
-                          trailing: const Text(
-                            'v1.0.0',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          onTap: () {},
-                        ),
-                        _ActionRow(
-                          icon: Icons.privacy_tip_outlined,
-                          label: 'Politique de confidentialité',
-                          color: AppColors.info,
-                          isDark: isDark,
-                          onTap: () {},
-                        ),
-                        _ActionRow(
-                          icon: Icons.star_outline_rounded,
-                          label: 'Noter l\'application',
-                          color: AppColors.accent,
-                          isDark: isDark,
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 20),
                     OutlinedButton.icon(
-                      onPressed: () => context.go('/login'),
+                      onPressed: () async {
+                        await signOutUser(ref);
+                        if (context.mounted) context.go('/login');
+                      },
                       icon: const Icon(Icons.logout_rounded,
                           color: AppColors.danger, size: 18),
                       label: Text(
@@ -294,7 +250,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  void _shareApp() {
+    Share.share('Découvrez EcoScan — l\'app de tri des déchets 🌿\nhttps://ecoscan.app');
+  }
+
+  Future<void> _sendFeedback() async {
+    final uri = Uri.parse('mailto:badreddinehammoucha@gmail.com?subject=EcoScan%20Feedback');
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  void _confirmClearHistory(BuildContext context, AppStrings s) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(s.clearHistory,
+            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+        content: Text(s.clearHistoryConfirm,
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              await StorageService.clearHistory();
+              if (!mounted) return;
+              messenger.showSnackBar(SnackBar(
+                content: Text(s.clearDone,
+                    style: const TextStyle(fontFamily: 'Poppins')),
+                backgroundColor: AppColors.primary,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                margin: const EdgeInsets.all(16),
+              ));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF39C12)),
+            child: Text(s.confirm,
+                style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmDelete(BuildContext context) {
+    final s = AppStrings.of(ref.read(localeProvider).languageCode);
     final passCtrl = TextEditingController();
     bool obscure = true;
 
@@ -303,17 +308,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'Supprimer le compte',
-            style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+          title: Text(
+            s.deleteAccount,
+            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Cette action est irréversible. Confirmez avec votre mot de passe.',
-                style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
+              Text(
+                s.deleteAccountConfirm,
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -339,15 +344,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler',
-                  style: TextStyle(fontFamily: 'Poppins')),
+              child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
             ),
             ElevatedButton(
-              onPressed: () => _deleteAccount(ctx, passCtrl.text),
+              onPressed: () => _deleteAccount(ctx, passCtrl.text, s),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-              child: const Text('Supprimer',
-                  style: TextStyle(
-                      fontFamily: 'Poppins', color: Colors.white)),
+              child: Text(s.delete,
+                  style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
             ),
           ],
         ),
@@ -355,10 +358,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _deleteAccount(BuildContext dlgCtx, String password) async {
+  Future<void> _deleteAccount(BuildContext dlgCtx, String password, AppStrings s) async {
     Navigator.pop(dlgCtx);
     try {
       final user = FirebaseAuth.instance.currentUser!;
+      final uid = user.uid;
       if (user.providerData.any((p) => p.providerId == 'password')) {
         final cred = EmailAuthProvider.credential(
           email: user.email!,
@@ -366,12 +370,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
         await user.reauthenticateWithCredential(cred);
       }
+      // Supprimer le document Firestore avant de supprimer le compte Auth
+      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final msg = e.code == 'wrong-password' || e.code == 'invalid-credential'
-          ? 'Mot de passe incorrect.'
+          ? s.wrongPassword
           : 'Erreur : ${e.message}';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
@@ -445,152 +451,6 @@ class _Section extends StatelessWidget {
         .animate()
         .fadeIn(duration: 400.ms, delay: delay.ms)
         .slideY(begin: 0.05);
-  }
-}
-
-class _ToggleRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String? subtitle;
-  final bool value;
-  final Color color;
-  final bool isDark;
-  final ValueChanged<bool> onChanged;
-  const _ToggleRow({
-    required this.icon,
-    required this.label,
-    this.subtitle,
-    required this.value,
-    required this.color,
-    required this.isDark,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.darkText : AppColors.textPrimary,
-                  ),
-                ),
-                if (subtitle != null)
-                  Text(
-                    subtitle!,
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeTrackColor: AppColors.primary,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DropdownRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final List<String> items;
-  final Color color;
-  final bool isDark;
-  final ValueChanged<String> onChanged;
-  const _DropdownRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.color,
-    required this.isDark,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? AppColors.darkText : AppColors.textPrimary,
-              ),
-            ),
-          ),
-          DropdownButton<String>(
-            value: value,
-            items: items
-                .map((e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(
-                        e,
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                        ),
-                      ),
-                    ))
-                .toList(),
-            onChanged: (v) => v != null ? onChanged(v) : null,
-            underline: const SizedBox.shrink(),
-            icon: const Icon(Icons.expand_more_rounded,
-                color: AppColors.textSecondary, size: 18),
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-            dropdownColor:
-                isDark ? AppColors.darkCard : Colors.white,
-          ),
-        ],
-      ),
-    );
   }
 }
 

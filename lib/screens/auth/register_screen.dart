@@ -11,6 +11,8 @@ import '../../widgets/loading_overlay.dart';
 import '../legal/privacy_policy_screen.dart';
 import '../legal/terms_screen.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 
 // ── Villes marocaines pour l'autocomplétion ───────────────────────────────────
 const _moroccanCities = [
@@ -149,8 +151,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   Future<void> _submit() async {
     if (!_agreedToTerms) {
       _triggerShake();
+      final s = AppStrings.of(ref.read(localeProvider).languageCode);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez accepter les CGU')),
+        SnackBar(content: Text(s.mustAcceptTerms)),
       );
       return;
     }
@@ -183,10 +186,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
   @override
   Widget build(BuildContext context) {
-    final regState = ref.watch(registerProvider);
-    final l10n     = AppLocalizations.of(context)!;
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final step     = regState.step;
+    final regState  = ref.watch(registerProvider);
+    final l10n      = AppLocalizations.of(context)!;
+    final s         = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final isDark    = Theme.of(context).brightness == Brightness.dark;
+    final step      = regState.step;
     final isLoading = regState.status == AuthStatus.loading;
 
     // Écouter les transitions d'état
@@ -300,9 +304,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         controller: _pageCtrl,
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
-                          _buildStep1(isDark, step),
-                          _buildStep2(isDark, step),
-                          _buildStep3(isDark, step),
+                          _buildStep1(isDark, step, s),
+                          _buildStep2(isDark, step, s),
+                          _buildStep3(isDark, step, s),
                         ],
                       ),
                     ),
@@ -367,13 +371,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
         // ── Message de bienvenue après succès ────────────────────────────
         if (regState.status == AuthStatus.success)
-          _WelcomeBanner(firstName: _firstCtrl.text.trim()),
+          _WelcomeBanner(
+            title: s.welcomeMsg(_firstCtrl.text.trim()),
+            subtitle: s.accountCreated,
+          ),
       ],
     );
   }
 
   // ── Étape 1 : Identité ─────────────────────────────────────────────────────
-  Widget _buildStep1(bool isDark, int step) {
+  Widget _buildStep1(bool isDark, int step, AppStrings s) {
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0.1, 0),
@@ -425,7 +432,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 ),
                 const SizedBox(height: 20),
 
-                _sectionTitle('Votre identité', isDark),
+                _sectionTitle(s.yourIdentity, isDark),
                 const SizedBox(height: 16),
 
                 // Prénom + Nom côte à côte
@@ -435,11 +442,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       child: CustomTextField(
                         controller: _firstCtrl,
                         label: AppLocalizations.of(context)!.firstName,
-                        hint: 'Fatima',
+                        hint: s.hintFirstName,
                         prefixIcon: Icons.person_outline_rounded,
                         isDark: isDark,
                         validator: (v) =>
-                            (v == null || v.trim().length < 2) ? 'Requis' : null,
+                            (v == null || v.trim().length < 2) ? s.fieldRequired : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -447,11 +454,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       child: CustomTextField(
                         controller: _lastCtrl,
                         label: AppLocalizations.of(context)!.lastName,
-                        hint: 'Benali',
+                        hint: s.hintLastName,
                         prefixIcon: Icons.badge_outlined,
                         isDark: isDark,
                         validator: (v) =>
-                            (v == null || v.trim().length < 2) ? 'Requis' : null,
+                            (v == null || v.trim().length < 2) ? s.fieldRequired : null,
                       ),
                     ),
                   ],
@@ -459,7 +466,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 const SizedBox(height: 28),
 
                 _NextButton(
-                  label: 'Continuer',
+                  label: s.continue_,
                   onPressed: () => _next(0),
                 ),
               ],
@@ -471,7 +478,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   }
 
   // ── Étape 2 : Accès ────────────────────────────────────────────────────────
-  Widget _buildStep2(bool isDark, int step) {
+  Widget _buildStep2(bool isDark, int step, AppStrings s) {
     final strength = _passStrength(_passCtrl.text);
     final passMatch = _passCtrl.text.isNotEmpty &&
         _passCtrl.text == _confirmCtrl.text;
@@ -490,19 +497,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('Vos accès', isDark),
+                _sectionTitle(s.yourAccess, isDark),
                 const SizedBox(height: 16),
 
                 // Email
                 CustomTextField(
                   controller: _emailCtrl,
                   label: AppLocalizations.of(context)!.email,
-                  hint: 'exemple@email.com',
+                  hint: s.hintEmail,
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   isDark: isDark,
                   validator: (v) =>
-                      (v == null || !v.contains('@')) ? 'Email invalide' : null,
+                      (v == null || !v.contains('@')) ? s.invalidEmail : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -526,7 +533,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     ),
                   ),
                   validator: (v) =>
-                      (v == null || v.length < 6) ? 'Minimum 6 caractères' : null,
+                      (v == null || v.length < 6) ? s.minPassword : null,
                 ),
                 const SizedBox(height: 10),
 
@@ -572,13 +579,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     ],
                   ),
                   validator: (v) => v != _passCtrl.text
-                      ? 'Les mots de passe ne correspondent pas'
+                      ? s.passwordsMismatch
                       : null,
                 ),
                 const SizedBox(height: 28),
 
                 _NextButton(
-                  label: 'Continuer',
+                  label: s.continue_,
                   onPressed: () => _next(1),
                 ),
               ],
@@ -590,7 +597,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   }
 
   // ── Étape 3 : Localisation + CGU ──────────────────────────────────────────
-  Widget _buildStep3(bool isDark, int step) {
+  Widget _buildStep3(bool isDark, int step, AppStrings s) {
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0.1, 0),
@@ -605,19 +612,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('Votre localisation', isDark),
+                _sectionTitle(s.yourLocation, isDark),
                 const SizedBox(height: 16),
 
                 // Champ ville avec dropdown expand animé
                 CustomTextField(
                   controller: _cityCtrl,
                   label: AppLocalizations.of(context)!.city,
-                  hint: 'Ex : Casablanca',
+                  hint: s.hintCity,
                   prefixIcon: Icons.location_city_rounded,
                   isDark: isDark,
                   onChanged: (_) {},
                   validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Ville requise' : null,
+                      (v == null || v.trim().isEmpty) ? s.cityRequired : null,
                 ),
 
                 // Dropdown de suggestions avec animation expand
@@ -682,13 +689,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 _TermsCheckbox(
                   agreed: _agreedToTerms,
                   isDark: isDark,
+                  acceptText: s.acceptTerms,
+                  termsText: s.termsOfUse,
+                  andText: s.andThe,
+                  privacyText: s.privacyPolicyLink,
                   onChanged: (v) => setState(() => _agreedToTerms = v),
                 ),
                 const SizedBox(height: 28),
 
                 // Bouton créer compte
                 _NextButton(
-                  label: 'Créer mon compte 🌿',
+                  label: s.createAccount2,
                   onPressed: () => _next(2),
                 ),
               ],
@@ -838,11 +849,19 @@ class _PasswordStrength extends StatelessWidget {
 class _TermsCheckbox extends StatelessWidget {
   final bool agreed;
   final bool isDark;
+  final String acceptText;
+  final String termsText;
+  final String andText;
+  final String privacyText;
   final ValueChanged<bool> onChanged;
 
   const _TermsCheckbox({
     required this.agreed,
     required this.isDark,
+    required this.acceptText,
+    required this.termsText,
+    required this.andText,
+    required this.privacyText,
     required this.onChanged,
   });
 
@@ -882,7 +901,7 @@ class _TermsCheckbox extends StatelessWidget {
               child: Wrap(
                 children: [
                   Text(
-                    "J'accepte les ",
+                    acceptText,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
@@ -897,9 +916,9 @@ class _TermsCheckbox extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (_) => const TermsScreen()),
                     ),
-                    child: const Text(
-                      "Conditions d'utilisation",
-                      style: TextStyle(
+                    child: Text(
+                      termsText,
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
                         color: AppColors.primary,
@@ -909,7 +928,7 @@ class _TermsCheckbox extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    ' et la ',
+                    andText,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
@@ -924,9 +943,9 @@ class _TermsCheckbox extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (_) => const PrivacyPolicyScreen()),
                     ),
-                    child: const Text(
-                      'Politique de confidentialité',
-                      style: TextStyle(
+                    child: Text(
+                      privacyText,
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
                         color: AppColors.primary,
@@ -993,8 +1012,9 @@ class _NextButton extends StatelessWidget {
 
 // ── Message de bienvenue post-inscription ─────────────────────────────────────
 class _WelcomeBanner extends StatelessWidget {
-  final String firstName;
-  const _WelcomeBanner({required this.firstName});
+  final String title;
+  final String subtitle;
+  const _WelcomeBanner({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) => Positioned.fill(
@@ -1008,7 +1028,7 @@ class _WelcomeBanner extends StatelessWidget {
                     size: 64, color: AppColors.primary),
                 const SizedBox(height: 16),
                 Text(
-                  'Bienvenue ${firstName.isNotEmpty ? firstName : ''} ! 🌿',
+                  title,
                   style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 22,
@@ -1018,9 +1038,9 @@ class _WelcomeBanner extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Votre compte a été créé avec succès.',
-                  style: TextStyle(
+                Text(
+                  subtitle,
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 14,
                     color: AppColors.textSecondary,

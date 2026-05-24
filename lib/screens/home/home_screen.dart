@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/did_you_know_data.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
@@ -229,7 +230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 16),
 
                 // ── Impact environnemental (3 cartes) ──────────────────
-                _ImpactRow(anim: _counterAnim, user: user)
+                _ImpactRow(anim: _counterAnim, user: user, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 180.ms)
                     .slideY(begin: 0.08),
@@ -243,21 +244,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 20),
 
                 // ── Bouton Scan CTA ────────────────────────────────────
-                const _ScanCTACard()
+                _ScanCTACard(scanLabel: s.scanProduct, analyzeLabel: s.analyzeEcoImpact)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 220.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 20),
 
                 // ── Défi du jour ───────────────────────────────────────
-                _DailyChallengeCard(anim: _counterAnim)
+                _DailyChallengeCard(anim: _counterAnim, dailyLabel: s.dailyChallenge, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 260.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 24),
 
                 // ── Actions rapides ────────────────────────────────────
-                _SectionTitle(title: s.quickActions, onSeeAll: null)
+                _SectionTitle(title: s.quickActions, onSeeAll: null, seeAllLabel: null)
                     .animate().fadeIn(duration: 280.ms, delay: 300.ms),
                 const SizedBox(height: 14),
 
@@ -284,22 +285,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 24),
 
                 // ── Catégories de tri ──────────────────────────────────
-                _SectionTitle(title: 'Catégories de tri', onSeeAll: () => context.go('/guide'))
+                _SectionTitle(title: s.sortingCategories, seeAllLabel: s.seeAll, onSeeAll: () => context.go('/guide'))
                     .animate().fadeIn(duration: 280.ms, delay: 360.ms),
                 const SizedBox(height: 12),
-                const _CategoriesRow()
+                _CategoriesRow(s: s)
                     .animate().fadeIn(duration: 350.ms, delay: 380.ms).slideX(begin: 0.08),
                 const SizedBox(height: 24),
 
                 // ── Conseil éco ────────────────────────────────────────
-                _EcoTipBanner(s: s)
+                _EcoTipBanner(s: s, lang: lang)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 400.ms)
                     .slideX(begin: 0.08),
                 const SizedBox(height: 20),
 
                 // ── Impact communautaire ───────────────────────────────
-                _CommunityCard(anim: _counterAnim)
+                _CommunityCard(anim: _counterAnim, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 430.ms)
                     .slideY(begin: 0.08),
@@ -308,6 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 // ── Activité récente ───────────────────────────────────
                 _SectionTitle(
                   title: s.recentActivity,
+                  seeAllLabel: s.seeAll,
                   onSeeAll: () => context.go('/history'),
                 ).animate().fadeIn(duration: 280.ms, delay: 460.ms),
                 const SizedBox(height: 12),
@@ -330,7 +332,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Center(
             child: Text(
-              'Aucune activité — scannez votre premier déchet !',
+              s.noActivity,
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 13,
@@ -533,16 +535,17 @@ class _WeeklyCard extends StatelessWidget {
 class _ImpactRow extends StatelessWidget {
   final Animation<double> anim;
   final UserModel user;
-  const _ImpactRow({required this.anim, required this.user});
+  final AppStrings s;
+  const _ImpactRow({required this.anim, required this.user, required this.s});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final co2 = user.co2Saved;
     final items = [
-      (Icons.cloud_outlined,      '${(co2 / 1000).toStringAsFixed(1)} kg', 'CO₂ évité',  const Color(0xFF27AE60)),
-      (Icons.park_outlined,       (co2 / 8000).toStringAsFixed(2),         'Arbres éq.', const Color(0xFF2E7D32)),
-      (Icons.water_drop_outlined, '${(co2 * 0.05).toStringAsFixed(0)} L',  'Eau éco.',   const Color(0xFF1ABC9C)),
+      (Icons.cloud_outlined,      '${(co2 / 1000).toStringAsFixed(1)} kg', s.co2Saved,    const Color(0xFF27AE60)),
+      (Icons.park_outlined,       (co2 / 8000).toStringAsFixed(2),         s.treesEquiv,  const Color(0xFF2E7D32)),
+      (Icons.water_drop_outlined, '${(co2 * 0.05).toStringAsFixed(0)} L',  s.waterSaved,  const Color(0xFF1ABC9C)),
     ];
     return Row(
       children: [
@@ -600,7 +603,9 @@ class _ImpactRow extends StatelessWidget {
 
 // ── Bouton Scan CTA ───────────────────────────────────────────────────────────
 class _ScanCTACard extends StatefulWidget {
-  const _ScanCTACard();
+  final String scanLabel;
+  final String analyzeLabel;
+  const _ScanCTACard({required this.scanLabel, required this.analyzeLabel});
   @override
   State<_ScanCTACard> createState() => _ScanCTACardState();
 }
@@ -663,20 +668,20 @@ class _ScanCTACardState extends State<_ScanCTACard>
               ),
             ),
             const SizedBox(width: 16),
-            const Column(
+            Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Scanner un produit',
-                  style: TextStyle(
+                  widget.scanLabel,
+                  style: const TextStyle(
                     fontFamily: 'Poppins', fontSize: 16,
                     fontWeight: FontWeight.bold, color: Colors.white,
                   ),
                 ),
                 Text(
-                  "Analysez l'impact écologique",
-                  style: TextStyle(
+                  widget.analyzeLabel,
+                  style: const TextStyle(
                     fontFamily: 'Poppins', fontSize: 12, color: Colors.white70,
                   ),
                 ),
@@ -696,7 +701,9 @@ class _ScanCTACardState extends State<_ScanCTACard>
 // ── Défi du jour ─────────────────────────────────────────────────────────────
 class _DailyChallengeCard extends StatelessWidget {
   final Animation<double> anim;
-  const _DailyChallengeCard({required this.anim});
+  final String dailyLabel;
+  final AppStrings s;
+  const _DailyChallengeCard({required this.anim, required this.dailyLabel, required this.s});
 
   @override
   Widget build(BuildContext context) {
@@ -730,10 +737,10 @@ class _DailyChallengeCard extends StatelessWidget {
                     color: Color(0xFFF39C12), size: 20),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Défi du jour',
-                  style: TextStyle(
+                  dailyLabel,
+                  style: const TextStyle(
                     fontFamily: 'Poppins', fontSize: 14,
                     fontWeight: FontWeight.bold, color: Color(0xFFF39C12),
                   ),
@@ -757,16 +764,16 @@ class _DailyChallengeCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Scannez 3 articles en plastique',
+            s.dailyChallengeTask,
             style: TextStyle(
               fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600,
               color: isDark ? AppColors.darkText : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '1 sur 3 complété  ·  Expire dans 8 h',
-            style: TextStyle(
+          Text(
+            s.challengeProgress1of3,
+            style: const TextStyle(
               fontFamily: 'Poppins', fontSize: 12, color: AppColors.textSecondary,
             ),
           ),
@@ -791,18 +798,19 @@ class _DailyChallengeCard extends StatelessWidget {
 
 // ── Catégories de tri (scroll horizontal) ────────────────────────────────────
 class _CategoriesRow extends StatelessWidget {
-  const _CategoriesRow();
+  final AppStrings s;
+  const _CategoriesRow({required this.s});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = [
-      (Icons.local_drink_outlined,   'Plastique',    const Color(0xFFFDD835)),
-      (Icons.wine_bar_outlined,       'Verre',         const Color(0xFF43A047)),
-      (Icons.newspaper_rounded,       'Papier',        const Color(0xFF1565C0)),
-      (Icons.hardware_rounded,        'Métal',         const Color(0xFF546E7A)),
-      (Icons.compost_rounded,         'Organique',     const Color(0xFF795548)),
-      (Icons.devices_other_rounded,   'Électronique',  const Color(0xFF7B1FA2)),
+      (Icons.local_drink_outlined,  s.catPlastic,    const Color(0xFFFDD835)),
+      (Icons.wine_bar_outlined,     s.catGlass,      const Color(0xFF43A047)),
+      (Icons.newspaper_rounded,     s.catPaper,      const Color(0xFF1565C0)),
+      (Icons.hardware_rounded,      s.catMetal,      const Color(0xFF546E7A)),
+      (Icons.compost_rounded,       s.catOrganic,    const Color(0xFF795548)),
+      (Icons.devices_other_rounded, s.catElectronic, const Color(0xFF7B1FA2)),
     ];
     return SizedBox(
       height: 90,
@@ -859,84 +867,17 @@ class _CategoriesRow extends StatelessWidget {
   }
 }
 
-// ── Daily eco-facts (60 facts, one per day) ───────────────────────────────────
-const _kHomeFacts = [
-  'Un sac plastique met 400 ans à se dégrader dans la nature.',
-  "Recycler une canette d'aluminium économise 95 % d'énergie par rapport à la production neuve.",
-  'Chaque tonne de papier recyclé sauve 17 arbres et économise 2,5 tonnes de CO₂.',
-  'Le Maroc produit environ 5 millions de tonnes de déchets solides par an.',
-  'Une bouteille en verre peut être recyclée à l\'infini sans perdre sa pureté.',
-  'Les déchets électroniques représentent 70 % des toxines dans les décharges mondiales.',
-  'Recycler une bouteille en verre économise l\'énergie pour alimenter une ampoule 4 heures.',
-  'Le plastique PET (bouteilles d\'eau) peut être recyclé en fibres textiles pour les vêtements.',
-  'Un téléphone portable contient de l\'or, de l\'argent et du cuivre récupérables.',
-  'Les emballages représentent 30 % des déchets ménagers au Maroc.',
-  'La décomposition des déchets organiques produit du méthane, 25 × plus puissant que le CO₂.',
-  'Composter 1 kg de déchets organiques réduit les émissions de 0,5 kg de CO₂.',
-  'Le verre met 4 000 ans à se décomposer dans la nature.',
-  'Une pile bouton peut contaminer 400 000 litres d\'eau si mal éliminée.',
-  'Le Plan National des Déchets du Maroc vise 100 % de collecte d\'ici 2030.',
-  'Les textiles non recyclés représentent 10 % des émissions mondiales de carbone.',
-  '1 tonne d\'aluminium recyclé économise 4 tonnes de bauxite.',
-  'Les déchets alimentaires représentent un tiers de tous les aliments produits dans le monde.',
-  'Un journal peut être recyclé jusqu\'à 7 fois avant que ses fibres ne soient trop courtes.',
-  'Les bouteilles en plastique mettent entre 400 et 1 000 ans à se dégrader.',
-  'Le Maroc est le premier pays africain à interdire les sacs plastiques à usage unique (2016).',
-  'Recycler 1 tonne de plastique économise 1,8 tonne de pétrole.',
-  'Les piles usagées contiennent du mercure, du cadmium et du plomb – métaux lourds très toxiques.',
-  'La production d\'une voiture génère autant de CO₂ que la conduite pendant 2 ans.',
-  'Trier vos déchets augmente le taux de recyclage et réduit les coûts de traitement.',
-  'Le carton peut être recyclé jusqu\'à 5 fois avant de perdre ses propriétés.',
-  'En recyclant vos DEEE, vous récupérez des matières premières rares et précieuses.',
-  '80 % des matériaux d\'un smartphone peuvent être récupérés et réutilisés.',
-  'Un seul arbre peut absorber jusqu\'à 22 kg de CO₂ par an.',
-  'Les déchets ménagers marocains contiennent 60–70 % de déchets organiques.',
-  'La production d\'une tonne de papier vierge consomme 100 000 litres d\'eau.',
-  'Le recyclage du verre réduit les émissions de CO₂ de 20 % par rapport au neuf.',
-  'L\'économie circulaire pourrait créer 4 millions d\'emplois en Afrique d\'ici 2030.',
-  'Les micro-plastiques ont été retrouvés dans le sang humain et dans l\'Himalaya.',
-  'Chaque Marocain produit en moyenne 0,8 kg de déchets par jour.',
-  'Le compostage réduit de 30 % la quantité de déchets envoyés en décharge.',
-  'Les cannettes recyclées peuvent être de retour sur les étagères en 60 jours.',
-  'Le plastique PVC (n°3) est difficile à recycler et libère des toxines à l\'incinération.',
-  '91 % du plastique produit dans le monde n\'a jamais été recyclé.',
-  'Racheter une bouteille d\'eau coûte 1 000 fois plus que l\'eau du robinet.',
-  'Le Maroc ambitionne d\'atteindre 52 % d\'énergies renouvelables d\'ici 2030.',
-  'Une boîte de conserve en acier met 50 ans à se dégrader dans la nature.',
-  'Le plastique oxodégradable n\'est PAS biodégradable – il se fragmente en micro-plastiques.',
-  'Les huiles usagées ne doivent jamais être versées dans les égouts.',
-  '1 litre d\'huile de moteur peut contaminer 1 million de litres d\'eau.',
-  'Les médicaments périmés doivent être rapportés en pharmacie, jamais dans les toilettes.',
-  'Le bois traité (vernis, peint) ne peut pas être composté ni brûlé sans filtres.',
-  'Les magazines glacés sont plus difficiles à recycler que le papier ordinaire.',
-  'L\'impression recto-verso économise 50 % de papier.',
-  'Un foyer marocain jette en moyenne 30 % de sa nourriture achetée.',
-  'La fast fashion produit 20 % de la pollution des eaux mondiales.',
-  'Réparer plutôt que remplacer réduit de 80 % l\'empreinte carbone d\'un appareil.',
-  'Acheter en vrac élimine jusqu\'à 40 % des emballages plastiques.',
-  'Un sac en toile doit être utilisé au moins 50 fois pour compenser son impact de production.',
-  'Le recyclage d\'une tonne de plastique évite l\'émission de 1,5 tonne de CO₂.',
-  'Les décharges sauvages coûtent 3 × plus cher à nettoyer qu\'une collecte organisée.',
-  '76 000 tonnes de plastique entrent dans la Méditerranée chaque année.',
-  'Marrakech a recyclé 15 000 tonnes de déchets en 2022, une première pour le Maroc.',
-  'Le tri sélectif est un geste citoyen qui bénéficie à toute la planète.',
-  'Chaque canette recyclée économise assez d\'énergie pour alimenter une TV pendant 3 heures.',
-  'Le papier d\'aluminium peut être recyclé avec les métaux si bien nettoyé.',
-];
-
-String get _todayHomeFact {
-  final dayIndex = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
-  return _kHomeFacts[dayIndex % _kHomeFacts.length];
-}
-
 // ── Conseil éco ───────────────────────────────────────────────────────────────
 class _EcoTipBanner extends StatelessWidget {
   final AppStrings s;
-  const _EcoTipBanner({required this.s});
+  final String lang;
+  const _EcoTipBanner({required this.s, required this.lang});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dayIndex = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+    final fact = allFacts[dayIndex % allFacts.length];
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -971,7 +912,7 @@ class _EcoTipBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _todayHomeFact,
+                  fact.factFor(lang),
                   style: TextStyle(
                     fontFamily: 'Poppins', fontSize: 12, height: 1.4,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
@@ -989,7 +930,8 @@ class _EcoTipBanner extends StatelessWidget {
 // ── Impact communautaire ──────────────────────────────────────────────────────
 class _CommunityCard extends StatelessWidget {
   final Animation<double> anim;
-  const _CommunityCard({required this.anim});
+  final AppStrings s;
+  const _CommunityCard({required this.anim, required this.s});
 
   @override
   Widget build(BuildContext context) {
@@ -1014,7 +956,7 @@ class _CommunityCard extends StatelessWidget {
               const Icon(Icons.people_alt_rounded, color: AppColors.teal, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Impact communautaire',
+                s.communityImpact,
                 style: TextStyle(
                   fontFamily: 'Poppins', fontSize: 15, fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.darkText : AppColors.textPrimary,
@@ -1025,9 +967,9 @@ class _CommunityCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _CommStat(label: 'Scans totaux', value: 12847, anim: anim, color: AppColors.teal),
-              _CommStat(label: 'kg recyclés',  value: 4521,  anim: anim, color: AppColors.primary),
-              _CommStat(label: 'Utilisateurs', value: 384,   anim: anim, color: const Color(0xFF9B59B6)),
+              _CommStat(label: s.totalScansComm, value: 12847, anim: anim, color: AppColors.teal),
+              _CommStat(label: s.kgRecycled,     value: 4521,  anim: anim, color: AppColors.primary),
+              _CommStat(label: s.users,           value: 384,   anim: anim, color: const Color(0xFF9B59B6)),
             ],
           ),
           const SizedBox(height: 14),
@@ -1045,7 +987,7 @@ class _CommunityCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '68% vers le prochain niveau communautaire',
+            s.communityLevelText,
             style: TextStyle(
               fontFamily: 'Poppins', fontSize: 11,
               color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
@@ -1103,7 +1045,8 @@ class _CommStat extends StatelessWidget {
 class _SectionTitle extends StatelessWidget {
   final String title;
   final VoidCallback? onSeeAll;
-  const _SectionTitle({required this.title, this.onSeeAll});
+  final String? seeAllLabel;
+  const _SectionTitle({required this.title, this.onSeeAll, this.seeAllLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -1122,9 +1065,9 @@ class _SectionTitle extends StatelessWidget {
         if (onSeeAll != null)
           TextButton(
             onPressed: onSeeAll,
-            child: const Text(
-              'Voir tout',
-              style: TextStyle(
+            child: Text(
+              seeAllLabel ?? 'Voir tout',
+              style: const TextStyle(
                 fontFamily: 'Poppins', color: AppColors.primary,
                 fontSize: 13, fontWeight: FontWeight.w600,
               ),

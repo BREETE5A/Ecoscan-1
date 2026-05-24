@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+import '../../services/storage_service.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -15,108 +16,35 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   String _filter = 'all';
   String _searchQuery = '';
+  List<Map<String, dynamic>> _history = [];
+  bool _loading = true;
 
-  static const _items = [
-    _ScanItem(
-      name: 'Bouteille en plastique',
-      nameEn: 'Plastic bottle',
-      nameAr: 'زجاجة بلاستيكية',
-      category: 'plastic',
-      recyclable: true,
-      points: 15,
-      time: 'Il y a 2 h',
-      timeEn: '2h ago',
-      timeAr: 'منذ ساعتين',
-      icon: Icons.local_drink_rounded,
-      color: AppColors.plastic,
-    ),
-    _ScanItem(
-      name: 'Boîte de conserve',
-      nameEn: 'Metal can',
-      nameAr: 'علبة معلبات',
-      category: 'metal',
-      recyclable: true,
-      points: 20,
-      time: 'Il y a 5 h',
-      timeEn: '5h ago',
-      timeAr: 'منذ 5 ساعات',
-      icon: Icons.breakfast_dining_rounded,
-      color: AppColors.metal,
-    ),
-    _ScanItem(
-      name: 'Journal',
-      nameEn: 'Newspaper',
-      nameAr: 'جريدة',
-      category: 'paper',
-      recyclable: true,
-      points: 10,
-      time: 'Hier, 14:30',
-      timeEn: 'Yesterday, 14:30',
-      timeAr: 'أمس، 14:30',
-      icon: Icons.article_rounded,
-      color: AppColors.paper,
-    ),
-    _ScanItem(
-      name: 'Bouteille en verre',
-      nameEn: 'Glass bottle',
-      nameAr: 'زجاجة زجاجية',
-      category: 'glass',
-      recyclable: true,
-      points: 25,
-      time: 'Hier, 09:15',
-      timeEn: 'Yesterday, 09:15',
-      timeAr: 'أمس، 09:15',
-      icon: Icons.wine_bar_rounded,
-      color: AppColors.glass,
-    ),
-    _ScanItem(
-      name: 'Emballage alimentaire',
-      nameEn: 'Food packaging',
-      nameAr: 'عبوة غذائية',
-      category: 'plastic',
-      recyclable: false,
-      points: 5,
-      time: 'Il y a 2 j',
-      timeEn: '2 days ago',
-      timeAr: 'منذ يومين',
-      icon: Icons.fastfood_rounded,
-      color: AppColors.textSecondary,
-    ),
-    _ScanItem(
-      name: 'Téléphone cassé',
-      nameEn: 'Broken phone',
-      nameAr: 'هاتف مكسور',
-      category: 'electronics',
-      recyclable: true,
-      points: 40,
-      time: 'Il y a 3 j',
-      timeEn: '3 days ago',
-      timeAr: 'منذ 3 أيام',
-      icon: Icons.phone_android_rounded,
-      color: AppColors.electronics,
-    ),
-    _ScanItem(
-      name: 'Épluchures de légumes',
-      nameEn: 'Vegetable peelings',
-      nameAr: 'قشور الخضروات',
-      category: 'organic',
-      recyclable: true,
-      points: 10,
-      time: 'Il y a 4 j',
-      timeEn: '4 days ago',
-      timeAr: 'منذ 4 أيام',
-      icon: Icons.eco_rounded,
-      color: AppColors.organic,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
 
-  List<_ScanItem> get _filtered {
-    return _items.where((item) {
-      if (_filter == 'recyclable' && !item.recyclable) return false;
-      if (_filter == 'nonRecyclable' && item.recyclable) return false;
+  Future<void> _loadHistory() async {
+    final raw = await StorageService.getHistory();
+    if (mounted) {
+      setState(() {
+        _history = raw.map((e) => Map<String, dynamic>.from(e)).toList();
+        _loading = false;
+      });
+    }
+  }
+
+  bool _isRecyclable(String binColor) => binColor != 'noir';
+
+  List<Map<String, dynamic>> get _filtered {
+    return _history.where((item) {
+      final binColor = (item['bin_color'] as String?) ?? 'gris';
+      final category = (item['category'] as String?) ?? '';
+      if (_filter == 'recyclable' && !_isRecyclable(binColor)) return false;
+      if (_filter == 'nonRecyclable' && _isRecyclable(binColor)) return false;
       if (_searchQuery.isNotEmpty &&
-          !item.name.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-          !item.nameEn.toLowerCase().contains(_searchQuery.toLowerCase())) {
+          !category.toLowerCase().contains(_searchQuery.toLowerCase())) {
         return false;
       }
       return true;
@@ -128,6 +56,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final lang = ref.watch(localeProvider).languageCode;
     final s = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final filtered = _filtered;
 
     return Scaffold(
@@ -149,7 +84,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       itemBuilder: (_, i) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _HistoryTile(
-                          item: filtered[i],
+                          entry: filtered[i],
                           isDark: isDark,
                           lang: lang,
                           delay: i * 60,
@@ -179,7 +114,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ),
           ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           Text(
-            '${_items.length} ${_filter == 'all' ? (s.totalScans.toLowerCase()) : ''}',
+            '${_history.length} ${_filter == 'all' ? (s.totalScans.toLowerCase()) : ''}',
             style: const TextStyle(
               fontFamily: 'Poppins',
               fontSize: 13,
@@ -192,8 +127,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   Widget _buildSummaryRow(AppStrings s, bool isDark) {
-    final totalPts = _items.fold(0, (sum, i) => sum + i.points);
-    final recyclableCount = _items.where((i) => i.recyclable).length;
+    final totalPts = _history.length * 10;
+    final recyclableCount = _history.where((i) {
+      final binColor = (i['bin_color'] as String?) ?? 'gris';
+      return _isRecyclable(binColor);
+    }).length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
@@ -201,7 +139,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         children: [
           _StatChip(
             label: s.totalScans,
-            value: '${_items.length}',
+            value: '${_history.length}',
             icon: Icons.qr_code_scanner_rounded,
             color: AppColors.primary,
             isDark: isDark,
@@ -219,7 +157,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           const SizedBox(width: 10),
           _StatChip(
             label: s.recyclable,
-            value: '$recyclableCount/${_items.length}',
+            value: '$recyclableCount/${_history.length}',
             icon: Icons.recycling_rounded,
             color: AppColors.teal,
             isDark: isDark,
@@ -307,8 +245,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     fontFamily: 'Poppins',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color:
-                        active ? Colors.white : AppColors.textSecondary,
+                    color: active ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -418,32 +355,100 @@ class _StatChip extends StatelessWidget {
 }
 
 class _HistoryTile extends StatelessWidget {
-  final _ScanItem item;
+  final Map<String, dynamic> entry;
   final bool isDark;
   final String lang;
   final int delay;
 
   const _HistoryTile({
-    required this.item,
+    required this.entry,
     required this.isDark,
     required this.lang,
     required this.delay,
   });
 
-  String get _name => lang == 'en'
-      ? item.nameEn
-      : lang == 'ar'
-          ? item.nameAr
-          : item.name;
+  String get _category => (entry['category'] as String?) ?? 'Inconnu';
+  String get _binColor => (entry['bin_color'] as String?) ?? 'gris';
+  bool get _recyclable => _binColor != 'noir';
 
-  String get _time => lang == 'en'
-      ? item.timeEn
-      : lang == 'ar'
-          ? item.timeAr
-          : item.time;
+  String get _relativeTime {
+    final raw = (entry['scanned_at'] as String?) ?? '';
+    if (raw.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(raw);
+      final diff = DateTime.now().difference(dt);
+      if (lang == 'ar') {
+        if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
+        if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعات';
+        if (diff.inDays == 1) return 'أمس';
+        return 'منذ ${diff.inDays} أيام';
+      } else if (lang == 'en') {
+        if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+        if (diff.inHours < 24) return '${diff.inHours}h ago';
+        if (diff.inDays == 1) return 'Yesterday';
+        return '${diff.inDays} days ago';
+      } else if (lang == 'es') {
+        if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
+        if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
+        if (diff.inDays == 1) return 'Ayer';
+        return 'Hace ${diff.inDays} días';
+      } else {
+        if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
+        if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
+        if (diff.inDays == 1) return 'Hier';
+        return 'Il y a ${diff.inDays} j';
+      }
+    } catch (_) {
+      return '';
+    }
+  }
+
+  IconData get _icon {
+    switch (_category.toLowerCase()) {
+      case 'plastique':
+        return Icons.local_drink_rounded;
+      case 'verre':
+        return Icons.wine_bar_rounded;
+      case 'métal':
+      case 'metal':
+        return Icons.breakfast_dining_rounded;
+      case 'papier':
+        return Icons.article_rounded;
+      case 'carton':
+        return Icons.inventory_2_rounded;
+      case 'électronique':
+      case 'deee':
+        return Icons.phone_android_rounded;
+      case 'organique':
+        return Icons.eco_rounded;
+      default:
+        return Icons.delete_outline_rounded;
+    }
+  }
+
+  Color get _color {
+    switch (_binColor) {
+      case 'jaune':
+        return AppColors.plastic;
+      case 'vert':
+        return AppColors.glass;
+      case 'bleu':
+        return AppColors.paper;
+      case 'gris':
+        return AppColors.metal;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final recyclableLabel = lang == 'en'
+        ? (_recyclable ? 'Recyclable' : 'Non-recyclable')
+        : lang == 'ar'
+            ? (_recyclable ? 'قابل للتدوير' : 'غير قابل للتدوير')
+            : (_recyclable ? 'Recyclable' : 'Non recyclable');
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -462,10 +467,10 @@ class _HistoryTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: item.color.withValues(alpha: 0.12),
+              color: _color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(item.icon, color: item.color, size: 22),
+            child: Icon(_icon, color: _color, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -473,7 +478,7 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _name,
+                  _category,
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 14,
@@ -486,17 +491,17 @@ class _HistoryTile extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      item.recyclable
+                      _recyclable
                           ? Icons.recycling_rounded
                           : Icons.delete_outline_rounded,
                       size: 12,
-                      color: item.recyclable
+                      color: _recyclable
                           ? AppColors.primary
                           : AppColors.danger,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _time,
+                      _relativeTime,
                       style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 11,
@@ -511,8 +516,8 @@ class _HistoryTile extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '+${item.points} pts',
+              const Text(
+                '+10 pts',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
@@ -525,26 +530,18 @@ class _HistoryTile extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: item.recyclable
+                  color: _recyclable
                       ? AppColors.primary.withValues(alpha: 0.1)
                       : AppColors.danger.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  lang == 'en'
-                      ? (item.recyclable ? 'Recyclable' : 'Non-recyclable')
-                      : lang == 'ar'
-                          ? (item.recyclable
-                              ? 'قابل للتدوير'
-                              : 'غير قابل للتدوير')
-                          : (item.recyclable ? 'Recyclable' : 'Non recyclable'),
+                  recyclableLabel,
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: item.recyclable
-                        ? AppColors.primary
-                        : AppColors.danger,
+                    color: _recyclable ? AppColors.primary : AppColors.danger,
                   ),
                 ),
               ),
@@ -557,32 +554,4 @@ class _HistoryTile extends StatelessWidget {
         .fadeIn(duration: 350.ms)
         .slideX(begin: 0.05, duration: 350.ms);
   }
-}
-
-class _ScanItem {
-  final String name;
-  final String nameEn;
-  final String nameAr;
-  final String category;
-  final bool recyclable;
-  final int points;
-  final String time;
-  final String timeEn;
-  final String timeAr;
-  final IconData icon;
-  final Color color;
-
-  const _ScanItem({
-    required this.name,
-    required this.nameEn,
-    required this.nameAr,
-    required this.category,
-    required this.recyclable,
-    required this.points,
-    required this.time,
-    required this.timeEn,
-    required this.timeAr,
-    required this.icon,
-    required this.color,
-  });
 }

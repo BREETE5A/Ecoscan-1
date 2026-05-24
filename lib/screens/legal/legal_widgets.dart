@@ -14,6 +14,7 @@ class LegalHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
@@ -23,18 +24,21 @@ class LegalHeader extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D6A4F),
+              color: isDark ? const Color(0xFF52B788) : const Color(0xFF2D6A4F),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              fontSize: 13,
+            ),
           ),
-          const Divider(height: 32),
+          Divider(height: 32, color: isDark ? Colors.white24 : Colors.black12),
         ],
       ),
     );
@@ -53,6 +57,7 @@ class LegalSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
@@ -60,19 +65,19 @@ class LegalSection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3748),
+              color: isDark ? Colors.white : const Color(0xFF2D3748),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.6,
-              color: Color(0xFF4A5568),
+              color: isDark ? Colors.grey[300] : const Color(0xFF4A5568),
             ),
           ),
         ],

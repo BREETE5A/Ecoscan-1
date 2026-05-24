@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../l10n/app_strings.dart';
+import '../providers/locale_provider.dart';
 import '../theme/app_theme.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
@@ -79,6 +81,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     final navBg = isDark ? AppColors.darkSurface : Colors.white;
     final loc = GoRouterState.of(context).uri.path;
     final showBotFab = !loc.startsWith('/chat') && !loc.startsWith('/scan') && !loc.startsWith('/map');
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
 
     return Scaffold(
       body: Stack(
@@ -91,7 +94,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
               top: 0,
               left: 0,
               right: 0,
-              child: _OfflineBanner(),
+              child: _OfflineBanner(offlineText: s.offlineBanner),
             ),
         ],
       ),
@@ -125,14 +128,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                     _NavItem(
                       icon: Icons.home_outlined,
                       activeIcon: Icons.home_rounded,
-                      label: 'Accueil',
+                      label: s.navHome,
                       selected: idx == 0,
                       onTap: () => context.go('/home'),
                     ),
                     _NavItem(
                       icon: Icons.map_outlined,
                       activeIcon: Icons.map_rounded,
-                      label: 'Carte',
+                      label: s.navMap,
                       selected: idx == 1,
                       onTap: () => context.go('/map'),
                     ),
@@ -140,14 +143,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                     _NavItem(
                       icon: Icons.menu_book_outlined,
                       activeIcon: Icons.menu_book_rounded,
-                      label: 'Guide',
+                      label: s.navGuide,
                       selected: idx == 3,
                       onTap: () => context.go('/guide'),
                     ),
                     _NavItem(
                       icon: Icons.person_outline_rounded,
                       activeIcon: Icons.person_rounded,
-                      label: 'Profil',
+                      label: s.navProfile,
                       selected: idx == 4,
                       onTap: () => context.go('/profile'),
                     ),
@@ -173,6 +176,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
 // ── Offline Banner ────────────────────────────────────────────────────────────
 
 class _OfflineBanner extends StatelessWidget {
+  final String offlineText;
+  const _OfflineBanner({required this.offlineText});
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -192,10 +198,10 @@ class _OfflineBanner extends StatelessWidget {
               const Icon(Icons.offline_bolt_rounded,
                   color: Colors.white, size: 18),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Mode hors-ligne — Analyse TFLite locale activée',
-                  style: TextStyle(
+                  offlineText,
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -300,14 +306,14 @@ class _EcoBotFabState extends State<_EcoBotFab>
 
 // ── EcoBot Bottom Sheet ───────────────────────────────────────────────────────
 
-class _EcoBotSheet extends StatefulWidget {
+class _EcoBotSheet extends ConsumerStatefulWidget {
   const _EcoBotSheet();
 
   @override
-  State<_EcoBotSheet> createState() => _EcoBotSheetState();
+  ConsumerState<_EcoBotSheet> createState() => _EcoBotSheetState();
 }
 
-class _EcoBotSheetState extends State<_EcoBotSheet> {
+class _EcoBotSheetState extends ConsumerState<_EcoBotSheet> {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
   bool _isTyping = false;
@@ -397,6 +403,7 @@ class _EcoBotSheetState extends State<_EcoBotSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -475,9 +482,9 @@ class _EcoBotSheetState extends State<_EcoBotSheet> {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Text(
-                                'En ligne',
-                                style: TextStyle(
+                              Text(
+                                s.onlineShort,
+                                style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 11,
                                   color: AppColors.primary,

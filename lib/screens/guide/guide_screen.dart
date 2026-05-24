@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_strings.dart';
 
-class GuideScreen extends StatefulWidget {
+class GuideScreen extends ConsumerStatefulWidget {
   const GuideScreen({super.key});
 
   @override
-  State<GuideScreen> createState() => _GuideScreenState();
+  ConsumerState<GuideScreen> createState() => _GuideScreenState();
 }
 
-class _GuideScreenState extends State<GuideScreen>
+class _GuideScreenState extends ConsumerState<GuideScreen>
     with SingleTickerProviderStateMixin {
   final _searchCtrl = TextEditingController();
   String _query = '';
@@ -17,15 +20,15 @@ class _GuideScreenState extends State<GuideScreen>
   late TabController _tabCtrl;
 
   static const _categories = [
-    _Cat('Tous',         Icons.category_rounded,              AppColors.primary),
-    _Cat('Plastique',    Icons.opacity_rounded,               AppColors.plastic),
-    _Cat('Papier',       Icons.article_outlined,              AppColors.paper),
-    _Cat('Verre',        Icons.local_bar_outlined,            AppColors.glass),
-    _Cat('Métal',        Icons.hardware_rounded,              AppColors.metal),
-    _Cat('Organique',    Icons.compost_rounded,               Color(0xFF795548)),
-    _Cat('Électronique', Icons.electrical_services_rounded,   AppColors.electronics),
-    _Cat('Dangereux',    Icons.warning_amber_rounded,         Color(0xFFE74C3C)),
-    _Cat('Textile',      Icons.checkroom_rounded,             Color(0xFF9B59B6)),
+    _Cat('Tous',         Icons.category_rounded,            AppColors.primary),
+    _Cat('Plastique',    Icons.opacity_rounded,             AppColors.plastic),
+    _Cat('Papier',       Icons.article_outlined,            AppColors.paper),
+    _Cat('Verre',        Icons.local_bar_outlined,          AppColors.glass),
+    _Cat('Métal',        Icons.hardware_rounded,            AppColors.metal),
+    _Cat('Organique',    Icons.compost_rounded,             Color(0xFF795548)),
+    _Cat('Électronique', Icons.electrical_services_rounded, AppColors.electronics),
+    _Cat('Dangereux',    Icons.warning_amber_rounded,       Color(0xFFE74C3C)),
+    _Cat('Textile',      Icons.checkroom_rounded,           Color(0xFF9B59B6)),
   ];
 
   // status: 'OUI' | 'NON' | 'COLLECTE SPÉCIALE' | 'INTERDIT'
@@ -34,328 +37,532 @@ class _GuideScreenState extends State<GuideScreen>
     // ── MÉTAL ────────────────────────────────────────────────────────────────
     _Item('Canette aluminium (Coca-Cola, Pepsi, Fanta)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.sports_bar_rounded, AppColors.metal,
-        'Écraser pour réduire le volume. Rincer. L\'alu est recyclé à l\'infini — 8kg CO₂ économisés/kg. Casablanca : bacs orange ECOVAL.'),
+        'Écraser pour réduire le volume. Rincer. L\'alu est recyclé à l\'infini — 8kg CO₂ économisés/kg. Casablanca : bacs orange ECOVAL.',
+        nameEn: 'Aluminum can (Coca-Cola, Pepsi, Fanta)', nameAr: 'علبة ألمنيوم (كوكا كولا، بيبسي، فانتا)', nameEs: 'Lata de aluminio (Coca-Cola, Pepsi, Fanta)',
+        tipEn: 'Crush to reduce volume. Rinse. Aluminium is infinitely recyclable — saves 8 kg CO₂/kg. Casablanca: orange ECOVAL bins.'),
     _Item('Boîte conserve acier (Aïcha, Diamanor)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.inventory_rounded, AppColors.metal,
-        'Rincer. Le couvercle peut rester (replier les bords). Accepté dans tous les bacs jaunes ECOVAL au Maroc.'),
+        'Rincer. Le couvercle peut rester (replier les bords). Accepté dans tous les bacs jaunes ECOVAL au Maroc.',
+        nameEn: 'Steel food can (Aïcha, Diamanor)', nameAr: 'علبة فولاذية (عائشة، ديامانور)', nameEs: 'Lata de conserva de acero (Aïcha, Diamanor)',
+        tipEn: 'Rinse. The lid can stay (fold the edges). Accepted in all ECOVAL yellow bins in Morocco.'),
     _Item('Capsule métallique (bouteille, bocal)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.radio_button_unchecked_rounded, AppColors.metal,
-        'Petites capsules : glisser dans une boîte conserve vide avant de fermer. Évite qu\'elles tombent dans les machines de tri.'),
+        'Petites capsules : glisser dans une boîte conserve vide avant de fermer. Évite qu\'elles tombent dans les machines de tri.',
+        nameEn: 'Metal cap (bottle, jar)', nameAr: 'غطاء معدني (زجاجة، برطمان)', nameEs: 'Cápsula metálica (botella, tarro)',
+        tipEn: 'Small caps: slip into an empty can before closing. Prevents them from falling into sorting machines.'),
     _Item('Barquette aluminium (cuisine, tajine)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.takeout_dining_rounded, AppColors.metal,
-        'Rincer si possible. Même légèrement souillée, elle reste recyclable. Écraser en boule.'),
+        'Rincer si possible. Même légèrement souillée, elle reste recyclable. Écraser en boule.',
+        nameEn: 'Aluminum tray (cooking, tajine)', nameAr: 'صينية ألمنيوم (للطبخ، طاجين)', nameEs: 'Bandeja de aluminio (cocina, tajine)',
+        tipEn: 'Rinse if possible. Even slightly soiled, still recyclable. Crush into a ball.'),
     _Item('Papier aluminium froissé en boule', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.layers_rounded, AppColors.metal,
-        'Froisser en boule compacte (min 5cm) pour faciliter le tri mécanique. Si très souillé de nourriture → poubelle.'),
+        'Froisser en boule compacte (min 5cm) pour faciliter le tri mécanique. Si très souillé de nourriture → poubelle.',
+        nameEn: 'Crumpled aluminum foil ball', nameAr: 'ورق ألمنيوم مجعّد على شكل كرة', nameEs: 'Papel de aluminio arrugado en bola',
+        tipEn: 'Crumple into a compact ball (min 5 cm) to ease mechanical sorting. If heavily soiled with food → trash.'),
     _Item('Couvercle métallique (pot, bocal)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.circle_outlined, AppColors.metal,
-        'Séparer du bocal en verre et mettre dans le bac jaune. Le bocal va dans la colonne verte.'),
+        'Séparer du bocal en verre et mettre dans le bac jaune. Le bocal va dans la colonne verte.',
+        nameEn: 'Metal lid (jar, pot)', nameAr: 'غطاء معدني (وعاء، برطمان)', nameEs: 'Tapa metálica (tarro, frasco)',
+        tipEn: 'Separate from the glass jar and put in the yellow bin. The jar goes in the green column.'),
     _Item('Aérosol vide dégazé (déodorant, laque)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.air_rounded, AppColors.metal,
-        'OBLIGATOIREMENT vide et dégazé (appuyer jusqu\'à silence). Ne jamais percer. Laisser le bouchon plastique.'),
+        'OBLIGATOIREMENT vide et dégazé (appuyer jusqu\'à silence). Ne jamais percer. Laisser le bouchon plastique.',
+        nameEn: 'Empty deflated aerosol (deodorant, hairspray)', nameAr: 'بخاخ فارغ مفرّغ من الغاز (مزيل عرق، لاك)', nameEs: 'Aerosol vacío desgasificado (desodorante, laca)',
+        tipEn: 'MUST be empty and deflated (press until silent). Never pierce. Leave the plastic cap on.'),
     _Item('Boîte biscuits métal (Bimo, LU)', 'Métal', 'OUI', 'Bac jaune ECOVAL',
         Icons.cookie_rounded, AppColors.metal,
-        'Retirer les emballages papier intérieurs. Écraser si possible pour réduire le volume.'),
+        'Retirer les emballages papier intérieurs. Écraser si possible pour réduire le volume.',
+        nameEn: 'Metal biscuit tin (Bimo, LU)', nameAr: 'علبة بسكويت معدنية (بيمو، لو)', nameEs: 'Lata de galletas (Bimo, LU)',
+        tipEn: 'Remove inner paper wrappings. Crush if possible to reduce volume.'),
     _Item('Ferraille / Casserole acier usagée', 'Métal', 'OUI', 'Déchetterie — zone métal',
         Icons.plumbing_rounded, AppColors.metal,
-        'Déchetterie (zone métaux) ou ferracha. Refondu et réutilisé dans la sidérurgie marocaine.'),
+        'Déchetterie (zone métaux) ou ferracha. Refondu et réutilisé dans la sidérurgie marocaine.',
+        nameEn: 'Scrap metal / Used steel pan', nameAr: 'خردة / قدر فولاذي مستعمل', nameEs: 'Chatarra / Cazuela de acero usada',
+        tipEn: 'Recycling center (metal zone) or ferracha. Remelted and reused in Moroccan steel industry.'),
     _Item('Pile alcaline (AA, AAA, 9V)', 'Métal', 'NON', 'Collecteur piles',
         Icons.battery_full_rounded, AppColors.metal,
-        'JAMAIS au bac jaune ! Contient mercure, cadmium. Déposer dans les collecteurs en supermarché (Marjane, Carrefour, Label\'Vie).'),
+        'JAMAIS au bac jaune ! Contient mercure, cadmium. Déposer dans les collecteurs en supermarché (Marjane, Carrefour, Label\'Vie).',
+        nameEn: 'Alkaline battery (AA, AAA, 9V)', nameAr: 'بطارية قلوية (AA، AAA، 9V)', nameEs: 'Pila alcalina (AA, AAA, 9V)',
+        tipEn: 'NEVER in the yellow bin! Contains mercury, cadmium. Drop off at supermarket collectors (Marjane, Carrefour, Label\'Vie).'),
     _Item('Aérosol non vide / sous pression', 'Métal', 'NON', 'Déchetterie — dangereux',
         Icons.dangerous_rounded, AppColors.metal,
-        'Risque d\'explosion. Déchetterie zone produits dangereux. Ne jamais percer ni jeter à la poubelle ordinaire.'),
+        'Risque d\'explosion. Déchetterie zone produits dangereux. Ne jamais percer ni jeter à la poubelle ordinaire.',
+        nameEn: 'Non-empty / pressurized aerosol', nameAr: 'بخاخ غير فارغ / تحت ضغط', nameEs: 'Aerosol no vacío / a presión',
+        tipEn: 'Risk of explosion. Recycling center hazardous zone. Never pierce or throw in regular trash.'),
     _Item('Boîte peinture métal avec résidus', 'Métal', 'NON', 'Déchetterie — dangereux',
         Icons.format_paint_rounded, AppColors.metal,
-        'Les résidus de peinture contaminent. Déchetterie zone produits dangereux. Si complètement sèche et vide → bac jaune.'),
+        'Les résidus de peinture contaminent. Déchetterie zone produits dangereux. Si complètement sèche et vide → bac jaune.',
+        nameEn: 'Metal paint can with residue', nameAr: 'علبة طلاء معدنية مع بقايا', nameEs: 'Lata de pintura metálica con residuos',
+        tipEn: 'Paint residues contaminate. Recycling center hazardous zone. If completely dry and empty → yellow bin.'),
 
     // ── VERRE ─────────────────────────────────────────────────────────────────
     _Item('Bouteille verre (Sidi Ali, Ain Atlas, Oulmes)', 'Verre', 'OUI', 'Colonne verte',
         Icons.local_bar_outlined, AppColors.glass,
-        'Rincer. Ne pas casser. Le bouchon métallique peut rester ou aller au bac jaune. Colonne verte = uniquement verre creux.'),
+        'Rincer. Ne pas casser. Le bouchon métallique peut rester ou aller au bac jaune. Colonne verte = uniquement verre creux.',
+        nameEn: 'Glass bottle (Sidi Ali, Ain Atlas, Oulmes)', nameAr: 'زجاجة زجاجية (سيدي علي، عين أطلس، أولمس)', nameEs: 'Botella de vidrio (Sidi Ali, Ain Atlas, Oulmes)',
+        tipEn: 'Rinse. Do not break. Metal cap can stay or go in yellow bin. Green column = hollow glass only.'),
     _Item('Bocal confiture / conserve (Aïcha, Aicha)', 'Verre', 'OUI', 'Colonne verte',
         Icons.lunch_dining_rounded, AppColors.glass,
-        'Rincer rapidement. Couvercle métallique → bac jaune. Bocal verre → colonne verte. Ne pas emballer dans un sac plastique.'),
+        'Rincer rapidement. Couvercle métallique → bac jaune. Bocal verre → colonne verte. Ne pas emballer dans un sac plastique.',
+        nameEn: 'Jam / preserve jar (Aïcha)', nameAr: 'برطمان مربى / مربيات (عائشة)', nameEs: 'Tarro de mermelada / conserva (Aïcha)',
+        tipEn: 'Quick rinse. Metal lid → yellow bin. Glass jar → green column. Do not wrap in a plastic bag.'),
     _Item('Pot bébé (Blédina, Nestlé Bébé)', 'Verre', 'OUI', 'Colonne verte',
         Icons.child_care_rounded, AppColors.glass,
-        'Rincer. Très recyclable. Même les petits pots sont acceptés. Colonne verte des villes (Casablanca, Rabat, Marrakech).'),
+        'Rincer. Très recyclable. Même les petits pots sont acceptés. Colonne verte des villes (Casablanca, Rabat, Marrakech).',
+        nameEn: 'Baby food jar (Blédina, Nestlé Bébé)', nameAr: 'برطمان غذاء الأطفال (بليدينا، نستله بيبي)', nameEs: 'Tarro para bebé (Blédina, Nestlé Bébé)',
+        tipEn: 'Rinse. Very recyclable. Even small jars are accepted. Green column in cities (Casablanca, Rabat, Marrakech).'),
     _Item('Flacon parfum en verre', 'Verre', 'OUI', 'Colonne verte',
         Icons.spa_rounded, AppColors.glass,
-        'Vider complètement. Retirer la pompe plastique si possible (va à la poubelle ordinaire). Le verre → colonne verte.'),
+        'Vider complètement. Retirer la pompe plastique si possible (va à la poubelle ordinaire). Le verre → colonne verte.',
+        nameEn: 'Glass perfume bottle', nameAr: 'قارورة عطر زجاجية', nameEs: 'Frasco de perfume de vidrio',
+        tipEn: 'Empty completely. Remove the plastic pump if possible (goes in regular trash). Glass → green column.'),
     _Item('Carafe / vase en verre ordinaire', 'Verre', 'OUI', 'Colonne verte',
         Icons.local_drink_rounded, AppColors.glass,
-        'Verre ordinaire recyclable. Ne pas confondre avec cristal (non recyclable). Déposer doucement pour éviter la casse.'),
+        'Verre ordinaire recyclable. Ne pas confondre avec cristal (non recyclable). Déposer doucement pour éviter la casse.',
+        nameEn: 'Glass carafe / vase', nameAr: 'إبريق / مزهرية زجاجية عادية', nameEs: 'Jarra / jarrón de vidrio ordinario',
+        tipEn: 'Ordinary glass is recyclable. Do not confuse with crystal (not recyclable). Place gently to avoid breakage.'),
     _Item('Pot de miel en verre', 'Verre', 'OUI', 'Colonne verte',
         Icons.emoji_nature_rounded, AppColors.glass,
-        'Rincer à l\'eau tiède pour décoller le miel. Couvercle métallique → bac jaune. Accepté dans toutes les colonnes vertes.'),
+        'Rincer à l\'eau tiède pour décoller le miel. Couvercle métallique → bac jaune. Accepté dans toutes les colonnes vertes.',
+        nameEn: 'Glass honey jar', nameAr: 'برطمان عسل زجاجي', nameEs: 'Tarro de miel de vidrio',
+        tipEn: 'Rinse with warm water to dissolve honey. Metal lid → yellow bin. Accepted in all green columns.'),
     _Item('Verre brisé / cassé', 'Verre', 'NON', 'Déchetterie (carton épais)',
         Icons.broken_image_rounded, AppColors.glass,
-        'DANGER : blesse les agents de tri. Envelopper dans du carton épais et du ruban adhésif. Jamais dans la colonne verte.'),
+        'DANGER : blesse les agents de tri. Envelopper dans du carton épais et du ruban adhésif. Jamais dans la colonne verte.',
+        nameEn: 'Broken / shattered glass', nameAr: 'زجاج مكسور', nameEs: 'Vidrio roto / quebrado',
+        tipEn: 'DANGER: injures sorting workers. Wrap in thick cardboard and tape. Never in the green column.'),
     _Item('Miroir', 'Verre', 'NON', 'Déchetterie',
         Icons.square_rounded, AppColors.glass,
-        'Composition chimique différente du verre ordinaire (revêtement argenté). Non recyclable avec le verre. Déchetterie.'),
+        'Composition chimique différente du verre ordinaire (revêtement argenté). Non recyclable avec le verre. Déchetterie.',
+        nameEn: 'Mirror', nameAr: 'مرآة', nameEs: 'Espejo',
+        tipEn: 'Different chemical composition from ordinary glass (silver coating). Not recyclable with glass. Recycling center.'),
     _Item('Verre trempé (pare-brise, vitre auto)', 'Verre', 'NON', 'Déchetterie',
         Icons.directions_car_rounded, AppColors.glass,
-        'Traitement thermique spécial incompatible avec le recyclage du verre ordinaire. Casse en miettes → contamination.'),
+        'Traitement thermique spécial incompatible avec le recyclage du verre ordinaire. Casse en miettes → contamination.',
+        nameEn: 'Tempered glass (windshield, car window)', nameAr: 'زجاج مقسّى (زجاج سيارة)', nameEs: 'Vidrio templado (parabrisas, ventana de auto)',
+        tipEn: 'Special heat treatment incompatible with ordinary glass recycling. Crumbles into tiny pieces → contamination.'),
     _Item('Pyrex / plat en verre réfractaire', 'Verre', 'NON', 'Déchetterie',
         Icons.microwave_rounded, AppColors.glass,
-        'Borosilicate : point de fusion différent. Contamine le lot de verre recyclé. Déchetterie ou don si en bon état.'),
+        'Borosilicate : point de fusion différent. Contamine le lot de verre recyclé. Déchetterie ou don si en bon état.',
+        nameEn: 'Pyrex / heat-resistant glass dish', nameAr: 'باير / طبق زجاجي مقاوم للحرارة', nameEs: 'Pyrex / plato de vidrio refractario',
+        tipEn: 'Borosilicate: different melting point. Contaminates recycled glass batch. Recycling center or donate if in good condition.'),
     _Item('Faïence / céramique / porcelaine', 'Verre', 'NON', 'Déchetterie',
         Icons.emoji_food_beverage_rounded, AppColors.glass,
-        'Pas du verre ! Composition totalement différente. Déchetterie ou ressourcerie si intact. Jamais dans la colonne verte.'),
+        'Pas du verre ! Composition totalement différente. Déchetterie ou ressourcerie si intact. Jamais dans la colonne verte.',
+        nameEn: 'Earthenware / ceramic / porcelain', nameAr: 'فخار / سيراميك / خزف', nameEs: 'Loza / cerámica / porcelana',
+        tipEn: 'Not glass! Completely different composition. Recycling center or charity if intact. Never in the green column.'),
     _Item('Ampoule (toute technologie)', 'Verre', 'NON', 'Point luminaire',
         Icons.lightbulb_outlined, AppColors.glass,
-        'Points de collecte luminaires : grandes surfaces bricolage (Bricoma, Mr. Bricolage), déchetterie. LED et fluocompactes = DEEE.'),
+        'Points de collecte luminaires : grandes surfaces bricolage (Bricoma, Mr. Bricolage), déchetterie. LED et fluocompactes = DEEE.',
+        nameEn: 'Light bulb (any type)', nameAr: 'مصباح (أي نوع)', nameEs: 'Bombilla (cualquier tipo)',
+        tipEn: 'Collection points: DIY stores (Bricoma, Mr. Bricolage), recycling center. LED and CFL = WEEE.'),
 
     // ── ORGANIQUE ─────────────────────────────────────────────────────────────
     _Item('Épluchures fruits et légumes', 'Organique', 'OUI', 'Composteur / Bac marron',
         Icons.eco_rounded, Color(0xFF795548),
-        'Représente 65% des déchets marocains. Idéal pour compost maison (balcon ou jardin). Se décompose en 2-6 mois.'),
+        'Représente 65% des déchets marocains. Idéal pour compost maison (balcon ou jardin). Se décompose en 2-6 mois.',
+        nameEn: 'Fruit and vegetable peels', nameAr: 'قشور الفواكه والخضروات', nameEs: 'Cáscaras de frutas y verduras',
+        tipEn: 'Represents 65% of Moroccan waste. Ideal for home compost (balcony or garden). Decomposes in 2–6 months.'),
     _Item('Marc de café (Cafés Najjar, Bouskoura)', 'Organique', 'OUI', 'Composteur',
         Icons.coffee_rounded, Color(0xFF795548),
-        'Excellent activateur de compost. Mélanger avec des matières sèches (feuilles mortes). Améliore la structure du sol.'),
+        'Excellent activateur de compost. Mélanger avec des matières sèches (feuilles mortes). Améliore la structure du sol.',
+        nameEn: 'Coffee grounds (Najjar, Bouskoura)', nameAr: 'تفل القهوة (نجار، بوسكورة)', nameEs: 'Posos de café (Najjar, Bouskoura)',
+        tipEn: 'Excellent compost activator. Mix with dry materials (dead leaves). Improves soil structure.'),
     _Item('Sachets thé usagés (Lipton, Atay Baraka)', 'Organique', 'OUI', 'Composteur',
         Icons.local_cafe_rounded, Color(0xFF795548),
-        'Enlever les agrafes métalliques avant de composter. Certains sachets synthétiques (nylon) → poubelle ordinaire.'),
+        'Enlever les agrafes métalliques avant de composter. Certains sachets synthétiques (nylon) → poubelle ordinaire.',
+        nameEn: 'Used tea bags (Lipton, Atay Baraka)', nameAr: 'أكياس شاي مستعملة (ليبتون، أتاي بركة)', nameEs: 'Bolsas de té usadas (Lipton, Atay Baraka)',
+        tipEn: 'Remove metal staples before composting. Some synthetic bags (nylon) → regular trash.'),
     _Item('Restes de pain / harcha / msemen', 'Organique', 'OUI', 'Composteur',
         Icons.breakfast_dining_rounded, Color(0xFF795548),
-        'Déchirer en petits morceaux pour accélérer la décomposition. Attention : dans un composteur ouvert, peut attirer des oiseaux.'),
+        'Déchirer en petits morceaux pour accélérer la décomposition. Attention : dans un composteur ouvert, peut attirer des oiseaux.',
+        nameEn: 'Leftover bread / harcha / msemen', nameAr: 'بقايا الخبز / الهرشة / المسمن', nameEs: 'Sobras de pan / harcha / msemen',
+        tipEn: 'Tear into small pieces to speed decomposition. Note: in an open composter, may attract birds.'),
     _Item('Coquilles d\'œuf', 'Organique', 'OUI', 'Composteur',
         Icons.egg_outlined, Color(0xFF795548),
-        'Écraser avant de composter — apportent du calcium au sol. Se décomposent lentement (1 an). Excellent pour rééquilibrer le pH.'),
+        'Écraser avant de composter — apportent du calcium au sol. Se décomposent lentement (1 an). Excellent pour rééquilibrer le pH.',
+        nameEn: 'Eggshells', nameAr: 'قشور البيض', nameEs: 'Cáscaras de huevo',
+        tipEn: 'Crush before composting — provide calcium to the soil. Decompose slowly (1 year). Great for rebalancing pH.'),
     _Item('Feuilles mortes / gazon / herbes', 'Organique', 'OUI', 'Composteur',
         Icons.grass_rounded, Color(0xFF795548),
-        'Mélanger vert (azote : feuilles fraîches, épluchures) et sec (carbone : feuilles mortes, carton). Rapport idéal 1/3 vert, 2/3 sec.'),
+        'Mélanger vert (azote : feuilles fraîches, épluchures) et sec (carbone : feuilles mortes, carton). Rapport idéal 1/3 vert, 2/3 sec.',
+        nameEn: 'Dead leaves / lawn clippings / plants', nameAr: 'أوراق جافة / عشب / نباتات', nameEs: 'Hojas secas / césped / hierba',
+        tipEn: 'Mix green (nitrogen: fresh leaves, peels) and dry (carbon: dead leaves, cardboard). Ideal ratio: 1/3 green, 2/3 dry.'),
     _Item('Sciure de bois non traité', 'Organique', 'OUI', 'Composteur',
         Icons.carpenter_rounded, Color(0xFF795548),
-        'Bon apport de carbone pour le compost. Uniquement bois naturel non peint, non verni. Pas de panneaux agglomérés (colle chimique).'),
+        'Bon apport de carbone pour le compost. Uniquement bois naturel non peint, non verni. Pas de panneaux agglomérés (colle chimique).',
+        nameEn: 'Untreated sawdust', nameAr: 'نشارة خشب غير معالج', nameEs: 'Serrín de madera sin tratar',
+        tipEn: 'Good carbon input for compost. Only untreated, unpainted, unvarnished wood. No chipboard (chemical glue).'),
     _Item('Carton déchiré non imprimé', 'Organique', 'OUI', 'Composteur',
         Icons.inventory_2_rounded, Color(0xFF795548),
-        'En petits morceaux humidifiés. Apport de carbone. Éviter carton imprimé (encres) ou ciré. Préférer le bac bleu si propre.'),
+        'En petits morceaux humidifiés. Apport de carbone. Éviter carton imprimé (encres) ou ciré. Préférer le bac bleu si propre.',
+        nameEn: 'Torn unprinted cardboard', nameAr: 'كرتون ممزق غير مطبوع', nameEs: 'Cartón roto sin imprimir',
+        tipEn: 'In small dampened pieces. Carbon input. Avoid printed or waxed cardboard. Prefer the blue bin if clean.'),
     _Item('Viande et poisson (restes)', 'Organique', 'NON', 'Poubelle ordinaire',
         Icons.set_meal_rounded, Color(0xFF795548),
-        'Attire rongeurs et insectes dans un composteur ouvert. Poubelle ordinaire. Exception : composteur fermé en biogaz (collectivités).'),
+        'Attire rongeurs et insectes dans un composteur ouvert. Poubelle ordinaire. Exception : composteur fermé en biogaz (collectivités).',
+        nameEn: 'Meat and fish leftovers', nameAr: 'بقايا اللحم والسمك', nameEs: 'Sobras de carne y pescado',
+        tipEn: 'Attracts rodents and insects in an open composter. Regular trash. Exception: sealed biogas composter (municipalities).'),
     _Item('Produits laitiers (yaourt, fromage)', 'Organique', 'NON', 'Poubelle ordinaire',
         Icons.local_drink_rounded, Color(0xFF795548),
-        'Fermentation rapide = odeurs et nuisibles. Poubelle ordinaire. Les emballages plastiques/carton → bacs recyclage.'),
+        'Fermentation rapide = odeurs et nuisibles. Poubelle ordinaire. Les emballages plastiques/carton → bacs recyclage.',
+        nameEn: 'Dairy products (yogurt, cheese)', nameAr: 'منتجات الألبان (زبادي، جبن)', nameEs: 'Productos lácteos (yogur, queso)',
+        tipEn: 'Fast fermentation = odors and pests. Regular trash. Plastic/cardboard packaging → recycling bins.'),
     _Item('Huile de cuisson usagée', 'Organique', 'NON', 'Collecte spéciale huile',
         Icons.oil_barrel_rounded, Color(0xFF795548),
-        'JAMAIS dans l\'évier (bouche les canalisations). Solidifier dans un contenant fermé → poubelle, ou rapporter en collecte spéciale.'),
+        'JAMAIS dans l\'évier (bouche les canalisations). Solidifier dans un contenant fermé → poubelle, ou rapporter en collecte spéciale.',
+        nameEn: 'Used cooking oil', nameAr: 'زيت الطهي المستعمل', nameEs: 'Aceite de cocina usado',
+        tipEn: 'NEVER down the sink (clogs pipes). Solidify in a sealed container → trash, or return to a special collection point.'),
     _Item('Couches bébé / protection hygiénique', 'Organique', 'NON', 'Poubelle ordinaire',
         Icons.child_friendly_rounded, Color(0xFF795548),
-        'Non recyclables et non compostables. Poubelle ordinaire. Des filières spécialisées émergent mais pas encore au Maroc.'),
+        'Non recyclables et non compostables. Poubelle ordinaire. Des filières spécialisées émergent mais pas encore au Maroc.',
+        nameEn: 'Baby diapers / hygiene protection', nameAr: 'حفاضات الأطفال / الحماية الصحية', nameEs: 'Pañales / protección higiénica',
+        tipEn: 'Non-recyclable and non-compostable. Regular trash. Specialized streams are emerging but not yet in Morocco.'),
     _Item('Cendres froides (barbecue, cheminée)', 'Organique', 'NON', 'Poubelle ordinaire',
         Icons.local_fire_department_rounded, Color(0xFF795548),
-        'En très petite quantité dans le compost si froid (apport de potasse). En grande quantité → poubelle. Jamais chaude.'),
+        'En très petite quantité dans le compost si froid (apport de potasse). En grande quantité → poubelle. Jamais chaude.',
+        nameEn: 'Cold ashes (barbecue, fireplace)', nameAr: 'رماد بارد (شواء، مدفأة)', nameEs: 'Cenizas frías (barbacoa, chimenea)',
+        tipEn: 'In very small cold amounts in compost (potassium input). In large quantities → trash. Never while still hot.'),
 
     // ── ÉLECTRONIQUE ──────────────────────────────────────────────────────────
     _Item('Smartphone / Téléphone portable', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.phone_android_rounded, AppColors.electronics,
-        'Décret 2-12-695 : reprise obligatoire. ECOVAL rembourse jusqu\'à 500 DH. Points ECOVAL : Marjane, Carrefour, Cosmos Electro.'),
+        'Décret 2-12-695 : reprise obligatoire. ECOVAL rembourse jusqu\'à 500 DH. Points ECOVAL : Marjane, Carrefour, Cosmos Electro.',
+        nameEn: 'Smartphone / Mobile phone', nameAr: 'هاتف ذكي / جوّال', nameEs: 'Smartphone / Teléfono móvil',
+        tipEn: 'Decree 2-12-695: mandatory take-back. ECOVAL reimburses up to 500 DH. ECOVAL points: Marjane, Carrefour, Cosmos Electro.'),
     _Item('Tablette / iPad', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.tablet_rounded, AppColors.electronics,
-        'Effacer les données avant dépôt (réinitialisation usine). Contient lithium, coltan, or — métaux précieux valorisables.'),
+        'Effacer les données avant dépôt (réinitialisation usine). Contient lithium, coltan, or — métaux précieux valorisables.',
+        nameEn: 'Tablet / iPad', nameAr: 'لوحي / آيباد', nameEs: 'Tableta / iPad',
+        tipEn: 'Erase data before drop-off (factory reset). Contains lithium, coltan, gold — valuable recoverable metals.'),
     _Item('Ordinateur / Laptop', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL / Déchetterie',
         Icons.laptop_rounded, AppColors.electronics,
-        'Effacer le disque dur (formatage complet). ECOVAL ou déchetterie zone DEEE. Certains constructeurs proposent la reprise gratuite.'),
+        'Effacer le disque dur (formatage complet). ECOVAL ou déchetterie zone DEEE. Certains constructeurs proposent la reprise gratuite.',
+        nameEn: 'Computer / Laptop', nameAr: 'حاسوب / كمبيوتر محمول', nameEs: 'Ordenador / Portátil',
+        tipEn: 'Erase the hard drive (full format). ECOVAL or recycling center WEEE zone. Some manufacturers offer free take-back.'),
     _Item('Télévision / Écran PC', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.tv_rounded, AppColors.electronics,
-        'Reprise 1 pour 1 chez le vendeur à l\'achat d\'un neuf (obligation légale). Ou éco-point ECOVAL. Contient plomb dans les anciens CRT.'),
+        'Reprise 1 pour 1 chez le vendeur à l\'achat d\'un neuf (obligation légale). Ou éco-point ECOVAL. Contient plomb dans les anciens CRT.',
+        nameEn: 'TV / Computer screen', nameAr: 'تلفزيون / شاشة كمبيوتر', nameEs: 'Televisión / Pantalla PC',
+        tipEn: '1-for-1 take-back when buying new (legal obligation). Or ECOVAL point. Old CRT models contain lead.'),
     _Item('Réfrigérateur / Congélateur', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.kitchen_rounded, AppColors.electronics,
-        'Gros électroménager : ECOVAL organise la collecte à domicile. Contient des frigorigènes (gaz à effet de serre) à traiter.'),
+        'Gros électroménager : ECOVAL organise la collecte à domicile. Contient des frigorigènes (gaz à effet de serre) à traiter.',
+        nameEn: 'Refrigerator / Freezer', nameAr: 'ثلاجة / مجمّد', nameEs: 'Refrigerador / Congelador',
+        tipEn: 'ECOVAL arranges home collection for large appliances. Contains refrigerants (greenhouse gases) to be treated.'),
     _Item('Machine à laver / Lave-vaisselle', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.local_laundry_service_rounded, AppColors.electronics,
-        'Reprise possible par le vendeur. ECOVAL organise collecte. Récupération du cuivre des moteurs et de l\'acier inoxydable.'),
+        'Reprise possible par le vendeur. ECOVAL organise collecte. Récupération du cuivre des moteurs et de l\'acier inoxydable.',
+        nameEn: 'Washing machine / Dishwasher', nameAr: 'غسالة / غسالة أطباق', nameEs: 'Lavadora / Lavavajillas',
+        tipEn: 'Take-back possible by the retailer. ECOVAL arranges collection. Copper from motors and stainless steel are recovered.'),
     _Item('Climatiseur / Split (unité intérieure)', 'Électronique', 'COLLECTE SPÉCIALE', 'Technicien agréé',
         Icons.ac_unit_rounded, AppColors.electronics,
-        'Le frigorigène doit être récupéré par un technicien agréé avant démontage. Puis éco-point ECOVAL pour le reste.'),
+        'Le frigorigène doit être récupéré par un technicien agréé avant démontage. Puis éco-point ECOVAL pour le reste.',
+        nameEn: 'Air conditioner / Split unit (indoor)', nameAr: 'مكيف هواء / وحدة داخلية', nameEs: 'Aire acondicionado / Split (unidad interior)',
+        tipEn: 'Refrigerant must be recovered by a certified technician before dismantling. Then ECOVAL point for the rest.'),
     _Item('Pile / Batterie Li-ion (téléphone, vélo)', 'Électronique', 'COLLECTE SPÉCIALE', 'Collecteur ECOVAL',
         Icons.battery_charging_full_rounded, AppColors.electronics,
-        'JAMAIS à la poubelle (risque d\'incendie). Collecteurs ECOVAL, Marjane, Label\'Vie. Ne pas court-circuiter avec du ruban adhésif sur les bornes.'),
+        'JAMAIS à la poubelle (risque d\'incendie). Collecteurs ECOVAL, Marjane, Label\'Vie. Ne pas court-circuiter avec du ruban adhésif sur les bornes.',
+        nameEn: 'Li-ion battery (phone, bike)', nameAr: 'بطارية ليثيوم أيون (هاتف، دراجة)', nameEs: 'Batería Li-ion (teléfono, bicicleta)',
+        tipEn: 'NEVER in the trash (fire risk). ECOVAL, Marjane, Label\'Vie collectors. Cover terminals with tape to prevent short-circuit.'),
     _Item('Chargeur / Câble USB / Adaptateur', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.cable_rounded, AppColors.electronics,
-        'Regrouper dans un sac. Éco-point ECOVAL ou point de collecte en magasin électronique (Biougnach, Electroplanet).'),
+        'Regrouper dans un sac. Éco-point ECOVAL ou point de collecte en magasin électronique (Biougnach, Electroplanet).',
+        nameEn: 'Charger / USB cable / Adapter', nameAr: 'شاحن / كابل USB / محوّل', nameEs: 'Cargador / Cable USB / Adaptador',
+        tipEn: 'Bundle in a bag. ECOVAL point or in-store collection (Biougnach, Electroplanet).'),
     _Item('Ampoule LED / Fluocompacte', 'Électronique', 'COLLECTE SPÉCIALE', 'Point luminaire',
         Icons.lightbulb_rounded, AppColors.electronics,
-        'Points de collecte : Bricoma, Mr. Bricolage, grandes surfaces. Contient mercure (fluocompactes) → manipulation délicate.'),
+        'Points de collecte : Bricoma, Mr. Bricolage, grandes surfaces. Contient mercure (fluocompactes) → manipulation délicate.',
+        nameEn: 'LED / CFL light bulb', nameAr: 'مصباح LED / موفر للطاقة', nameEs: 'Bombilla LED / CFL',
+        tipEn: 'Collection points: Bricoma, Mr. Bricolage, supermarkets. CFL bulbs contain mercury → handle carefully.'),
     _Item('Imprimante / Cartouche d\'encre', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.print_rounded, AppColors.electronics,
-        'Cartouches : programmes de reprise fabricant (HP, Epson, Canon). Imprimantes complètes → éco-point ECOVAL.'),
+        'Cartouches : programmes de reprise fabricant (HP, Epson, Canon). Imprimantes complètes → éco-point ECOVAL.',
+        nameEn: 'Printer / Ink cartridge', nameAr: 'طابعة / خرطوشة حبر', nameEs: 'Impresora / Cartucho de tinta',
+        tipEn: 'Cartridges: manufacturer take-back programs (HP, Epson, Canon). Full printers → ECOVAL point.'),
     _Item('Four micro-ondes', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.microwave_rounded, AppColors.electronics,
-        'Contient des composants électroniques et magnétrons. Éco-point ECOVAL ou reprise vendeur. Ne jamais démonter soi-même.'),
+        'Contient des composants électroniques et magnétrons. Éco-point ECOVAL ou reprise vendeur. Ne jamais démonter soi-même.',
+        nameEn: 'Microwave oven', nameAr: 'فرن الميكروويف', nameEs: 'Horno microondas',
+        tipEn: 'Contains electronic components and magnetrons. ECOVAL point or retailer take-back. Never disassemble yourself.'),
     _Item('Aspirateur / Petit électroménager', 'Électronique', 'COLLECTE SPÉCIALE', 'Éco-point ECOVAL',
         Icons.cleaning_services_rounded, AppColors.electronics,
-        'Tous les appareils électriques sont concernés par le Décret 2-12-695. Éco-point ECOVAL ou déchetterie zone DEEE.'),
+        'Tous les appareils électriques sont concernés par le Décret 2-12-695. Éco-point ECOVAL ou déchetterie zone DEEE.',
+        nameEn: 'Vacuum cleaner / Small appliance', nameAr: 'مكنسة كهربائية / أجهزة منزلية صغيرة', nameEs: 'Aspiradora / Pequeño electrodoméstico',
+        tipEn: 'All electrical appliances are covered by Decree 2-12-695. ECOVAL point or recycling center WEEE zone.'),
 
     // ── TEXTILE ───────────────────────────────────────────────────────────────
     _Item('Vêtements en bon état', 'Textile', 'OUI', 'Borne textile / Souk fripe',
         Icons.checkroom_rounded, Color(0xFF9B59B6),
-        'Déposer propres dans un sac en borne textile. Tradition de sadaqa : don à des associations (Caritas Maroc, Croix-Rouge).'),
+        'Déposer propres dans un sac en borne textile. Tradition de sadaqa : don à des associations (Caritas Maroc, Croix-Rouge).',
+        nameEn: 'Clothing in good condition', nameAr: 'ملابس بحالة جيدة', nameEs: 'Ropa en buen estado',
+        tipEn: 'Drop off clean in a bag at a textile bin. Sadaqa tradition: donate to charities (Caritas Maroc, Red Cross).'),
     _Item('Vêtements abîmés / déchirés', 'Textile', 'OUI', 'Borne textile',
         Icons.settings_backup_restore_rounded, Color(0xFF9B59B6),
-        'Même abîmés, recyclés en chiffons industriels, isolants thermiques ou couvertures. Ne pas jeter à la poubelle.'),
+        'Même abîmés, recyclés en chiffons industriels, isolants thermiques ou couvertures. Ne pas jeter à la poubelle.',
+        nameEn: 'Damaged / torn clothing', nameAr: 'ملابس تالفة / ممزقة', nameEs: 'Ropa dañada / rasgada',
+        tipEn: 'Even damaged, recycled into industrial rags, thermal insulation or blankets. Do not throw in the trash.'),
     _Item('Chaussures (toutes matières)', 'Textile', 'OUI', 'Borne textile',
         Icons.directions_run_rounded, Color(0xFF9B59B6),
-        'Attacher par paires avec un lacet. Mettre dans un sac. Même très usées — valorisées ou recyclées en semelles de terrain de sport.'),
+        'Attacher par paires avec un lacet. Mettre dans un sac. Même très usées — valorisées ou recyclées en semelles de terrain de sport.',
+        nameEn: 'Shoes (all materials)', nameAr: 'أحذية (جميع المواد)', nameEs: 'Zapatos (todos los materiales)',
+        tipEn: 'Tie in pairs with a lace. Put in a bag. Even very worn — valued or recycled into sports field surfaces.'),
     _Item('Sac en tissu / sac à main tissu', 'Textile', 'OUI', 'Borne textile',
         Icons.shopping_bag_rounded, Color(0xFF9B59B6),
-        'Nettoyer si possible. Borne textile ou association. Alternative au sac plastique à encourager (Loi 77-15 depuis 2016).'),
+        'Nettoyer si possible. Borne textile ou association. Alternative au sac plastique à encourager (Loi 77-15 depuis 2016).',
+        nameEn: 'Fabric bag / fabric handbag', nameAr: 'حقيبة قماشية / حقيبة يد قماشية', nameEs: 'Bolsa de tela / bolso de tela',
+        tipEn: 'Clean if possible. Textile bin or charity. Alternative to plastic bags encouraged (Law 77-15 since 2016).'),
     _Item('Linge de maison (draps, serviettes, rideaux)', 'Textile', 'OUI', 'Borne textile',
         Icons.bed_rounded, Color(0xFF9B59B6),
-        'Propre et sec. Borne textile ou ressourcerie. Les draps usagés deviennent des chiffons industriels pour les garages.'),
+        'Propre et sec. Borne textile ou ressourcerie. Les draps usagés deviennent des chiffons industriels pour les garages.',
+        nameEn: 'Household linen (sheets, towels, curtains)', nameAr: 'مفروشات (ملاءات، مناشف، ستائر)', nameEs: 'Ropa de hogar (sábanas, toallas, cortinas)',
+        tipEn: 'Clean and dry. Textile bin or charity. Used sheets become industrial rags for garages.'),
     _Item('Peluches / jouets tissu propres', 'Textile', 'OUI', 'Borne textile / Association',
         Icons.toys_rounded, Color(0xFF9B59B6),
-        'Propres et sans piles. Associations caritatives (Bayti, SOS Villages d\'Enfants Maroc) ou bornes textile.'),
+        'Propres et sans piles. Associations caritatives (Bayti, SOS Villages d\'Enfants Maroc) ou bornes textile.',
+        nameEn: 'Clean stuffed toys / fabric toys', nameAr: 'دمى / ألعاب قماشية نظيفة', nameEs: 'Peluches / juguetes de tela limpios',
+        tipEn: 'Clean and battery-free. Charities (Bayti, SOS Villages d\'Enfants Maroc) or textile bins.'),
     _Item('Ceinture cuir / sac cuir', 'Textile', 'OUI', 'Borne textile / Souk fripe',
         Icons.watch_rounded, Color(0xFF9B59B6),
-        'Souk fripe marocain (Derb Ghallef, Mellah de Marrakech) ou bornes textile. Le cuir a une longue durée de vie.'),
+        'Souk fripe marocain (Derb Ghallef, Mellah de Marrakech) ou bornes textile. Le cuir a une longue durée de vie.',
+        nameEn: 'Leather belt / leather bag', nameAr: 'حزام جلدي / حقيبة جلدية', nameEs: 'Cinturón de cuero / bolso de cuero',
+        tipEn: 'Moroccan flea market (Derb Ghallef, Marrakech Mellah) or textile bins. Leather has a long lifespan.'),
     _Item('Burnous / Djellaba usagée', 'Textile', 'OUI', 'Borne textile / Association',
         Icons.people_rounded, Color(0xFF9B59B6),
-        'Tradition marocaine de sadaqa. Associations ou bornes textile. La laine est recyclable en isolant ou en nouveau tissu.'),
+        'Tradition marocaine de sadaqa. Associations ou bornes textile. La laine est recyclable en isolant ou en nouveau tissu.',
+        nameEn: 'Used burnous / djellaba', nameAr: 'برنوس / جلابة مستعملة', nameEs: 'Burnús / Djellaba usada',
+        tipEn: 'Moroccan sadaqa tradition. Charities or textile bins. Wool is recyclable into insulation or new fabric.'),
     _Item('Sous-vêtements usagés', 'Textile', 'NON', 'Poubelle ordinaire',
         Icons.do_not_disturb_rounded, Color(0xFF9B59B6),
-        'Pour des raisons d\'hygiène, non acceptés dans les bornes textile ni les associations. Poubelle ordinaire.'),
+        'Pour des raisons d\'hygiène, non acceptés dans les bornes textile ni les associations. Poubelle ordinaire.',
+        nameEn: 'Used underwear', nameAr: 'ملابس داخلية مستعملة', nameEs: 'Ropa interior usada',
+        tipEn: 'For hygiene reasons, not accepted in textile bins or charities. Regular trash.'),
     _Item('Vêtements souillés chimiques / peinture', 'Textile', 'NON', 'Déchetterie',
         Icons.dangerous_rounded, Color(0xFF9B59B6),
-        'Contaminent les autres textiles. Si souillés de produits chimiques → déchetterie zone dangereux.'),
+        'Contaminent les autres textiles. Si souillés de produits chimiques → déchetterie zone dangereux.',
+        nameEn: 'Chemical / paint-stained clothing', nameAr: 'ملابس ملوثة بمواد كيميائية / طلاء', nameEs: 'Ropa manchada de productos químicos / pintura',
+        tipEn: 'Contaminates other textiles. If soiled with chemicals → recycling center hazardous zone.'),
     _Item('Matelas / oreillers', 'Textile', 'NON', 'Déchetterie / Collecte encombrants',
         Icons.hotel_rounded, Color(0xFF9B59B6),
-        'Trop volumineux pour les bornes. Collecte encombrants de la commune (Casablanca 0801003737, Rabat 0537726364) ou déchetterie.'),
+        'Trop volumineux pour les bornes. Collecte encombrants de la commune (Casablanca 0801003737, Rabat 0537726364) ou déchetterie.',
+        nameEn: 'Mattress / pillows', nameAr: 'مرتبة / وسائد', nameEs: 'Colchón / almohadas',
+        tipEn: 'Too bulky for bins. Municipality bulky waste collection (Casablanca 0801003737, Rabat 0537726364) or recycling center.'),
 
     // ── PLASTIQUE ─────────────────────────────────────────────────────────────
     _Item('Bouteille PET (Sidi Ali, Ain Atlas, Pepsi)', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.opacity_rounded, AppColors.plastic,
-        'Rincer. Écraser pour réduire le volume. Bouchon peut rester vissé. L\'un des plastiques les plus recyclés au Maroc (ECOVAL).'),
+        'Rincer. Écraser pour réduire le volume. Bouchon peut rester vissé. L\'un des plastiques les plus recyclés au Maroc (ECOVAL).',
+        nameEn: 'PET bottle (Sidi Ali, Ain Atlas, Pepsi)', nameAr: 'زجاجة PET (سيدي علي، عين أطلس، بيبسي)', nameEs: 'Botella PET (Sidi Ali, Ain Atlas, Pepsi)',
+        tipEn: 'Rinse. Crush to reduce volume. Cap can stay screwed on. One of the most recycled plastics in Morocco (ECOVAL).'),
     _Item('Flacon PEHD (shampoing Pantene, lait Centrale Laitière)', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.cleaning_services_rounded, AppColors.plastic,
-        'Vider et rincer. Écraser. Le PEHD (code 2) est très recyclable — redevient tuyaux, mobilier urbain, sacs poubelles.'),
+        'Vider et rincer. Écraser. Le PEHD (code 2) est très recyclable — redevient tuyaux, mobilier urbain, sacs poubelles.',
+        nameEn: 'HDPE bottle (Pantene shampoo, Centrale Laitière milk)', nameAr: 'زجاجة PEHD (شامبو بانتين، حليب المركزية)', nameEs: 'Botella PEHD (champú Pantene, leche Centrale Laitière)',
+        tipEn: 'Empty and rinse. Crush. HDPE (code 2) is very recyclable — becomes pipes, street furniture, trash bags.'),
     _Item('Barquette alimentaire rincée', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.takeout_dining_rounded, AppColors.plastic,
-        'Rincer pour enlever les résidus. Même légèrement souillée, elle reste recyclable. Code plastique 1 (PET) ou 5 (PP) préférables.'),
+        'Rincer pour enlever les résidus. Même légèrement souillée, elle reste recyclable. Code plastique 1 (PET) ou 5 (PP) préférables.',
+        nameEn: 'Rinsed food tray', nameAr: 'صينية طعام مشطوفة', nameEs: 'Bandeja alimentaria enjuagada',
+        tipEn: 'Rinse to remove residue. Even slightly soiled, still recyclable. Plastic code 1 (PET) or 5 (PP) preferred.'),
     _Item('Pot de yaourt (Danone Jaouda, Yawmi)', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.icecream_rounded, AppColors.plastic,
-        'Rincer rapidement. Le couvercle en alu → bac jaune aussi. Accepté dans tous les bacs ECOVAL du Maroc.'),
+        'Rincer rapidement. Le couvercle en alu → bac jaune aussi. Accepté dans tous les bacs ECOVAL du Maroc.',
+        nameEn: 'Yogurt pot (Danone Jaouda, Yawmi)', nameAr: 'كوب زبادي (دانون جودة، يومي)', nameEs: 'Tarrina de yogur (Danone Jaouda, Yawmi)',
+        tipEn: 'Quick rinse. The aluminum lid → yellow bin too. Accepted in all ECOVAL bins in Morocco.'),
     _Item('Bidon plastique propre (eau de Javel, huile)', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.water_drop_rounded, AppColors.plastic,
-        'Vider complètement et rincer 3 fois. Écraser. Le PEHD des bidons est très valorisé. Éviter les bidons de produits chimiques purs.'),
+        'Vider complètement et rincer 3 fois. Écraser. Le PEHD des bidons est très valorisé. Éviter les bidons de produits chimiques purs.',
+        nameEn: 'Clean plastic container (bleach, oil)', nameAr: 'جركان بلاستيكي نظيف (ماء جافيل، زيت)', nameEs: 'Bidón plástico limpio (lejía, aceite)',
+        tipEn: 'Empty completely and rinse 3 times. Crush. HDPE containers are highly valued. Avoid containers of pure chemicals.'),
     _Item('Bouchon plastique vissé', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.circle_rounded, AppColors.plastic,
-        'Le bouchon vissé sur la bouteille écrasée est accepté. Collectes solidaires de bouchons pour associations (Bouchons de l\'Espoir Maroc).'),
+        'Le bouchon vissé sur la bouteille écrasée est accepté. Collectes solidaires de bouchons pour associations (Bouchons de l\'Espoir Maroc).',
+        nameEn: 'Screwed plastic cap', nameAr: 'سدادة بلاستيكية ملولبة', nameEs: 'Tapón de plástico enroscado',
+        tipEn: 'Cap screwed onto crushed bottle is accepted. Solidarity cap collections for charities (Bouchons de l\'Espoir Maroc).'),
     _Item('Emballage plastique rigide propre (code 1, 2, 5)', 'Plastique', 'OUI', 'Bac jaune ECOVAL',
         Icons.inventory_rounded, AppColors.plastic,
-        'PET (1), PEHD (2), PP (5) = les plus recyclables. Regarder le code triangle en dessous de l\'emballage.'),
+        'PET (1), PEHD (2), PP (5) = les plus recyclables. Regarder le code triangle en dessous de l\'emballage.',
+        nameEn: 'Clean rigid plastic packaging (code 1, 2, 5)', nameAr: 'تغليف بلاستيكي صلب نظيف (رمز 1، 2، 5)', nameEs: 'Envase plástico rígido limpio (código 1, 2, 5)',
+        tipEn: 'PET (1), HDPE (2), PP (5) = most recyclable. Check the triangle code on the bottom of the packaging.'),
     _Item('Sac plastique (tous types)', 'Plastique', 'INTERDIT', 'Interdit — Loi 77-15',
         Icons.shopping_bag_outlined, AppColors.plastic,
-        'INTERDIT en production et distribution depuis juillet 2016 (Loi 77-15). Amende : 1000 DH à 1 million DH. Utiliser sac tissu ou panier.'),
+        'INTERDIT en production et distribution depuis juillet 2016 (Loi 77-15). Amende : 1000 DH à 1 million DH. Utiliser sac tissu ou panier.',
+        nameEn: 'Plastic bag (all types)', nameAr: 'كيس بلاستيكي (جميع الأنواع)', nameEs: 'Bolsa plástica (todos los tipos)',
+        tipEn: 'BANNED from production and distribution since July 2016 (Law 77-15). Fine: 1,000 to 1 million DH. Use fabric bag or basket.'),
     _Item('Film plastique souple (emballage)', 'Plastique', 'NON', 'Borne dédiée / Poubelle',
         Icons.wrap_text_rounded, AppColors.plastic,
-        'Non recyclable dans les bacs jaunes — bloque les machines de tri. Certains supermarchés (Carrefour) ont des bornes pour films plastiques.'),
+        'Non recyclable dans les bacs jaunes — bloque les machines de tri. Certains supermarchés (Carrefour) ont des bornes pour films plastiques.',
+        nameEn: 'Soft plastic film (packaging)', nameAr: 'غشاء بلاستيكي مرن (تغليف)', nameEs: 'Film plástico flexible (embalaje)',
+        tipEn: 'Not recyclable in yellow bins — clogs sorting machines. Some supermarkets (Carrefour) have dedicated film bins.'),
     _Item('Polystyrène expansé (emballage, barquette poisson)', 'Plastique', 'NON', 'Déchetterie',
         Icons.view_in_ar_rounded, AppColors.plastic,
-        'Difficile à recycler au Maroc. Déchetterie ou compactage spécialisé. Volume énorme pour peu de matière — problème majeur de pollution.'),
+        'Difficile à recycler au Maroc. Déchetterie ou compactage spécialisé. Volume énorme pour peu de matière — problème majeur de pollution.',
+        nameEn: 'Expanded polystyrene (packaging, fish tray)', nameAr: 'البوليسترين المتمدد (تغليف، صينية سمك)', nameEs: 'Poliestireno expandido (embalaje, bandeja de pescado)',
+        tipEn: 'Difficult to recycle in Morocco. Recycling center or specialized compaction. Huge volume for little material — major pollution issue.'),
     _Item('Tube dentifrice (Colgate, Signal)', 'Plastique', 'NON', 'Poubelle ordinaire',
         Icons.brush_rounded, AppColors.plastic,
-        'Multicouche aluminium + plastique = non recyclable. Poubelle ordinaire. Programme de reprise Colgate en pharmacies partenaires.'),
+        'Multicouche aluminium + plastique = non recyclable. Poubelle ordinaire. Programme de reprise Colgate en pharmacies partenaires.',
+        nameEn: 'Toothpaste tube (Colgate, Signal)', nameAr: 'أنبوب معجون أسنان (كولجيت، سيجنال)', nameEs: 'Tubo de pasta de dientes (Colgate, Signal)',
+        tipEn: 'Multilayer aluminium + plastic = not recyclable. Regular trash. Colgate take-back program in partner pharmacies.'),
     _Item('Paille plastique', 'Plastique', 'NON', 'Poubelle ordinaire',
         Icons.remove_rounded, AppColors.plastic,
-        'Trop légère et petite pour les machines de tri. Poubelle ordinaire. Préférer paille en inox, bambou, papier ou verre réutilisable.'),
+        'Trop légère et petite pour les machines de tri. Poubelle ordinaire. Préférer paille en inox, bambou, papier ou verre réutilisable.',
+        nameEn: 'Plastic straw', nameAr: 'شفاطة بلاستيكية', nameEs: 'Pajita de plástico',
+        tipEn: 'Too light and small for sorting machines. Regular trash. Prefer stainless steel, bamboo, paper or reusable glass straws.'),
     _Item('Emballage multicouche (brique de jus, sachets café)', 'Plastique', 'NON', 'Poubelle ordinaire',
         Icons.layers_rounded, AppColors.plastic,
-        'Mélange plastique + aluminium + carton inséparable mécaniquement. Pas de filière de recyclage au Maroc actuellement.'),
+        'Mélange plastique + aluminium + carton inséparable mécaniquement. Pas de filière de recyclage au Maroc actuellement.',
+        nameEn: 'Multi-layer packaging (juice carton, coffee sachets)', nameAr: 'تغليف متعدد الطبقات (عبوة عصير، أكياس قهوة)', nameEs: 'Envase multicapa (brick de zumo, sobres de café)',
+        tipEn: 'Mix of plastic + aluminium + cardboard that cannot be mechanically separated. No recycling stream in Morocco yet.'),
 
     // ── PAPIER / CARTON ───────────────────────────────────────────────────────
     _Item('Journal / Magazine (Al Ahdath, L\'Économiste, TelQuel)', 'Papier', 'OUI', 'Bac bleu / Ferracha',
         Icons.article_outlined, AppColors.paper,
-        'Plier ou empiler. Ne pas mouiller. La ferracha (récupérateur informel) joue un rôle essentiel dans le recyclage du papier au Maroc.'),
+        'Plier ou empiler. Ne pas mouiller. La ferracha (récupérateur informel) joue un rôle essentiel dans le recyclage du papier au Maroc.',
+        nameEn: 'Newspaper / Magazine (Al Ahdath, L\'Économiste, TelQuel)', nameAr: 'جريدة / مجلة (الأحداث، الاقتصادية، تيلكيل)', nameEs: 'Periódico / Revista (Al Ahdath, L\'Économiste, TelQuel)',
+        tipEn: 'Fold or stack. Do not wet. The ferracha (informal collector) plays a key role in paper recycling in Morocco.'),
     _Item('Carton ondulé aplati', 'Papier', 'OUI', 'Bac bleu / Ferracha',
         Icons.inventory_2_rounded, AppColors.paper,
-        'Aplatir avant de mettre dans le bac. Enlever les agrafes et le ruban adhésif. Repris par l\'industrie papetière marocaine (CMCP).'),
+        'Aplatir avant de mettre dans le bac. Enlever les agrafes et le ruban adhésif. Repris par l\'industrie papetière marocaine (CMCP).',
+        nameEn: 'Flattened corrugated cardboard', nameAr: 'كرتون مموج مفرود', nameEs: 'Cartón corrugado aplanado',
+        tipEn: 'Flatten before putting in the bin. Remove staples and adhesive tape. Collected by the Moroccan paper industry (CMCP).'),
     _Item('Boîte carton (céréales Kellogg\'s, conserves Aïcha)', 'Papier', 'OUI', 'Bac bleu',
         Icons.breakfast_dining_rounded, AppColors.paper,
-        'Aplatir. Retirer les sachets plastiques intérieurs (→ bac jaune si recyclable, sinon poubelle). Pureté du carton très importante.'),
+        'Aplatir. Retirer les sachets plastiques intérieurs (→ bac jaune si recyclable, sinon poubelle). Pureté du carton très importante.',
+        nameEn: 'Cardboard box (Kellogg\'s cereals, Aïcha cans)', nameAr: 'علبة كرتون (حبوب كيلوغز، علب عائشة)', nameEs: 'Caja de cartón (cereales Kellogg\'s, conservas Aïcha)',
+        tipEn: 'Flatten. Remove inner plastic bags (→ yellow bin if recyclable, otherwise waste bin). Cardboard purity is very important.'),
     _Item('Enveloppe (avec ou sans fenêtre plastique)', 'Papier', 'OUI', 'Bac bleu',
         Icons.mail_outlined, AppColors.paper,
-        'La fenêtre plastique est acceptée dans la plupart des collectes. Retirer les autocollants si possible. Sans le contenu papier.'),
+        'La fenêtre plastique est acceptée dans la plupart des collectes. Retirer les autocollants si possible. Sans le contenu papier.',
+        nameEn: 'Envelope (with or without plastic window)', nameAr: 'مظروف (مع أو بدون نافذة بلاستيكية)', nameEs: 'Sobre (con o sin ventana de plástico)',
+        tipEn: 'The plastic window is accepted in most collections. Remove stickers if possible. Without the paper contents.'),
     _Item('Cahier / Papier bureau (fax, imprimante)', 'Papier', 'OUI', 'Bac bleu',
         Icons.description_outlined, AppColors.paper,
-        'Retirer les spirales métalliques (→ bac jaune). Les trombones et agrafes sont acceptés. Ne pas mixer avec papier mouillé.'),
+        'Retirer les spirales métalliques (→ bac jaune). Les trombones et agrafes sont acceptés. Ne pas mixer avec papier mouillé.',
+        nameEn: 'Notebook / Office paper (fax, printer)', nameAr: 'دفتر / ورق مكتبي (فاكس، طابعة)', nameEs: 'Cuaderno / Papel de oficina (fax, impresora)',
+        tipEn: 'Remove metal spirals (→ yellow bin). Paper clips and staples are accepted. Do not mix with wet paper.'),
     _Item('Brique alimentaire (Centrale Laitière, Candia)', 'Papier', 'OUI', 'Bac bleu',
         Icons.local_drink_rounded, AppColors.paper,
-        'Rincer. Écraser. Certaines collectes en bac bleu, d\'autres en bac jaune selon la ville. Vérifier auprès de votre commune.'),
+        'Rincer. Écraser. Certaines collectes en bac bleu, d\'autres en bac jaune selon la ville. Vérifier auprès de votre commune.',
+        nameEn: 'Food carton (Centrale Laitière, Candia)', nameAr: 'علبة أغذية مقوى (المركزية الحليبية، كانديا)', nameEs: 'Cartón de alimentación (Centrale Laitière, Candia)',
+        tipEn: 'Rinse. Crush. Some collections in blue bin, others in yellow bin depending on city. Check with your municipality.'),
     _Item('Annuaire téléphonique / catalogue', 'Papier', 'OUI', 'Bac bleu / Ferracha',
         Icons.menu_book_rounded, AppColors.paper,
-        'Papier non couché = très recyclable. La ferracha marocaine rachète ce type de papier. Dépôt en bac bleu ou point de collecte.'),
+        'Papier non couché = très recyclable. La ferracha marocaine rachète ce type de papier. Dépôt en bac bleu ou point de collecte.',
+        nameEn: 'Phone directory / catalogue', nameAr: 'دليل هاتفي / كتالوج', nameEs: 'Guía telefónica / catálogo',
+        tipEn: 'Uncoated paper = very recyclable. The Moroccan ferracha buys this type of paper. Drop in blue bin or collection point.'),
     _Item('Ticket de caisse thermique', 'Papier', 'NON', 'Poubelle ordinaire',
         Icons.receipt_rounded, AppColors.paper,
-        'Contient du Bisphénol A (BPA) — perturbateur endocrinien qui contamine les autres papiers. JAMAIS au bac bleu.'),
+        'Contient du Bisphénol A (BPA) — perturbateur endocrinien qui contamine les autres papiers. JAMAIS au bac bleu.',
+        nameEn: 'Thermal cash register receipt', nameAr: 'إيصال صراف حراري', nameEs: 'Ticket de caja térmico',
+        tipEn: 'Contains Bisphenol A (BPA) — endocrine disruptor that contaminates other paper. NEVER in the blue bin.'),
     _Item('Papier cuisson siliconé', 'Papier', 'NON', 'Poubelle ordinaire',
         Icons.kitchen_rounded, AppColors.paper,
-        'Le revêtement silicone empêche le recyclage. Poubelle ordinaire. Préférer tapis de cuisson réutilisable en silicone.'),
+        'Le revêtement silicone empêche le recyclage. Poubelle ordinaire. Préférer tapis de cuisson réutilisable en silicone.',
+        nameEn: 'Silicone-coated baking paper', nameAr: 'ورق خبز مطلي بالسيليكون', nameEs: 'Papel de horno siliconado',
+        tipEn: 'The silicone coating prevents recycling. Regular waste bin. Prefer reusable silicone baking mat.'),
     _Item('Emballage cadeau brillant / pailleté', 'Papier', 'NON', 'Poubelle ordinaire',
         Icons.card_giftcard_rounded, AppColors.paper,
-        'Le revêtement plastique ou métallique est non séparable. Poubelle ordinaire. Préférer papier kraft naturel recyclable.'),
+        'Le revêtement plastique ou métallique est non séparable. Poubelle ordinaire. Préférer papier kraft naturel recyclable.',
+        nameEn: 'Shiny / glittery gift wrap', nameAr: 'ورق تغليف هدايا لامع / متألق', nameEs: 'Papel de regalo brillante / con purpurina',
+        tipEn: 'The plastic or metallic coating is inseparable. Regular waste bin. Prefer recyclable natural kraft paper.'),
     _Item('Carton pizza gras / souillé', 'Papier', 'NON', 'Composteur (si non imprimé)',
         Icons.local_pizza_rounded, AppColors.paper,
-        'La partie grasse contamine le lot de papier recyclé. Découper : partie propre → bac bleu, partie grasse → compost ou poubelle.'),
+        'La partie grasse contamine le lot de papier recyclé. Découper : partie propre → bac bleu, partie grasse → compost ou poubelle.',
+        nameEn: 'Greasy / soiled pizza box', nameAr: 'علبة بيتزا دهنية / ملوثة', nameEs: 'Caja de pizza grasienta / sucia',
+        tipEn: 'The greasy part contaminates the recycled paper batch. Cut it: clean part → blue bin, greasy part → compost or waste.'),
     _Item('Papier aluminium / papier cuisson alu', 'Papier', 'NON', 'Bac jaune ECOVAL (métal)',
         Icons.layers_rounded, AppColors.paper,
-        'Ce n\'est pas du papier — c\'est de l\'aluminium ! Froisser en boule compacte → bac jaune (métal).'),
+        'Ce n\'est pas du papier — c\'est de l\'aluminium ! Froisser en boule compacte → bac jaune (métal).',
+        nameEn: 'Aluminium foil / aluminium baking paper', nameAr: 'ورق ألمنيوم / ورق خبز ألمنيوم', nameEs: 'Papel de aluminio / papel de cocina de aluminio',
+        tipEn: 'It\'s not paper — it\'s aluminium! Scrunch into a compact ball → yellow bin (metal).'),
     _Item('Papier hygiénique / mouchoir usagé', 'Papier', 'NON', 'Poubelle ordinaire',
         Icons.clean_hands_rounded, AppColors.paper,
-        'Souillé de matières biologiques → non recyclable. Poubelle ordinaire. Le papier recyclé en mouchoirs ne peut pas être recyclé de nouveau.'),
+        'Souillé de matières biologiques → non recyclable. Poubelle ordinaire. Le papier recyclé en mouchoirs ne peut pas être recyclé de nouveau.',
+        nameEn: 'Toilet paper / used tissue', nameAr: 'ورق صحي / منديل مستعمل', nameEs: 'Papel higiénico / pañuelo usado',
+        tipEn: 'Contaminated with biological material → not recyclable. Regular waste bin. Recycled tissue paper cannot be recycled again.'),
     _Item('Emballage fast-food gras (sac McDo, KFC)', 'Papier', 'NON', 'Poubelle ordinaire',
         Icons.fastfood_rounded, AppColors.paper,
-        'Imprégné de graisse et souvent mélangé avec plastique. Non recyclable. Poubelle ordinaire.'),
+        'Imprégné de graisse et souvent mélangé avec plastique. Non recyclable. Poubelle ordinaire.',
+        nameEn: 'Greasy fast-food packaging (McDonald\'s, KFC bag)', nameAr: 'تغليف وجبات سريعة دهنية (ماكدونالدز، كي إف سي)', nameEs: 'Envase de comida rápida grasiento (bolsa McDonald\'s, KFC)',
+        tipEn: 'Soaked in grease and often mixed with plastic. Not recyclable. Regular waste bin.'),
 
     // ── DÉCHETS DANGEREUX ─────────────────────────────────────────────────────
     _Item('Médicaments périmés', 'Dangereux', 'COLLECTE SPÉCIALE', 'Pharmacie agréée',
         Icons.medication_rounded, Color(0xFFE74C3C),
-        'JAMAIS à la poubelle ni dans les toilettes (contamination eau). Rapporter en pharmacie. Maroc : filière de valorisation thermique.'),
+        'JAMAIS à la poubelle ni dans les toilettes (contamination eau). Rapporter en pharmacie. Maroc : filière de valorisation thermique.',
+        nameEn: 'Expired medications', nameAr: 'أدوية منتهية الصلاحية', nameEs: 'Medicamentos caducados',
+        tipEn: 'NEVER in the bin or toilet (water contamination). Return to pharmacy. Morocco: thermal recovery system.'),
     _Item('Piles et batteries (toutes tailles)', 'Dangereux', 'COLLECTE SPÉCIALE', 'Collecteur ECOVAL',
         Icons.battery_full_rounded, Color(0xFFE74C3C),
-        'Contiennent mercure, cadmium, plomb. Collecteurs ECOVAL dans les supermarchés. JAMAIS dans la poubelle ordinaire (Loi 28-00).'),
+        'Contiennent mercure, cadmium, plomb. Collecteurs ECOVAL dans les supermarchés. JAMAIS dans la poubelle ordinaire (Loi 28-00).',
+        nameEn: 'Batteries (all sizes)', nameAr: 'بطاريات (جميع الأحجام)', nameEs: 'Pilas y baterías (todos los tamaños)',
+        tipEn: 'Contain mercury, cadmium, lead. ECOVAL collectors in supermarkets. NEVER in the regular waste bin (Law 28-00).'),
     _Item('Huile moteur usagée', 'Dangereux', 'COLLECTE SPÉCIALE', 'Garage agréé',
         Icons.oil_barrel_rounded, Color(0xFFE74C3C),
-        'Ne jamais verser dans les égouts (1L pollue 1 million L d\'eau). Garage agréé ou déchetterie. Filière de re-raffinage au Maroc.'),
+        'Ne jamais verser dans les égouts (1L pollue 1 million L d\'eau). Garage agréé ou déchetterie. Filière de re-raffinage au Maroc.',
+        nameEn: 'Used motor oil', nameAr: 'زيت محرك مستعمل', nameEs: 'Aceite de motor usado',
+        tipEn: 'Never pour down drains (1L pollutes 1 million L of water). Approved garage or waste facility. Re-refining industry in Morocco.'),
     _Item('Peinture / Vernis / Solvant', 'Dangereux', 'COLLECTE SPÉCIALE', 'Déchetterie — dangereux',
         Icons.format_paint_rounded, Color(0xFFE74C3C),
-        'Garder dans le contenant d\'origine avec l\'étiquette. Déchetterie zone produits dangereux. Loi 28-00 : infraction pénale si abandon.'),
+        'Garder dans le contenant d\'origine avec l\'étiquette. Déchetterie zone produits dangereux. Loi 28-00 : infraction pénale si abandon.',
+        nameEn: 'Paint / Varnish / Solvent', nameAr: 'طلاء / ورنيش / مذيب', nameEs: 'Pintura / Barniz / Disolvente',
+        tipEn: 'Keep in original container with label. Waste facility dangerous products area. Law 28-00: criminal offense if abandoned.'),
     _Item('Produits ménagers chimiques (Javel, déboucheurs)', 'Dangereux', 'COLLECTE SPÉCIALE', 'Déchetterie — dangereux',
         Icons.science_rounded, Color(0xFFE74C3C),
-        'Ne jamais mélanger (réactions dangereuses). Garder en contenant d\'origine. Déchetterie zone produits dangereux.'),
+        'Ne jamais mélanger (réactions dangereuses). Garder en contenant d\'origine. Déchetterie zone produits dangereux.',
+        nameEn: 'Chemical household products (bleach, drain cleaners)', nameAr: 'منتجات منزلية كيميائية (جافيل، مزيلات انسداد)', nameEs: 'Productos domésticos químicos (lejía, destapacañerías)',
+        tipEn: 'Never mix (dangerous reactions). Keep in original container. Waste facility dangerous products area.'),
     _Item('Seringues / Aiguilles (DASRI)', 'Dangereux', 'COLLECTE SPÉCIALE', 'Boîte DASRI / Pharmacie',
         Icons.vaccines_rounded, Color(0xFFE74C3C),
-        'Déchets d\'Activités de Soins à Risques Infectieux. Boîtes DASRI disponibles en pharmacie. JAMAIS dans la poubelle ordinaire.'),
+        'Déchets d\'Activités de Soins à Risques Infectieux. Boîtes DASRI disponibles en pharmacie. JAMAIS dans la poubelle ordinaire.',
+        nameEn: 'Syringes / Needles (DASRI)', nameAr: 'حقن / إبر (نفايات طبية)', nameEs: 'Jeringas / Agujas (DASRI)',
+        tipEn: 'Infectious Healthcare Waste. DASRI boxes available at pharmacy. NEVER in the regular waste bin.'),
     _Item('Thermomètre à mercure', 'Dangereux', 'COLLECTE SPÉCIALE', 'Pharmacie / Déchetterie',
         Icons.thermostat_rounded, Color(0xFFE74C3C),
-        'Le mercure est extrêmement toxique. En cas de casse : aérer, évacuer, ne pas aspirer. Rapporter entier en pharmacie ou déchetterie.'),
+        'Le mercure est extrêmement toxique. En cas de casse : aérer, évacuer, ne pas aspirer. Rapporter entier en pharmacie ou déchetterie.',
+        nameEn: 'Mercury thermometer', nameAr: 'ميزان حرارة زئبقي', nameEs: 'Termómetro de mercurio',
+        tipEn: 'Mercury is extremely toxic. If broken: ventilate, evacuate, do not vacuum. Return whole to pharmacy or waste facility.'),
     _Item('Pesticides / Herbicides / Insecticides', 'Dangereux', 'COLLECTE SPÉCIALE', 'Déchetterie — dangereux',
         Icons.bug_report_rounded, Color(0xFFE74C3C),
-        'Contaminants des eaux souterraines. Déchetterie zone dangereux. En milieu agricole : programme ECOPHYTO du Maroc.'),
+        'Contaminants des eaux souterraines. Déchetterie zone dangereux. En milieu agricole : programme ECOPHYTO du Maroc.',
+        nameEn: 'Pesticides / Herbicides / Insecticides', nameAr: 'مبيدات حشرية / مبيدات أعشاب / حشريات', nameEs: 'Pesticidas / Herbicidas / Insecticidas',
+        tipEn: 'Groundwater contaminants. Waste facility dangerous area. In agricultural settings: Morocco\'s ECOPHYTO programme.'),
     _Item('Acides / Bases concentrées', 'Dangereux', 'COLLECTE SPÉCIALE', 'Déchetterie — dangereux',
         Icons.warning_amber_rounded, Color(0xFFE74C3C),
-        'Produits très corrosifs. Conserver en contenant d\'origine, ne jamais transférer dans une autre bouteille. Déchetterie zone dangereux.'),
+        'Produits très corrosifs. Conserver en contenant d\'origine, ne jamais transférer dans une autre bouteille. Déchetterie zone dangereux.',
+        nameEn: 'Concentrated acids / bases', nameAr: 'أحماض / قواعد مركزة', nameEs: 'Ácidos / Bases concentradas',
+        tipEn: 'Highly corrosive products. Store in original container, never transfer to another bottle. Waste facility dangerous area.'),
     _Item('Extincteur (poudre, CO₂, eau)', 'Dangereux', 'COLLECTE SPÉCIALE', 'Déchetterie / Professionnel',
         Icons.fire_extinguisher_rounded, Color(0xFFE74C3C),
-        'Certains distributeurs assurent la reprise. Déchetterie ou professionnel agréé. Ne jamais percer ni jeter à la poubelle.'),
+        'Certains distributeurs assurent la reprise. Déchetterie ou professionnel agréé. Ne jamais percer ni jeter à la poubelle.',
+        nameEn: 'Fire extinguisher (powder, CO₂, water)', nameAr: 'طفاية حريق (مسحوق، ثاني أكسيد الكربون، ماء)', nameEs: 'Extintor (polvo, CO₂, agua)',
+        tipEn: 'Some distributors offer take-back. Waste facility or approved professional. Never pierce or throw in the bin.'),
     _Item('Amiante (plaques, tuiles)', 'Dangereux', 'COLLECTE SPÉCIALE', 'Déchetterie — amiante',
         Icons.dangerous_rounded, Color(0xFFE74C3C),
-        'TRÈS DANGEREUX — fibre cancérigène. Ne jamais casser ni poncer. Filière spécialisée obligatoire. Contacter la commune ou l\'ONEE.'),
+        'TRÈS DANGEREUX — fibre cancérigène. Ne jamais casser ni poncer. Filière spécialisée obligatoire. Contacter la commune ou l\'ONEE.',
+        nameEn: 'Asbestos (sheets, tiles)', nameAr: 'أسبستوس (ألواح، قرميد)', nameEs: 'Amianto (placas, tejas)',
+        tipEn: 'VERY DANGEROUS — carcinogenic fibre. Never break or sand. Mandatory specialised facility. Contact municipality or ONEE.'),
     _Item('Néons / Tubes fluorescents', 'Dangereux', 'COLLECTE SPÉCIALE', 'Point luminaire / Déchetterie',
         Icons.light_rounded, Color(0xFFE74C3C),
-        'Contiennent du mercure. Ne jamais casser. Points de collecte luminaires (Bricoma, Mr. Bricolage) ou déchetterie zone DEEE.'),
+        'Contiennent du mercure. Ne jamais casser. Points de collecte luminaires (Bricoma, Mr. Bricolage) ou déchetterie zone DEEE.',
+        nameEn: 'Neon / Fluorescent tubes', nameAr: 'أنابيب نيون / أنابيب فلورية', nameEs: 'Tubos de neón / fluorescentes',
+        tipEn: 'Contain mercury. Never break. Lighting collection points (Bricoma, Mr. Bricolage) or WEEE waste facility.'),
   ];
 
-  List<_Item> get _filtered {
+  List<_Item> _getFiltered(String lang) {
     final catName = _categories[_selectedCat].name;
+    final q = _query.toLowerCase();
     return _items.where((item) {
       final matchCat = catName == 'Tous' || item.category == catName;
-      final matchQ = _query.isEmpty ||
-          item.name.toLowerCase().contains(_query.toLowerCase()) ||
-          item.category.toLowerCase().contains(_query.toLowerCase()) ||
-          item.tip.toLowerCase().contains(_query.toLowerCase());
+      final matchQ = q.isEmpty ||
+          item.name.toLowerCase().contains(q) ||
+          item.nameEn.toLowerCase().contains(q) ||
+          item.nameAr.contains(q) ||
+          item.nameEs.toLowerCase().contains(q) ||
+          item.category.toLowerCase().contains(q) ||
+          item.tip.toLowerCase().contains(q);
       return matchCat && matchQ;
     }).toList();
   }
@@ -377,7 +584,9 @@ class _GuideScreenState extends State<GuideScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final filtered = _filtered;
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
+    final filtered = _getFiltered(lang);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
@@ -409,14 +618,14 @@ class _GuideScreenState extends State<GuideScreen>
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('Guide de Tri',
-                                  style: TextStyle(
+                            children: [
+                              Text(s.sortingGuide,
+                                  style: const TextStyle(
                                     fontFamily: 'Poppins', fontSize: 22,
                                     fontWeight: FontWeight.bold, color: Colors.white,
                                   )),
-                              Text('Triez mieux, recyclez plus',
-                                  style: TextStyle(
+                              Text(s.sortingSubtitle,
+                                  style: const TextStyle(
                                     fontFamily: 'Poppins', fontSize: 11, color: Colors.white70,
                                   )),
                             ],
@@ -429,7 +638,7 @@ class _GuideScreenState extends State<GuideScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '${_items.length} déchets',
+                            s.guideWasteCount(_items.length),
                             style: const TextStyle(
                               fontFamily: 'Poppins', fontSize: 12,
                               color: Colors.white, fontWeight: FontWeight.w600,
@@ -451,7 +660,7 @@ class _GuideScreenState extends State<GuideScreen>
                         style: const TextStyle(
                           fontFamily: 'Poppins', color: Colors.white, fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Rechercher un déchet...',
+                          hintText: s.searchWaste,
                           hintStyle: TextStyle(
                             fontFamily: 'Poppins',
                             color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
@@ -484,9 +693,9 @@ class _GuideScreenState extends State<GuideScreen>
                           fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600),
                       unselectedLabelStyle:
                           const TextStyle(fontFamily: 'Poppins', fontSize: 13),
-                      tabs: const [
-                        Tab(text: 'Déchets'),
-                        Tab(text: 'Consignes'),
+                      tabs: [
+                        Tab(text: s.guideTabWaste),
+                        Tab(text: s.guideTabTips),
                       ],
                     ),
                   ],
@@ -528,7 +737,7 @@ class _GuideScreenState extends State<GuideScreen>
                                 size: 13, color: active ? Colors.white : cat.color),
                             const SizedBox(width: 5),
                             Text(
-                              cat.name,
+                              _catDisplay(cat.name, s),
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 11,
@@ -564,8 +773,8 @@ class _GuideScreenState extends State<GuideScreen>
                                 size: 64,
                                 color: AppColors.textLight.withValues(alpha: 0.4)),
                             const SizedBox(height: 12),
-                            const Text('Aucun résultat trouvé',
-                                style: TextStyle(
+                            Text(s.noResults,
+                                style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   color: AppColors.textSecondary,
                                 )),
@@ -576,7 +785,7 @@ class _GuideScreenState extends State<GuideScreen>
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                         itemCount: filtered.length,
                         separatorBuilder: (_, i) => const SizedBox(height: 8),
-                        itemBuilder: (_, i) => _GuideCard(item: filtered[i], isDark: isDark)
+                        itemBuilder: (_, i) => _GuideCard(item: filtered[i], isDark: isDark, lang: lang)
                             .animate(delay: (i * 40).ms)
                             .fadeIn(duration: 300.ms)
                             .slideX(begin: 0.04),
@@ -590,6 +799,33 @@ class _GuideScreenState extends State<GuideScreen>
         ],
       ),
     );
+  }
+}
+
+// ── Translation helpers ────────────────────────────────────────────────────────
+
+String _catDisplay(String frCat, AppStrings s) {
+  switch (frCat) {
+    case 'Tous':         return s.catAll;
+    case 'Plastique':    return s.catPlastic;
+    case 'Papier':       return s.catPaper;
+    case 'Verre':        return s.catGlass;
+    case 'Métal':        return s.catMetal;
+    case 'Organique':    return s.catOrganic;
+    case 'Électronique': return s.catElectronic;
+    case 'Dangereux':    return s.catDangerous;
+    case 'Textile':      return s.catTextile;
+    default:             return frCat;
+  }
+}
+
+String _statusLabel(String status, AppStrings s) {
+  switch (status) {
+    case 'OUI':              return s.statusYes;
+    case 'NON':              return s.statusNo;
+    case 'COLLECTE SPÉCIALE':return s.statusSpecial;
+    case 'INTERDIT':         return s.statusBanned;
+    default:                 return status;
   }
 }
 
@@ -626,7 +862,8 @@ IconData _statusIcon(String status) {
 class _GuideCard extends StatefulWidget {
   final _Item item;
   final bool isDark;
-  const _GuideCard({required this.item, required this.isDark});
+  final String lang;
+  const _GuideCard({required this.item, required this.isDark, required this.lang});
 
   @override
   State<_GuideCard> createState() => _GuideCardState();
@@ -639,6 +876,8 @@ class _GuideCardState extends State<_GuideCard> {
   Widget build(BuildContext context) {
     final item = widget.item;
     final isDark = widget.isDark;
+    final lang = widget.lang;
+    final s = AppStrings.of(lang);
     final sc = _statusColor(item.status);
 
     return GestureDetector(
@@ -678,7 +917,7 @@ class _GuideCardState extends State<_GuideCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.name,
+                        item.nameFor(lang),
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 13,
@@ -696,7 +935,7 @@ class _GuideCardState extends State<_GuideCard> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              item.category,
+                              _catDisplay(item.category, s),
                               style: TextStyle(
                                 fontFamily: 'Poppins', fontSize: 10,
                                 color: item.color, fontWeight: FontWeight.w500,
@@ -708,7 +947,7 @@ class _GuideCardState extends State<_GuideCard> {
                           const SizedBox(width: 3),
                           Flexible(
                             child: Text(
-                              item.status,
+                              _statusLabel(item.status, s),
                               style: TextStyle(
                                 fontFamily: 'Poppins', fontSize: 10, color: sc,
                                 fontWeight: FontWeight.w600,
@@ -765,7 +1004,7 @@ class _GuideCardState extends State<_GuideCard> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        item.tip,
+                        item.tipFor(lang),
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12, height: 1.5,
@@ -788,7 +1027,7 @@ class _GuideCardState extends State<_GuideCard> {
 
 // ── Consignes Tab ─────────────────────────────────────────────────────────────
 
-class _ConsignesTab extends StatelessWidget {
+class _ConsignesTab extends ConsumerWidget {
   final bool isDark;
   const _ConsignesTab({required this.isDark});
 
@@ -930,12 +1169,13 @@ class _ConsignesTab extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         // ── Accès rapide ──────────────────────────────────────────────────
-        _SectionHeader('Accès rapide', Icons.rocket_launch_rounded, isDark),
+        _SectionHeader(s.quickAccess, Icons.rocket_launch_rounded, isDark),
         const SizedBox(height: 12),
         GridView.count(
           shrinkWrap: true,
@@ -947,7 +1187,7 @@ class _ConsignesTab extends StatelessWidget {
           children: [
             _QuickAccessCard(
               icon: Icons.delete_sweep_rounded,
-              label: 'Bacs de tri',
+              label: s.guideSortingBins,
               color: const Color(0xFFF39C12),
               isDark: isDark,
               onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -955,7 +1195,7 @@ class _ConsignesTab extends StatelessWidget {
             ),
             _QuickAccessCard(
               icon: Icons.gavel_rounded,
-              label: 'Cadre légal',
+              label: s.guideLegalFrame,
               color: AppColors.primary,
               isDark: isDark,
               onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -963,7 +1203,7 @@ class _ConsignesTab extends StatelessWidget {
             ),
             _QuickAccessCard(
               icon: Icons.bar_chart_rounded,
-              label: 'Impact éco',
+              label: s.guideEcoImpact,
               color: const Color(0xFF2ECC71),
               isDark: isDark,
               onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -971,7 +1211,7 @@ class _ConsignesTab extends StatelessWidget {
             ),
             _QuickAccessCard(
               icon: Icons.business_rounded,
-              label: 'Opérateurs',
+              label: s.guideOperators,
               color: const Color(0xFF3498DB),
               isDark: isDark,
               onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -979,7 +1219,7 @@ class _ConsignesTab extends StatelessWidget {
             ),
             _QuickAccessCard(
               icon: Icons.star_rounded,
-              label: 'Règles d\'or',
+              label: s.guideGoldenRules,
               color: const Color(0xFF9B59B6),
               isDark: isDark,
               onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -987,7 +1227,7 @@ class _ConsignesTab extends StatelessWidget {
             ),
             _QuickAccessCard(
               icon: Icons.contact_phone_rounded,
-              label: 'Contacts',
+              label: s.guideContacts,
               color: const Color(0xFFE74C3C),
               isDark: isDark,
               onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -998,7 +1238,7 @@ class _ConsignesTab extends StatelessWidget {
         const SizedBox(height: 24),
 
         // ── Bacs de tri ───────────────────────────────────────────────────
-        _SectionHeader('Bacs de tri au Maroc', Icons.delete_sweep_rounded, isDark),
+        _SectionHeader(s.guideSortingBinsSection, Icons.delete_sweep_rounded, isDark),
         const SizedBox(height: 12),
         ...List.generate(_bins.length, (i) =>
           _BinCard(bin: _bins[i], isDark: isDark)
@@ -1006,7 +1246,7 @@ class _ConsignesTab extends StatelessWidget {
         const SizedBox(height: 24),
 
         // ── Cadre légal ───────────────────────────────────────────────────
-        _SectionHeader('Cadre légal marocain', Icons.gavel_rounded, isDark),
+        _SectionHeader(s.guideLegalSection, Icons.gavel_rounded, isDark),
         const SizedBox(height: 12),
         ...List.generate(_laws.length, (i) =>
           _LegalCard(legal: _laws[i], isDark: isDark)
@@ -1014,7 +1254,7 @@ class _ConsignesTab extends StatelessWidget {
         const SizedBox(height: 24),
 
         // ── Impact environnemental ────────────────────────────────────────
-        _SectionHeader('Impact environnemental', Icons.bar_chart_rounded, isDark),
+        _SectionHeader(s.guideImpactSection, Icons.bar_chart_rounded, isDark),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
@@ -1038,7 +1278,7 @@ class _ConsignesTab extends StatelessWidget {
         const SizedBox(height: 24),
 
         // ── Opérateurs ────────────────────────────────────────────────────
-        _SectionHeader('Opérateurs & contacts', Icons.business_rounded, isDark),
+        _SectionHeader(s.guideOperatorsSection, Icons.business_rounded, isDark),
         const SizedBox(height: 12),
         ...List.generate(_operators.length, (i) =>
           _OperatorCard(op: _operators[i], isDark: isDark)
@@ -1046,7 +1286,7 @@ class _ConsignesTab extends StatelessWidget {
         const SizedBox(height: 24),
 
         // ── Règles d'or ───────────────────────────────────────────────────
-        _SectionHeader('Règles d\'or du tri', Icons.star_rounded, isDark),
+        _SectionHeader(s.guideGoldenRulesSection, Icons.star_rounded, isDark),
         const SizedBox(height: 12),
         ...List.generate(_rules.length, (i) =>
           _RuleCard(rule: _rules[i], isDark: isDark)
@@ -1060,23 +1300,23 @@ class _ConsignesTab extends StatelessWidget {
             gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.eco_rounded, color: Colors.white, size: 40),
-              SizedBox(width: 14),
+              const Icon(Icons.eco_rounded, color: Colors.white, size: 40),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Le saviez-vous ?',
-                        style: TextStyle(
+                    Text(s.didYouKnow,
+                        style: const TextStyle(
                           fontFamily: 'Poppins', fontSize: 14,
                           fontWeight: FontWeight.bold, color: Colors.white,
                         )),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Le Maroc a interdit les sacs plastique en 2016 — l\'une des premières lois anti-plastique au monde (Loi 77-15). Contribuez : utilisez toujours un sac en tissu ou un panier.',
-                      style: TextStyle(
+                      s.guidePlasticBanFact,
+                      style: const TextStyle(
                         fontFamily: 'Poppins', fontSize: 12,
                         color: Colors.white, height: 1.4,
                       ),
@@ -1475,15 +1715,36 @@ class _Cat {
 
 class _Item {
   final String name;
+  final String nameEn;
+  final String nameAr;
+  final String nameEs;
   final String category;
   final String status; // 'OUI' | 'NON' | 'COLLECTE SPÉCIALE' | 'INTERDIT'
   final String bin;
   final IconData icon;
   final Color color;
   final String tip;
+  final String tipEn;
   const _Item(this.name, this.category, this.status, this.bin,
-      this.icon, this.color, this.tip);
+      this.icon, this.color, this.tip, {
+    this.nameEn = '', this.nameAr = '', this.nameEs = '',
+    this.tipEn = '',
+  });
   bool get recyclable => status == 'OUI';
+  String nameFor(String lang) {
+    switch (lang) {
+      case 'en': return nameEn.isEmpty ? name : nameEn;
+      case 'ar': return nameAr.isEmpty ? name : nameAr;
+      case 'es': return nameEs.isEmpty ? name : nameEs;
+      default:   return name;
+    }
+  }
+  String tipFor(String lang) {
+    switch (lang) {
+      case 'en': return tipEn.isEmpty ? tip : tipEn;
+      default:   return tip;
+    }
+  }
 }
 
 class _Bin {
@@ -1718,15 +1979,16 @@ class _DetailPageBase extends StatelessWidget {
 
 // ── Bacs de tri page ──────────────────────────────────────────────────────────
 
-class _BacsDetailPage extends StatelessWidget {
+class _BacsDetailPage extends ConsumerWidget {
   final bool isDark;
   const _BacsDetailPage({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return _DetailPageBase(
-      title: 'Bacs de tri',
-      subtitle: 'Au Maroc — ECOVAL et collectes locales',
+      title: s.guideSortingBins,
+      subtitle: s.guideSortingBinsSubtitle,
       icon: Icons.delete_sweep_rounded,
       headerColor: const Color(0xFFF39C12),
       isDark: isDark,
@@ -1745,15 +2007,16 @@ class _BacsDetailPage extends StatelessWidget {
 
 // ── Cadre légal page ──────────────────────────────────────────────────────────
 
-class _LegalDetailPage extends StatelessWidget {
+class _LegalDetailPage extends ConsumerWidget {
   final bool isDark;
   const _LegalDetailPage({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return _DetailPageBase(
-      title: 'Cadre légal',
-      subtitle: 'Lois et réglementations marocaines',
+      title: s.guideLegalFrame,
+      subtitle: s.guideLegalSubtitle,
       icon: Icons.gavel_rounded,
       headerColor: AppColors.primary,
       isDark: isDark,
@@ -1865,7 +2128,7 @@ class _LegalDetailPage extends StatelessWidget {
               Row(children: [
                 const Icon(Icons.verified_rounded, color: AppColors.primary, size: 18),
                 const SizedBox(width: 8),
-                Text('Normes Marocaines (NM) applicables',
+                Text(s.guideMoroccanStandards,
                     style: TextStyle(fontFamily: 'Poppins', fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: isDark ? AppColors.darkText : AppColors.textPrimary)),
@@ -1920,7 +2183,7 @@ class _LegalDetailPage extends StatelessWidget {
 
 // ── Impact environnemental page ───────────────────────────────────────────────
 
-class _ImpactDetailPage extends StatelessWidget {
+class _ImpactDetailPage extends ConsumerWidget {
   final bool isDark;
   const _ImpactDetailPage({required this.isDark});
 
@@ -2055,14 +2318,15 @@ class _ImpactDetailPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final textPrimary = isDark ? AppColors.darkText : AppColors.textPrimary;
     final textSec = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     final cardBg = isDark ? AppColors.darkCard : Colors.white;
 
     return _DetailPageBase(
-      title: 'Impact environnemental',
-      subtitle: 'CO₂ économisé · Énergie · Décomposition',
+      title: s.guideImpactSection,
+      subtitle: s.guideEcoImpactSubtitle,
       icon: Icons.bar_chart_rounded,
       headerColor: const Color(0xFF2ECC71),
       isDark: isDark,
@@ -2139,7 +2403,7 @@ class _ImpactDetailPage extends StatelessWidget {
                       Row(children: [
                         const Icon(Icons.thumb_up_rounded, size: 13, color: Color(0xFF27AE60)),
                         const SizedBox(width: 5),
-                        Text('Impact positif', style: TextStyle(fontFamily: 'Poppins',
+                        Text(s.guideImpactPositive, style: TextStyle(fontFamily: 'Poppins',
                             fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF27AE60))),
                       ]),
                       const SizedBox(height: 4),
@@ -2169,7 +2433,7 @@ class _ImpactDetailPage extends StatelessWidget {
                       Row(children: [
                         const Icon(Icons.warning_amber_rounded, size: 13, color: Color(0xFFE74C3C)),
                         const SizedBox(width: 5),
-                        Text('Si non recyclé', style: TextStyle(fontFamily: 'Poppins',
+                        Text(s.guideIfNotRecycled, style: TextStyle(fontFamily: 'Poppins',
                             fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFE74C3C))),
                       ]),
                       const SizedBox(height: 4),
@@ -2197,22 +2461,20 @@ class _ImpactDetailPage extends StatelessWidget {
             gradient: const LinearGradient(colors: [Color(0xFF27AE60), Color(0xFF2ECC71)]),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Icon(Icons.eco_rounded, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-                Text('Le saviez-vous ?',
-                    style: TextStyle(fontFamily: 'Poppins', fontSize: 14,
+                const Icon(Icons.eco_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(s.didYouKnow,
+                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 14,
                         fontWeight: FontWeight.bold, color: Colors.white)),
               ]),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Si tous les Marocains triaient leurs déchets organiques (65% du volume), '
-                'le Maroc pourrait réduire ses émissions de méthane de 30% — '
-                'l\'équivalent de retirer 500 000 voitures de la route.',
-                style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Colors.white, height: 1.5),
+                s.guideOrganicFact,
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Colors.white, height: 1.5),
               ),
             ],
           ),
@@ -2256,7 +2518,7 @@ class _StatChip extends StatelessWidget {
 
 // ── Opérateurs page ───────────────────────────────────────────────────────────
 
-class _OperateursDetailPage extends StatelessWidget {
+class _OperateursDetailPage extends ConsumerWidget {
   final bool isDark;
   const _OperateursDetailPage({required this.isDark});
 
@@ -2325,7 +2587,8 @@ class _OperateursDetailPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final cardBg = isDark ? AppColors.darkCard : Colors.white;
     final textPrimary = isDark ? AppColors.darkText : AppColors.textPrimary;
     final textSec = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
@@ -2347,7 +2610,7 @@ class _OperateursDetailPage extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Opérateurs Nationaux (présence multi-régions)',
+                s.guideNatOperators,
                 style: TextStyle(fontFamily: 'Poppins', fontSize: 13,
                     fontWeight: FontWeight.bold, color: textPrimary),
               ),
@@ -2460,8 +2723,8 @@ class _OperateursDetailPage extends StatelessWidget {
     ];
 
     return _DetailPageBase(
-      title: 'Opérateurs',
-      subtitle: 'Entreprises, régies et associations de collecte',
+      title: s.guideOperators,
+      subtitle: s.guideOperatorsSubtitle,
       icon: Icons.business_rounded,
       headerColor: regionColor,
       isDark: isDark,
@@ -2472,15 +2735,16 @@ class _OperateursDetailPage extends StatelessWidget {
 
 // ── Règles d'or page ─────────────────────────────────────────────────────────
 
-class _ReglesDetailPage extends StatelessWidget {
+class _ReglesDetailPage extends ConsumerWidget {
   final bool isDark;
   const _ReglesDetailPage({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return _DetailPageBase(
-      title: 'Règles d\'or',
-      subtitle: 'Les bons gestes du tri au Maroc',
+      title: s.guideGoldenRules,
+      subtitle: s.guideGoldenRulesSubtitle,
       icon: Icons.star_rounded,
       headerColor: const Color(0xFF9B59B6),
       isDark: isDark,
@@ -2498,7 +2762,7 @@ class _ReglesDetailPage extends StatelessWidget {
 
 // ── Contacts page ─────────────────────────────────────────────────────────────
 
-class _ContactsDetailPage extends StatelessWidget {
+class _ContactsDetailPage extends ConsumerWidget {
   final bool isDark;
   const _ContactsDetailPage({required this.isDark});
 
@@ -2574,10 +2838,11 @@ class _ContactsDetailPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return _DetailPageBase(
-      title: 'Contacts',
-      subtitle: 'Opérateurs et services utiles',
+      title: s.guideContacts,
+      subtitle: s.guideContactsSubtitle,
       icon: Icons.contact_phone_rounded,
       headerColor: const Color(0xFFE74C3C),
       isDark: isDark,

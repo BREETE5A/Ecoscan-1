@@ -12,6 +12,8 @@ import '../../widgets/loading_overlay.dart';
 import '../legal/privacy_policy_screen.dart';
 import '../legal/terms_screen.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -69,6 +71,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Widget build(BuildContext context) {
     final authState    = ref.watch(loginProvider);
     final googleState  = ref.watch(googleSignInProvider);
+    final s            = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final l10n         = AppLocalizations.of(context)!;
+    final isLoading    = authState.status == AuthStatus.loading ||
+                         googleState.status == AuthStatus.loading;
+    final isDark       = Theme.of(context).brightness == Brightness.dark;
+    final size         = MediaQuery.of(context).size;
 
     // Réagir au login email
     ref.listen(loginProvider, (_, next) {
@@ -96,18 +104,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       }
       if (next.status == AuthStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(next.errorMessage ?? 'Erreur Google Sign-In'),
+          content: Text(next.errorMessage ?? s.googleSignInError),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
         ));
       }
     });
-
-    final l10n      = AppLocalizations.of(context)!;
-    final isLoading = authState.status == AuthStatus.loading ||
-                      googleState.status == AuthStatus.loading;
-    final isDark    = Theme.of(context).brightness == Brightness.dark;
-    final size      = MediaQuery.of(context).size;
 
     return Stack(
       children: [
@@ -151,9 +153,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const SizedBox(height: 14),
 
                         // Slogan
-                        const Text(
-                          'Triez mieux, vivez mieux 🌱',
-                          style: TextStyle(
+                        Text(
+                          s.taglineLogin,
+                          style: const TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 14,
                             color: AppColors.textSecondary,
@@ -195,7 +197,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               CustomTextField(
                                 controller: _emailCtrl,
                                 label: l10n.email,
-                                hint: 'exemple@email.com',
+                                hint: s.hintEmail,
                                 prefixIcon: Icons.email_outlined,
                                 keyboardType: TextInputType.emailAddress,
                                 errorText: authState.status == AuthStatus.error
@@ -205,7 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 isDark: isDark,
                                 validator: (v) =>
                                     (v == null || !v.contains('@'))
-                                        ? 'Email invalide'
+                                        ? s.invalidEmail
                                         : null,
                               )
                                   .animate()
@@ -236,7 +238,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                                 validator: (v) =>
                                     (v == null || v.length < 6)
-                                        ? 'Minimum 6 caractères'
+                                        ? s.minPassword
                                         : null,
                               )
                                   .animate()
@@ -251,8 +253,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                     final email = _emailCtrl.text.trim();
                                     if (email.isEmpty) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Entrez votre email pour réinitialiser le mot de passe'),
+                                        SnackBar(
+                                          content: Text(s.forgotPassHint),
                                           backgroundColor: Colors.orange,
                                         ),
                                       );
@@ -262,8 +264,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Email de réinitialisation envoyé ✅'),
+                                          SnackBar(
+                                            content: Text(s.resetSent),
                                             backgroundColor: Colors.green,
                                           ),
                                         );
@@ -272,7 +274,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
-                                            content: Text(e.message ?? 'Erreur lors de l\'envoi'),
+                                            content: Text(e.message ?? s.sendError),
                                             backgroundColor: Colors.red,
                                           ),
                                         );
@@ -351,7 +353,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const SizedBox(height: 22),
 
                         // ── Séparateur animé ─────────────────────────────
-                        _AnimatedDivider()
+                        _AnimatedDivider(text: s.orContinueWith)
                             .animate()
                             .fadeIn(duration: 400.ms, delay: 600.ms),
 
@@ -369,13 +371,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             .animate()
                             .fadeIn(duration: 400.ms, delay: 650.ms)
                             .slideY(begin: 0.1),
-
-                        const SizedBox(height: 12),
-
-                        // ── Continuer sans compte ────────────────────────
-                        _GhostButton(onTap: () => context.go('/home'))
-                            .animate()
-                            .fadeIn(duration: 400.ms, delay: 700.ms),
 
                         const SizedBox(height: 24),
 
@@ -678,6 +673,9 @@ class _OrbitingLeaves extends StatelessWidget {
 
 // ── Séparateur animé ──────────────────────────────────────────────────────────
 class _AnimatedDivider extends StatelessWidget {
+  final String text;
+  const _AnimatedDivider({required this.text});
+
   @override
   Widget build(BuildContext context) => Row(
         children: [
@@ -689,7 +687,7 @@ class _AnimatedDivider extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Text(
-              'ou continuer avec',
+              text,
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 12,
@@ -818,27 +816,6 @@ class _GoogleLogoPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
-}
-
-// ── Bouton fantôme "Continuer sans compte" ────────────────────────────────────
-class _GhostButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _GhostButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => TextButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.person_outline_rounded,
-            size: 18, color: AppColors.textSecondary),
-        label: const Text(
-          'Continuer sans compte',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 13,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      );
 }
 
 // ── Vague verte en bas de l'écran ────────────────────────────────────────────

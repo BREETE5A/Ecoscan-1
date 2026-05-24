@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../l10n/app_strings.dart';
+import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/chat_message.dart';
 import '../../providers/chat_provider.dart';
@@ -71,8 +73,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
     final messages = ref.watch(chatProvider);
     final hasLoading = messages.any((m) => m.isLoading);
+
+    ref.listen(localeProvider, (prev, next) {
+      if (prev?.languageCode != next.languageCode) {
+        ref.read(chatProvider.notifier)
+            .updateWelcomeMessage(AppStrings.of(next.languageCode).botGreeting);
+      }
+    });
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -80,7 +91,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           isDark ? AppColors.darkBackground : const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          _Header(isDark: isDark, onClear: () {
+          _Header(isDark: isDark, s: s, onClear: () {
             ref.read(chatProvider.notifier).clearChat();
           }),
           Expanded(
@@ -108,6 +119,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ctrl: _ctrl,
             sending: _sending || hasLoading,
             isDark: isDark,
+            s: s,
             onSend: _send,
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom),
@@ -121,8 +133,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
 class _Header extends StatelessWidget {
   final bool isDark;
+  final AppStrings s;
   final VoidCallback onClear;
-  const _Header({required this.isDark, required this.onClear});
+  const _Header({required this.isDark, required this.s, required this.onClear});
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +192,8 @@ class _Header extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 5),
-                    const Text('Assistant RAG — Gemini',
-                        style: TextStyle(
+                    Text(s.online,
+                        style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 11,
                           color: AppColors.textSecondary,
@@ -197,14 +210,14 @@ class _Header extends StatelessWidget {
               if (v == 'clear') onClear();
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'clear',
                 child: Row(children: [
-                  Icon(Icons.delete_outline_rounded,
+                  const Icon(Icons.delete_outline_rounded,
                       color: Colors.redAccent, size: 20),
-                  SizedBox(width: 10),
-                  Text('Effacer la conversation',
-                      style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                  const SizedBox(width: 10),
+                  Text(s.clearConversation,
+                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
                 ]),
               ),
             ],
@@ -386,11 +399,13 @@ class _InputBar extends StatelessWidget {
   final TextEditingController ctrl;
   final bool sending;
   final bool isDark;
+  final AppStrings s;
   final VoidCallback onSend;
   const _InputBar(
       {required this.ctrl,
       required this.sending,
       required this.isDark,
+      required this.s,
       required this.onSend});
 
   @override
@@ -425,9 +440,7 @@ class _InputBar extends StatelessWidget {
                   color: isDark ? AppColors.darkText : AppColors.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: sending
-                      ? 'EcoBot réfléchit...'
-                      : 'Posez votre question sur le recyclage...',
+                  hintText: sending ? s.botThinking : s.typeMessage,
                   hintStyle: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 13,

@@ -2,17 +2,21 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+import 'two_factor_screen.dart' show TwoFactorScreen;
 
-class VerifyEmailScreen extends StatefulWidget {
+class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
 
   @override
-  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
+  ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
-class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   final _auth = FirebaseAuth.instance;
   Timer? _pollTimer;
   Timer? _cooldownTimer;
@@ -66,8 +70,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     });
   }
 
-  Future<void> _skipForNow() async {
-    context.go('/home');
+  Future<void> _changeAccount() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) context.go('/login');
   }
 
   @override
@@ -75,6 +80,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final user = _auth.currentUser;
     final email = user?.email ?? '';
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF9FBF7),
@@ -99,7 +105,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   .fadeIn(),
               const SizedBox(height: 32),
               Text(
-                'Vérifiez votre email',
+                s.verifyEmail,
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 24,
@@ -110,7 +116,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
               const SizedBox(height: 12),
               Text(
-                'Un lien de vérification a été envoyé à\n$email',
+                '${s.verifyEmail}\n$email',
                 style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,
@@ -119,9 +125,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 300.ms),
               const SizedBox(height: 12),
-              const Text(
-                'Ouvrez votre boîte mail et cliquez sur le lien.\nCette page se redirige automatiquement.',
-                style: TextStyle(
+              Text(
+                s.verifyEmailDesc,
+                style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
                   color: AppColors.textSecondary,
@@ -149,8 +155,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
                   label: Text(
                     _cooldownSeconds > 0
-                        ? 'Renvoyer dans ${_cooldownSeconds}s'
-                        : 'Renvoyer l\'email',
+                        ? '${s.resendIn} ${_cooldownSeconds}s'
+                        : s.resendEmail,
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       color: Colors.white,
@@ -159,18 +165,31 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   ),
                 ),
               ).animate().fadeIn(delay: 500.ms),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: _skipForNow,
-                child: const Text(
-                  'Vérifier plus tard',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const TwoFactorScreen())),
+                icon: const Icon(Icons.sms_outlined, color: AppColors.primary),
+                label: Text(s.verifyBySms,
+                  style: const TextStyle(color: AppColors.primary, fontFamily: 'Poppins')),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ).animate().fadeIn(delay: 600.ms),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _changeAccount,
+                icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+                label: Text(s.changeAccount,
+                  style: const TextStyle(color: AppColors.danger, fontFamily: 'Poppins')),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  side: const BorderSide(color: AppColors.danger),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ).animate().fadeIn(delay: 650.ms),
               const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -182,9 +201,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         strokeWidth: 2, color: AppColors.primary),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'En attente de vérification…',
-                    style: TextStyle(
+                  Text(
+                    s.waitingVerif,
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
                       color: AppColors.textSecondary,
