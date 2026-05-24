@@ -18,20 +18,22 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey:            'AIzaSyCgRPJODaZKUoL6n8EtvdurewDGDxwjtPQ',
-    appId:             '1:1089511172826:android:d08252852004f3627313e3',
+    apiKey: 'AIzaSyCgRPJODaZKUoL6n8EtvdurewDGDxwjtPQ',
+    appId: '1:1089511172826:android:d08252852004f3627313e3',
     messagingSenderId: '1089511172826',
-    projectId:         'ecoscan-8795b',
-    storageBucket:     'ecoscan-8795b.firebasestorage.app',
+    projectId: 'ecoscan-8795b',
+    storageBucket: 'ecoscan-8795b.firebasestorage.app',
   );
 
-  // iOS : ajoute GoogleService-Info.plist si tu actives la plateforme iOS
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey:            'AIzaSyCgRPJODaZKUoL6n8EtvdurewDGDxwjtPQ',
-    appId:             '1:1089511172826:android:d08252852004f3627313e3',
+    apiKey: 'AIzaSyBNasOM7ubORnz6lzws_QAVoxCIbhL3sKI',
+    appId: '1:1089511172826:ios:b057c4caa512c6757313e3',
     messagingSenderId: '1089511172826',
-    projectId:         'ecoscan-8795b',
-    storageBucket:     'ecoscan-8795b.firebasestorage.app',
-    iosBundleId:       'com.ecoscan.ecoscan',
+    projectId: 'ecoscan-8795b',
+    storageBucket: 'ecoscan-8795b.firebasestorage.app',
+    androidClientId: '1089511172826-khbf57bsjcepc8s7ppm1cb9erbv7uim3.apps.googleusercontent.com',
+    iosClientId: '1089511172826-i7ov6am9mpkq72ip0feci0jugbd67sal.apps.googleusercontent.com',
+    iosBundleId: 'com.ecoscan.ecoscan',
   );
+
 }
