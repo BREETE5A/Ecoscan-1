@@ -1038,54 +1038,78 @@ class _ConsignesTab extends ConsumerWidget {
          'Barquettes et pots en plastique rigide', 'Aérosols vides et dégazés',
          'Boites biscuits métal, couvercles métal', 'ECOVAL : Casablanca, Rabat, Marrakech, Tanger, Agadir, Fès'],
         nameEn: 'Yellow ECOVAL Bin', subtitleEn: 'Plastics, metals, packaging',
+        nameAr: 'الحاوية الصفراء ECOVAL', subtitleAr: 'البلاستيك والمعادن والتغليف',
         itemsEn: ['Rinsed PET bottles and HDPE containers', 'Aluminium cans and steel food tins',
          'Rigid plastic trays and pots', 'Empty and deflated aerosols',
-         'Metal biscuit tins, metal lids', 'ECOVAL: Casablanca, Rabat, Marrakech, Tangier, Agadir, Fes']),
+         'Metal biscuit tins, metal lids', 'ECOVAL: Casablanca, Rabat, Marrakech, Tangier, Agadir, Fes'],
+        itemsAr: ['زجاجات PET وحاويات PEHD مشطوفة', 'علب الألومنيوم وعلب الفولاذ',
+         'صواني وأوعية البلاستيك الصلبة', 'علب الرذاذ الفارغة والمفرغة من الغاز',
+         'علب البسكويت المعدنية وأغطية المعدن', 'ECOVAL: الدار البيضاء، الرباط، مراكش، طنجة، أكادير، فاس']),
     _Bin('Colonne Verte', 'Verre uniquement',
         AppColors.glass, Icons.local_bar_outlined,
         ['Bouteilles verre (Sidi Ali, Ain Atlas, Oulmes)', 'Bocaux et pots en verre',
          'Flacons parfum et carafe verre', 'PAS : verre brisé, miroir, pyrex, ampoules',
          'Rincer avant dépôt — bouchon métal peut rester', 'Présentes dans 20 villes marocaines'],
         nameEn: 'Green Column', subtitleEn: 'Glass only',
+        nameAr: 'العمود الأخضر', subtitleAr: 'الزجاج فقط',
         itemsEn: ['Glass bottles (Sidi Ali, Ain Atlas, Oulmes)', 'Glass jars and pots',
          'Perfume bottles and glass carafes', 'NOT: broken glass, mirror, pyrex, bulbs',
-         'Rinse before drop-off — metal cap can stay', 'Available in 20 Moroccan cities']),
+         'Rinse before drop-off — metal cap can stay', 'Available in 20 Moroccan cities'],
+        itemsAr: ['زجاجات الزجاج (سيدي علي، عين أطلس، أولمس)', 'برطمانات وأوعية الزجاج',
+         'قوارير العطر وإبريق الزجاج', 'لا: الزجاج المكسور، المرايا، بيريكس، المصابيح',
+         'اشطف قبل الإيداع — يمكن إبقاء الغطاء المعدني', 'متوفرة في 20 مدينة مغربية']),
     _Bin('Bac Bleu / Ferracha', 'Papiers et cartons',
         Color(0xFF3498DB), Icons.article_outlined,
         ['Journaux, magazines, catalogues', 'Carton ondulé aplati (retirer scotch)', 'Boîtes carton céréales et emballages',
          'Cahiers, papier bureau, enveloppes', 'Briques alimentaires rincées',
          'Ferracha : récupérateurs informels — rôle clé au Maroc'],
         nameEn: 'Blue Bin / Ferracha', subtitleEn: 'Paper and cardboard',
+        nameAr: 'الحاوية الزرقاء / الفراشة', subtitleAr: 'الورق والكرتون',
         itemsEn: ['Newspapers, magazines, catalogues', 'Flattened corrugated cardboard (remove tape)', 'Cereal boxes and paper packaging',
          'Notebooks, office paper, envelopes', 'Rinsed food cartons',
-         'Ferracha: informal collectors — key role in Morocco']),
+         'Ferracha: informal collectors — key role in Morocco'],
+        itemsAr: ['الجرائد والمجلات والكتالوجات', 'الكرتون المموج المسطح (إزالة الشريط اللاصق)', 'علب الكرتون وتغليف الأغذية',
+         'كراسات وورق المكتب والمظاريف', 'عبوات الأغذية السائلة المشطوفة',
+         'الفراشة: جامعون غير رسميون — دور رئيسي في المغرب']),
     _Bin('Bac Marron / Composteur', 'Déchets organiques',
         Color(0xFF795548), Icons.compost_rounded,
         ['Épluchures fruits et légumes', 'Marc de café et sachets thé',
          'Pain, harcha, coquilles d\'œuf', 'Feuilles mortes, gazon, sciure bois naturel',
          '65% des déchets marocains sont organiques', 'Décomposition : 2 à 6 mois'],
         nameEn: 'Brown Bin / Composter', subtitleEn: 'Organic waste',
+        nameAr: 'الحاوية البنية / المُسمِّد', subtitleAr: 'النفايات العضوية',
         itemsEn: ['Fruit and vegetable peels', 'Coffee grounds and tea bags',
          'Bread, harcha, eggshells', 'Dead leaves, lawn clippings, natural sawdust',
-         '65% of Moroccan waste is organic', 'Decomposition: 2 to 6 months']),
+         '65% of Moroccan waste is organic', 'Decomposition: 2 to 6 months'],
+        itemsAr: ['قشور الفواكه والخضراوات', 'تفل القهوة وأكياس الشاي',
+         'الخبز والهرشة وقشور البيض', 'الأوراق الميتة وقص العشب ونشارة الخشب الطبيعية',
+         '65٪ من النفايات المغربية عضوية', 'التحلل: من 2 إلى 6 أشهر']),
     _Bin('Borne Textile / Souk Fripe', 'Vêtements et chaussures',
         Color(0xFF9B59B6), Icons.checkroom_rounded,
         ['Vêtements en bon état (propres, secs)', 'Chaussures attachées par paires',
          'Linge de maison, peluches, sacs tissu', 'Tradition sadaqa : don à associations',
          'Souk fripe (Derb Ghallef, Mellah) pour revente', 'Caritas Maroc, SOS Villages d\'Enfants'],
         nameEn: 'Textile Bin / Souk Fripe', subtitleEn: 'Clothing and shoes',
+        nameAr: 'بورن النسيج / سوق الفريبة', subtitleAr: 'الملابس والأحذية',
         itemsEn: ['Clean, dry clothing in good condition', 'Shoes tied in pairs',
          'Bed linen, soft toys, fabric bags', 'Sadaqa tradition: donations to associations',
-         'Souk Fripe (Derb Ghallef, Mellah) for resale', 'Caritas Maroc, SOS Villages d\'Enfants']),
+         'Souk Fripe (Derb Ghallef, Mellah) for resale', 'Caritas Maroc, SOS Villages d\'Enfants'],
+        itemsAr: ['الملابس النظيفة والجافة في حالة جيدة', 'الأحذية مربوطة في أزواج',
+         'المفارش والألعاب الناعمة وحقائب القماش', 'تقليد الصدقة: تبرعات للجمعيات',
+         'سوق الفريبة (درب غلف، الملاح) للبيع بالتجزئة', 'كاريتاس المغرب، SOS قرى الأطفال']),
     _Bin('Éco-point ECOVAL (DEEE)', 'Appareils électroniques',
         AppColors.electronics, Icons.electrical_services_rounded,
         ['Téléphones, tablettes, ordinateurs', 'Électroménager : frigo, machine à laver',
          'Piles, batteries, chargeurs, câbles', 'ECOVAL : jusqu\'à 500 DH remboursés',
          'Points dans Marjane, Carrefour, Cosmos Electro', 'Décret 2-12-695 — reprise obligatoire'],
         nameEn: 'ECOVAL Eco-point (WEEE)', subtitleEn: 'Electronic devices',
+        nameAr: 'نقطة ECOVAL البيئية (DEEE)', subtitleAr: 'الأجهزة الإلكترونية',
         itemsEn: ['Phones, tablets, computers', 'Appliances: fridge, washing machine',
          'Batteries, chargers, cables', 'ECOVAL: up to 500 DH reimbursed',
-         'Drop-off at Marjane, Carrefour, Cosmos Electro', 'Decree 2-12-695 — mandatory take-back']),
+         'Drop-off at Marjane, Carrefour, Cosmos Electro', 'Decree 2-12-695 — mandatory take-back'],
+        itemsAr: ['الهواتف والأجهزة اللوحية والحواسيب', 'الأجهزة المنزلية: الثلاجة والغسالة',
+         'البطاريات والشواحن والكابلات', 'ECOVAL: حتى 500 درهم مسترداد',
+         'نقاط الإيداع في مرجان وكارفور وكوزموس إلكترو', 'مرسوم 2-12-695 — الاسترجاع إلزامي']),
   ];
 
   static const _laws = [
@@ -1093,52 +1117,72 @@ class _ConsignesTab extends ConsumerWidget {
         Icons.gavel_rounded,
         'Loi cadre : principe Pollueur-Payeur, 7 catégories officielles. Interdit abandon/brûlage. Sanctions : 500 à 500 000 DH + prison 1 à 12 mois. Oblige communes à élaborer Plans Directeurs Provinciaux de Gestion.',
         titleEn: 'Waste management and disposal',
-        descEn: 'Framework law: Polluter-Pays principle, 7 official categories. Prohibits illegal dumping/burning. Penalties: 500 to 500,000 DH + 1 to 12 months prison. Municipalities must develop Provincial Waste Management Plans.'),
+        titleAr: 'إدارة النفايات والتخلص منها',
+        descEn: 'Framework law: Polluter-Pays principle, 7 official categories. Prohibits illegal dumping/burning. Penalties: 500 to 500,000 DH + 1 to 12 months prison. Municipalities must develop Provincial Waste Management Plans.',
+        descAr: 'قانون إطار: مبدأ الملوث يدفع، 7 فئات رسمية. يحظر الإلقاء/الحرق غير القانوني. العقوبات: من 500 إلى 500,000 درهم + سجن من 1 إلى 12 شهرًا. على البلديات وضع مخططات إقليمية لتدبير النفايات.'),
     _Legal('Loi 77-15 (2016)', 'Interdiction sacs plastique',
         Icons.shopping_bag_outlined,
         'Interdit fabrication, import, commercialisation sacs plastique < 60 microns. Amende fabricants : 200 000 à 1 000 000 DH. Amende commerçants : 1 000 à 10 000 DH. Prison 1 à 3 mois. Seuls sacs certifiés biodégradables (NM ISO 17088) autorisés.',
         titleEn: 'Plastic bag ban',
-        descEn: 'Prohibits production, import and sale of plastic bags < 60 microns. Manufacturer fine: 200,000 to 1,000,000 DH. Retailer fine: 1,000 to 10,000 DH. Prison 1 to 3 months. Only NM ISO 17088-certified biodegradable bags allowed.'),
+        titleAr: 'حظر الأكياس البلاستيكية',
+        descEn: 'Prohibits production, import and sale of plastic bags < 60 microns. Manufacturer fine: 200,000 to 1,000,000 DH. Retailer fine: 1,000 to 10,000 DH. Prison 1 to 3 months. Only NM ISO 17088-certified biodegradable bags allowed.',
+        descAr: 'يحظر تصنيع واستيراد وتسويق الأكياس البلاستيكية < 60 ميكرون. غرامة المصنعين: من 200,000 إلى 1,000,000 درهم. غرامة التجار: من 1,000 إلى 10,000 درهم. سجن من 1 إلى 3 أشهر. يُسمح فقط بالأكياس القابلة للتحلل المعتمدة (NM ISO 17088).'),
     _Legal('Décret 2-14-782 (2015)', 'DEEE — Responsabilité élargie producteurs',
         Icons.phone_android_rounded,
         'Fabricants et importateurs d\'électronique financent collecte et traitement DEEE. Objectif : 65% de collecte d\'ici 2030. Reprise obligatoire 1 pour 1 dans magasins > 400 m². Amende : 50 000 à 500 000 DH + 3 à 12 mois de prison.',
         titleEn: 'WEEE — Extended Producer Responsibility',
-        descEn: 'Electronics manufacturers and importers fund WEEE collection and treatment. Target: 65% collection rate by 2030. Mandatory 1-for-1 take-back in stores > 400 m². Fine: 50,000 to 500,000 DH + 3 to 12 months prison.'),
+        titleAr: 'DEEE — المسؤولية الموسعة للمنتجين',
+        descEn: 'Electronics manufacturers and importers fund WEEE collection and treatment. Target: 65% collection rate by 2030. Mandatory 1-for-1 take-back in stores > 400 m². Fine: 50,000 to 500,000 DH + 3 to 12 months prison.',
+        descAr: 'يموّل مصنعو الإلكترونيات ومستورديها جمع ومعالجة DEEE. الهدف: 65٪ معدل جمع بحلول 2030. استرجاع إلزامي 1 مقابل 1 في المحلات > 400 م². غرامة: من 50,000 إلى 500,000 درهم + سجن من 3 إلى 12 شهرًا.'),
     _Legal('Décret 2-09-139 (2009)', 'Déchets dangereux — Procédures',
         Icons.warning_amber_rounded,
         'Procédures de gestion, traitement et élimination des déchets dangereux. Déclaration obligatoire pour producteurs > 500 kg/an. Bordereau de suivi obligatoire. Complété par Arrêté 3286-08 (liste officielle), Arrêté 2073-14 (huiles usagées).',
         titleEn: 'Hazardous waste — Procedures',
-        descEn: 'Procedures for management, treatment and disposal of hazardous waste. Mandatory declaration for producers > 500 kg/year. Mandatory tracking form. Supplemented by Order 3286-08 (official list), Order 2073-14 (used oils).'),
+        titleAr: 'النفايات الخطرة — الإجراءات',
+        descEn: 'Procedures for management, treatment and disposal of hazardous waste. Mandatory declaration for producers > 500 kg/year. Mandatory tracking form. Supplemented by Order 3286-08 (official list), Order 2073-14 (used oils).',
+        descAr: 'إجراءات إدارة ومعالجة والتخلص من النفايات الخطرة. إعلان إلزامي للمنتجين > 500 كغ/سنة. بيان تتبع إلزامي. يُكمله قرار 3286-08 (القائمة الرسمية)، قرار 2073-14 (الزيوت المستعملة).'),
     _Legal('SNGD 2030', 'Stratégie Nationale Gestion des Déchets',
         Icons.flag_rounded,
         'Budget 40 milliards DH (2021-2030). Objectifs : 90% collecte urbaine, 35 centres de tri dans villes > 50 000 hab., 20% taux de recyclage ménager, fermeture 300+ décharges sauvages, 50 unités de compostage. Tri à la source dans 20 villes pilotes d\'ici 2025.',
         titleEn: 'National Waste Management Strategy',
-        descEn: 'Budget 40 billion DH (2021–2030). Targets: 90% urban collection, 35 sorting centres in cities > 50,000 pop., 20% household recycling rate, closure of 300+ illegal dumps, 50 composting units. Source separation in 20 pilot cities by 2025.'),
+        titleAr: 'الاستراتيجية الوطنية لتدبير النفايات',
+        descEn: 'Budget 40 billion DH (2021–2030). Targets: 90% urban collection, 35 sorting centres in cities > 50,000 pop., 20% household recycling rate, closure of 300+ illegal dumps, 50 composting units. Source separation in 20 pilot cities by 2025.',
+        descAr: 'ميزانية 40 مليار درهم (2021-2030). الأهداف: 90٪ جمع حضري، 35 مركز فرز في مدن > 50,000 ساكن، 20٪ معدل إعادة تدوير منزلي، إغلاق 300+ مطرح عشوائي، 50 وحدة تسميد. الفرز من المصدر في 20 مدينة نموذجية بحلول 2025.'),
     _Legal('Loi 99-12', 'Charte nationale environnement',
         Icons.balance_rounded,
         'Charte Nationale de l\'Environnement et du Développement Durable. Consacre le droit à un environnement sain. Base juridique de toutes les politiques environnementales marocaines.',
         titleEn: 'National environment charter',
-        descEn: 'National Charter for Environment and Sustainable Development. Enshrines the right to a healthy environment. Legal basis for all Moroccan environmental policies.'),
+        titleAr: 'الميثاق الوطني للبيئة',
+        descEn: 'National Charter for Environment and Sustainable Development. Enshrines the right to a healthy environment. Legal basis for all Moroccan environmental policies.',
+        descAr: 'الميثاق الوطني للبيئة والتنمية المستدامة. يكرس الحق في بيئة سليمة. الأساس القانوني لجميع السياسات البيئية المغربية.'),
     _Legal('Convention de Bâle (1995)', 'Déchets dangereux transfrontaliers',
         Icons.public_rounded,
         'Ratifiée par le Maroc. Interdit export déchets dangereux vers pays non-OCDE sans preuve de traitement conforme. Sanction : 500 000 à 2 000 000 DH + 6 à 24 mois prison. Convention de Bamako (1991) renforce cette protection pour l\'Afrique.',
         titleEn: 'Transboundary hazardous waste',
-        descEn: 'Ratified by Morocco. Prohibits export of hazardous waste to non-OECD countries without proof of compliant treatment. Penalty: 500,000 to 2,000,000 DH + 6 to 24 months prison. Bamako Convention (1991) reinforces this protection for Africa.'),
+        titleAr: 'النفايات الخطرة عبر الحدود',
+        descEn: 'Ratified by Morocco. Prohibits export of hazardous waste to non-OECD countries without proof of compliant treatment. Penalty: 500,000 to 2,000,000 DH + 6 to 24 months prison. Bamako Convention (1991) reinforces this protection for Africa.',
+        descAr: 'مصادق عليها من المغرب. تحظر تصدير النفايات الخطرة إلى دول غير منظمة التعاون الاقتصادي دون إثبات المعالجة المطابقة. عقوبة: من 500,000 إلى 2,000,000 درهم + سجن من 6 إلى 24 شهرًا. تعزز اتفاقية باماكو (1991) هذه الحماية لأفريقيا.'),
     _Legal('Accord de Paris (2016)', 'Réduction GES — 42% d\'ici 2030',
         Icons.eco_rounded,
         'Le Maroc s\'engage à réduire ses GES de 42% d\'ici 2030. Les déchets représentent 4,7% des émissions. Agenda ODD 2030 cible 12.5 : réduire de 50% la génération de déchets d\'ici 2030 par prévention, réutilisation et recyclage.',
         titleEn: 'GHG reduction — 42% by 2030',
-        descEn: 'Morocco commits to reducing GHG by 42% by 2030. Waste represents 4.7% of emissions. SDG 2030 target 12.5: reduce waste generation by 50% by 2030 through prevention, reuse and recycling.'),
+        titleAr: 'تخفيض غازات الاحتباس الحراري — 42٪ بحلول 2030',
+        descEn: 'Morocco commits to reducing GHG by 42% by 2030. Waste represents 4.7% of emissions. SDG 2030 target 12.5: reduce waste generation by 50% by 2030 through prevention, reuse and recycling.',
+        descAr: 'يلتزم المغرب بتخفيض غازات الاحتباس الحراري بنسبة 42٪ بحلول 2030. تمثل النفايات 4.7٪ من الانبعاثات. هدف SDG 2030 رقم 12.5: تخفيض توليد النفايات بنسبة 50٪ بحلول 2030 عبر الوقاية وإعادة الاستخدام والتدوير.'),
     _Legal('Décret 2-20-446 (2020)', 'Renforcement sanctions (+50%)',
         Icons.gavel_rounded,
         'Révision à la hausse des amendes environnementales (+50%). Zéro tolérance pour les rejets illégaux. En cas de préjudice grave, le tribunal ordonne la remise en état du site aux frais du contrevenant.',
         titleEn: 'Tightened penalties (+50%)',
-        descEn: 'Upward revision of environmental fines (+50%). Zero tolerance for illegal discharges. In case of serious damage, the court orders site restoration at the offender\'s expense.'),
+        titleAr: 'تشديد العقوبات (+50٪)',
+        descEn: 'Upward revision of environmental fines (+50%). Zero tolerance for illegal discharges. In case of serious damage, the court orders site restoration at the offender\'s expense.',
+        descAr: 'مراجعة تصاعدية للغرامات البيئية (+50٪). تسامح صفري مع الصرف غير القانوني. في حالة الضرر الجسيم، تأمر المحكمة بإعادة تأهيل الموقع على نفقة المخالف.'),
     _Legal('Feuille Route Économie Circulaire 2030', 'Programme SWITCH-Med UE-Maroc',
         Icons.autorenew_rounded,
         'Adoptée en 2023 avec appui UE. 4 axes : Production Propre, Consommation Responsable, Gestion Optimisée des Déchets, Innovation & Numérique. Introduction de la consigne bouteilles verre/PET d\'ici 2026 (pilote Casa et Rabat). EcoScan s\'inscrit dans l\'Axe 4.',
         titleEn: 'EU-Morocco SWITCH-Med programme',
-        descEn: 'Adopted in 2023 with EU support. 4 pillars: Clean Production, Responsible Consumption, Optimised Waste Management, Innovation & Digital. Introduction of glass/PET bottle deposit scheme by 2026 (Casa & Rabat pilot). EcoScan is part of Pillar 4.'),
+        titleAr: 'برنامج SWITCH-Med الاتحاد الأوروبي-المغرب',
+        descEn: 'Adopted in 2023 with EU support. 4 pillars: Clean Production, Responsible Consumption, Optimised Waste Management, Innovation & Digital. Introduction of glass/PET bottle deposit scheme by 2026 (Casa & Rabat pilot). EcoScan is part of Pillar 4.',
+        descAr: 'اعتمدت عام 2023 بدعم أوروبي. 4 محاور: الإنتاج النظيف، الاستهلاك المسؤول، التدبير الأمثل للنفايات، الابتكار والرقمنة. إدخال نظام الوديعة لزجاجات الزجاج/PET بحلول 2026 (نموذج الدار البيضاء والرباط). EcoScan ضمن المحور 4.'),
   ];
 
   static const _operators = [
@@ -1146,81 +1190,113 @@ class _ConsignesTab extends ConsumerWidget {
         Icons.recycling_rounded, Color(0xFF27AE60),
         'Opérateur national de valorisation. Tél : 0522 35 66 00 — Usine Aïn Sebaâ, Casablanca. Présent dans 20+ villes. Points de collecte dans Marjane, Carrefour, Label\'Vie.',
         roleEn: 'Plastic, Metal, Paper — National',
-        descEn: 'National recovery operator. Tel: 0522 35 66 00 — Aïn Sebaâ plant, Casablanca. Present in 20+ cities. Collection points at Marjane, Carrefour, Label\'Vie.'),
+        roleAr: 'البلاستيك والمعدن والورق — وطني',
+        descEn: 'National recovery operator. Tel: 0522 35 66 00 — Aïn Sebaâ plant, Casablanca. Present in 20+ cities. Collection points at Marjane, Carrefour, Label\'Vie.',
+        descAr: 'مشغّل وطني لتثمين النفايات. هاتف: 0522 35 66 00 — مصنع عين السبع، الدار البيضاء. حاضر في أكثر من 20 مدينة. نقاط جمع في مرجان وكارفور ولابيلفي.'),
     _Operator('AVERDA Maroc', 'Collecte & tri sélectif — National',
         Icons.local_shipping_rounded, Color(0xFF2980B9),
         'Opérateur national collecte OM. Tél : 0537 71 10 10 — Rabat. Gestion déléguée dans plusieurs villes. Camions de collecte + centres de tri.',
         roleEn: 'Collection & selective sorting — National',
-        descEn: 'National household waste collection operator. Tel: 0537 71 10 10 — Rabat. Delegated management in several cities. Collection trucks + sorting centres.'),
+        roleAr: 'الجمع والفرز الانتقائي — وطني',
+        descEn: 'National household waste collection operator. Tel: 0537 71 10 10 — Rabat. Delegated management in several cities. Collection trucks + sorting centres.',
+        descAr: 'مشغّل وطني لجمع النفايات المنزلية. هاتف: 0537 71 10 10 — الرباط. تدبير مفوض في عدة مدن. شاحنات جمع + مراكز فرز.'),
     _Operator('SITA El Beida', 'Collecte ordures ménagères',
         Icons.delete_rounded, Color(0xFF5D6D7E),
         'Collecte et traitement des déchets ménagers. Tél : 0522 90 48 00 — Casablanca. Filiale groupe SUEZ Environnement.',
         roleEn: 'Household waste collection',
-        descEn: 'Household waste collection and treatment. Tel: 0522 90 48 00 — Casablanca. Subsidiary of SUEZ Environnement group.'),
+        roleAr: 'جمع النفايات المنزلية',
+        descEn: 'Household waste collection and treatment. Tel: 0522 90 48 00 — Casablanca. Subsidiary of SUEZ Environnement group.',
+        descAr: 'جمع ومعالجة النفايات المنزلية. هاتف: 0522 90 48 00 — الدار البيضاء. فرع مجموعة SUEZ Environnement.'),
     _Operator('TECMED', 'DEEE & déchets dangereux — National',
         Icons.electrical_services_rounded, AppColors.electronics,
         'Collecte et traitement DEEE (ordinateurs, téléphones, TV). Tél : 0523 32 00 00 — Mohammedia. Sites Tanger Nord aussi. Agréé MTEDD.',
         roleEn: 'WEEE & hazardous waste — National',
-        descEn: 'WEEE collection and treatment (computers, phones, TVs). Tel: 0523 32 00 00 — Mohammedia. Also at Tangier North sites. Approved by MTEDD.'),
+        roleAr: 'DEEE والنفايات الخطرة — وطني',
+        descEn: 'WEEE collection and treatment (computers, phones, TVs). Tel: 0523 32 00 00 — Mohammedia. Also at Tangier North sites. Approved by MTEDD.',
+        descAr: 'جمع ومعالجة DEEE (حواسيب، هواتف، تلفزيونات). هاتف: 0523 32 00 00 — المحمدية. مواقع بطنجة الشمالية أيضًا. معتمد من MTEDD.'),
     _Operator('Moroccan Green', 'PET & plastiques — National',
         Icons.opacity_rounded, AppColors.plastic,
         'Recyclage plastique PET et PEHD. Tél : 0522 40 09 09 — Casablanca. Collecte bouteilles PET auprès ménages et industries.',
         roleEn: 'PET & plastics — National',
-        descEn: 'PET and HDPE plastic recycling. Tel: 0522 40 09 09 — Casablanca. Collects PET bottles from households and industry.'),
+        roleAr: 'PET والبلاستيك — وطني',
+        descEn: 'PET and HDPE plastic recycling. Tel: 0522 40 09 09 — Casablanca. Collects PET bottles from households and industry.',
+        descAr: 'إعادة تدوير البلاستيك PET وPEHD. هاتف: 0522 40 09 09 — الدار البيضاء. يجمع زجاجات PET من الأسر والصناعة.'),
     _Operator('PREVOR Maroc', 'Déchets industriels dangereux',
         Icons.warning_amber_rounded, Color(0xFFE74C3C),
         'Collecte et traitement déchets industriels dangereux. Tél : 0522 23 45 67 — Casablanca. Agréé Ministère Transition Énergétique.',
         roleEn: 'Industrial hazardous waste',
-        descEn: 'Industrial hazardous waste collection and treatment. Tel: 0522 23 45 67 — Casablanca. Approved by Ministry of Energy Transition.'),
+        roleAr: 'النفايات الصناعية الخطرة',
+        descEn: 'Industrial hazardous waste collection and treatment. Tel: 0522 23 45 67 — Casablanca. Approved by Ministry of Energy Transition.',
+        descAr: 'جمع ومعالجة النفايات الصناعية الخطرة. هاتف: 0522 23 45 67 — الدار البيضاء. معتمد من وزارة الانتقال الطاقي.'),
     _Operator('OZONE Environnement', 'Huiles usagées & solvants',
         Icons.water_drop_rounded, Color(0xFF8E44AD),
         'Collecte et valorisation des huiles de vidange usagées et solvants industriels. Tél : 0522 88 76 54 — Casablanca.',
         roleEn: 'Used oils & solvents',
-        descEn: 'Collection and recovery of used motor oils and industrial solvents. Tel: 0522 88 76 54 — Casablanca.'),
+        roleAr: 'الزيوت المستعملة والمذيبات',
+        descEn: 'Collection and recovery of used motor oils and industrial solvents. Tel: 0522 88 76 54 — Casablanca.',
+        descAr: 'جمع وتثمين زيوت المحرك المستعملة والمذيبات الصناعية. هاتف: 0522 88 76 54 — الدار البيضاء.'),
     _Operator('ECO-TLC Maroc', 'Textiles & vêtements usagés',
         Icons.checkroom_rounded, Color(0xFF9B59B6),
         'Éco-organisme pour collecte et valorisation textiles usés. Tél : 0522 55 44 33 — Casablanca. Bornes de collecte dans 15+ villes.',
         roleEn: 'Textiles & used clothing',
-        descEn: 'Eco-organisation for used textile collection and recovery. Tel: 0522 55 44 33 — Casablanca. Collection bins in 15+ cities.'),
+        roleAr: 'المنسوجات والملابس المستعملة',
+        descEn: 'Eco-organisation for used textile collection and recovery. Tel: 0522 55 44 33 — Casablanca. Collection bins in 15+ cities.',
+        descAr: 'هيئة بيئية لجمع وتثمين المنسوجات المستعملة. هاتف: 0522 55 44 33 — الدار البيضاء. حاويات جمع في أكثر من 15 مدينة.'),
     _Operator('SOUSS RECYCLAGE', 'Multi-matériaux — Sud Maroc',
         Icons.recycling_rounded, Color(0xFF1E8449),
         'Plastique, métal, papier — toute la région Souss-Massa. Tél : 0528 83 12 34 — Agadir. Centre de tri zone industrielle.',
         roleEn: 'Multi-material — Southern Morocco',
-        descEn: 'Plastic, metal, paper — entire Souss-Massa region. Tel: 0528 83 12 34 — Agadir. Sorting centre in industrial zone.'),
+        roleAr: 'متعدد المواد — جنوب المغرب',
+        descEn: 'Plastic, metal, paper — entire Souss-Massa region. Tel: 0528 83 12 34 — Agadir. Sorting centre in industrial zone.',
+        descAr: 'البلاستيك والمعدن والورق — كامل منطقة سوس-ماسة. هاتف: 0528 83 12 34 — أكادير. مركز فرز في المنطقة الصناعية.'),
     _Operator('RECYCLAGE MAGHREB', 'Multi-matériaux — National',
         Icons.loop_rounded, Color(0xFF2C3E50),
         'Recyclage multi-matériaux. Tél : 0522 67 89 01 — Aïn Sebaâ, Casablanca. Partenaire industrie et collectivités.',
         roleEn: 'Multi-material — National',
-        descEn: 'Multi-material recycling. Tel: 0522 67 89 01 — Aïn Sebaâ, Casablanca. Partner to industry and local authorities.'),
+        roleAr: 'متعدد المواد — وطني',
+        descEn: 'Multi-material recycling. Tel: 0522 67 89 01 — Aïn Sebaâ, Casablanca. Partner to industry and local authorities.',
+        descAr: 'إعادة تدوير متعددة المواد. هاتف: 0522 67 89 01 — عين السبع، الدار البيضاء. شريك الصناعة والجماعات الترابية.'),
     _Operator('Zéro Zbel', 'ONG tri & sensibilisation',
         Icons.volunteer_activism_rounded, Color(0xFF7D6608),
         'ONG pionnière du tri au Maroc. contact@zerozabel.ma. Sensibilisation dans écoles, entreprises et communes. Programmes de compostage communautaire.',
         roleEn: 'NGO sorting & awareness',
-        descEn: 'Pioneer sorting NGO in Morocco. contact@zerozabel.ma. Awareness in schools, companies and municipalities. Community composting programmes.'),
+        roleAr: 'جمعية فرز وتوعية',
+        descEn: 'Pioneer sorting NGO in Morocco. contact@zerozabel.ma. Awareness in schools, companies and municipalities. Community composting programmes.',
+        descAr: 'جمعية رائدة في الفرز بالمغرب. contact@zerozabel.ma. توعية في المدارس والشركات والبلديات. برامج التسميد المجتمعي.'),
     _Operator('Green Morocco', 'Association environnement',
         Icons.park_rounded, Color(0xFF145A32),
         'Plages propres, nettoyages collectifs. Tél : 0522 55 11 22 — Casablanca. Projets recyclage communautaires et sensibilisation.',
         roleEn: 'Environmental association',
-        descEn: 'Beach clean-ups, collective cleanups. Tel: 0522 55 11 22 — Casablanca. Community recycling projects and awareness campaigns.'),
+        roleAr: 'جمعية بيئية',
+        descEn: 'Beach clean-ups, collective cleanups. Tel: 0522 55 11 22 — Casablanca. Community recycling projects and awareness campaigns.',
+        descAr: 'تنظيف الشواطئ والتنظيفات الجماعية. هاتف: 0522 55 11 22 — الدار البيضاء. مشاريع إعادة تدوير مجتمعية وحملات توعية.'),
   ];
 
   static const _impacts = [
     _Impact('Métal (alu)', '8 kg CO₂ économisés par kg recyclé', '2 700 ans', Icons.hardware_rounded, AppColors.metal,
-        categoryEn: 'Metal (aluminium)', benefitEn: '8 kg CO₂ saved per kg recycled', decompEn: '2,700 years'),
+        categoryEn: 'Metal (aluminium)', benefitEn: '8 kg CO₂ saved per kg recycled', decompEn: '2,700 years',
+        categoryAr: 'المعدن (الألومنيوم)', benefitAr: '8 كغ CO₂ موفرة لكل كغ مُعاد تدويره', decompAr: '2,700 سنة'),
     _Impact('Verre', '300 kg CO₂ économisés par tonne', '4 000 ans', Icons.local_bar_outlined, AppColors.glass,
-        categoryEn: 'Glass', benefitEn: '300 kg CO₂ saved per tonne', decompEn: '4,000 years'),
+        categoryEn: 'Glass', benefitEn: '300 kg CO₂ saved per tonne', decompEn: '4,000 years',
+        categoryAr: 'الزجاج', benefitAr: '300 كغ CO₂ موفرة لكل طن', decompAr: '4,000 سنة'),
     _Impact('Plastique PET', '1,5 kg CO₂ économisés par kg', '500 ans', Icons.opacity_rounded, AppColors.plastic,
-        categoryEn: 'PET Plastic', benefitEn: '1.5 kg CO₂ saved per kg', decompEn: '500 years'),
+        categoryEn: 'PET Plastic', benefitEn: '1.5 kg CO₂ saved per kg', decompEn: '500 years',
+        categoryAr: 'البلاستيك PET', benefitAr: '1.5 كغ CO₂ موفرة لكل كغ', decompAr: '500 سنة'),
     _Impact('Papier/Carton', '17 arbres sauvés par tonne', '3–6 mois', Icons.article_outlined, AppColors.paper,
-        categoryEn: 'Paper/Cardboard', benefitEn: '17 trees saved per tonne', decompEn: '3–6 months'),
+        categoryEn: 'Paper/Cardboard', benefitEn: '17 trees saved per tonne', decompEn: '3–6 months',
+        categoryAr: 'الورق/الكرتون', benefitAr: '17 شجرة منقذة لكل طن', decompAr: '3-6 أشهر'),
     _Impact('Organique', '65% des déchets marocains', '2–6 mois', Icons.compost_rounded, Color(0xFF795548),
-        categoryEn: 'Organic', benefitEn: '65% of Moroccan waste', decompEn: '2–6 months'),
+        categoryEn: 'Organic', benefitEn: '65% of Moroccan waste', decompEn: '2–6 months',
+        categoryAr: 'العضوي', benefitAr: '65٪ من النفايات المغربية', decompAr: '2-6 أشهر'),
     _Impact('Électronique', '70 kg CO₂ économisés/ordinateur', '> 1 000 ans', Icons.electrical_services_rounded, AppColors.electronics,
-        categoryEn: 'Electronics', benefitEn: '70 kg CO₂ saved/computer', decompEn: '> 1,000 years'),
+        categoryEn: 'Electronics', benefitEn: '70 kg CO₂ saved/computer', decompEn: '> 1,000 years',
+        categoryAr: 'الإلكترونيات', benefitAr: '70 كغ CO₂ موفرة/حاسوب', decompAr: '> 1,000 سنة'),
     _Impact('Textile', '3 200 L d\'eau économisés/kg coton', '200 ans (synthétique)', Icons.checkroom_rounded, Color(0xFF9B59B6),
-        categoryEn: 'Textile', benefitEn: '3,200 L water saved/kg cotton', decompEn: '200 years (synthetic)'),
+        categoryEn: 'Textile', benefitEn: '3,200 L water saved/kg cotton', decompEn: '200 years (synthetic)',
+        categoryAr: 'المنسوجات', benefitAr: '3,200 لتر ماء موفرة/كغ قطن', decompAr: '200 سنة (اصطناعي)'),
     _Impact('Déchets dangereux', '1 L d\'huile = 1 million L d\'eau polluée', 'Permanent', Icons.warning_amber_rounded, Color(0xFFE74C3C),
-        categoryEn: 'Hazardous waste', benefitEn: '1 L oil = 1 million L polluted water', decompEn: 'Permanent'),
+        categoryEn: 'Hazardous waste', benefitEn: '1 L oil = 1 million L polluted water', decompEn: 'Permanent',
+        categoryAr: 'النفايات الخطرة', benefitAr: '1 لتر زيت = 1 مليون لتر ماء ملوث', decompAr: 'دائم'),
   ];
 
   static const _rules = [
@@ -1228,32 +1304,44 @@ class _ConsignesTab extends ConsumerWidget {
         'Rincer avant de trier',
         'Un rinçage rapide suffit. Les emballages propres garantissent la qualité du recyclat et protègent les agents de tri.',
         titleEn: 'Rinse before sorting',
-        descEn: 'A quick rinse is enough. Clean packaging guarantees recyclate quality and protects sorting workers.'),
+        titleAr: 'اشطف قبل الفرز',
+        descEn: 'A quick rinse is enough. Clean packaging guarantees recyclate quality and protects sorting workers.',
+        descAr: 'شطف سريع يكفي. التغليف النظيف يضمن جودة المعاد تدويره ويحمي عمال الفرز.'),
     _Rule(Icons.check_circle_outline_rounded, AppColors.primary,
         'Ne pas emballer dans un sac plastique',
         'Les sacs plastiques sont interdits au Maroc (Loi 77-15). Déposer les emballages directement dans le bac ou la borne.',
         titleEn: 'Don\'t wrap in a plastic bag',
-        descEn: 'Plastic bags are banned in Morocco (Law 77-15). Place packaging directly in the bin or drop-off point.'),
+        titleAr: 'لا تضع في كيس بلاستيكي',
+        descEn: 'Plastic bags are banned in Morocco (Law 77-15). Place packaging directly in the bin or drop-off point.',
+        descAr: 'الأكياس البلاستيكية محظورة في المغرب (القانون 77-15). ضع التغليف مباشرة في الحاوية أو نقطة الإيداع.'),
     _Rule(Icons.check_circle_outline_rounded, AppColors.primary,
         'Écraser les bouteilles et boîtes',
         'Réduire le volume pour optimiser la capacité des bacs ECOVAL et faciliter le transport jusqu\'au centre de tri.',
         titleEn: 'Crush bottles and cans',
-        descEn: 'Reduce volume to optimise ECOVAL bin capacity and ease transport to the sorting centre.'),
+        titleAr: 'اسحق الزجاجات والعلب',
+        descEn: 'Reduce volume to optimise ECOVAL bin capacity and ease transport to the sorting centre.',
+        descAr: 'قلّل الحجم لتحسين سعة حاويات ECOVAL وتسهيل النقل إلى مركز الفرز.'),
     _Rule(Icons.cancel_outlined, AppColors.danger,
         'Jamais de déchets dangereux dans les bacs',
         'Piles, médicaments, produits chimiques ont leurs propres filières. Ils contaminent et peuvent blesser les agents de tri.',
         titleEn: 'Never put hazardous waste in bins',
-        descEn: 'Batteries, medications, chemicals have their own streams. They contaminate and can injure sorting workers.'),
+        titleAr: 'لا تضع النفايات الخطرة في الحاويات أبدًا',
+        descEn: 'Batteries, medications, chemicals have their own streams. They contaminate and can injure sorting workers.',
+        descAr: 'البطاريات والأدوية والمواد الكيميائية لها مسارات خاصة. إنها تلوث وقد تُصيب عمال الفرز.'),
     _Rule(Icons.cancel_outlined, AppColors.danger,
         'Pas de verre brisé dans la colonne verte',
         'Emballer dans du carton épais et apporter en déchetterie. Le verre brisé blesse les agents et bloque les machines.',
         titleEn: 'No broken glass in the green column',
-        descEn: 'Wrap in thick cardboard and bring to a recycling centre. Broken glass injures workers and jams machines.'),
+        titleAr: 'لا زجاج مكسور في العمود الأخضر',
+        descEn: 'Wrap in thick cardboard and bring to a recycling centre. Broken glass injures workers and jams machines.',
+        descAr: 'لفّه في كرتون سميك وأحضره إلى مركز إعادة التدوير. الزجاج المكسور يُصيب العمال ويعطّل الآلات.'),
     _Rule(Icons.cancel_outlined, AppColors.danger,
         'Ne pas jeter dans la nature — Loi 28-00',
         'L\'abandon de déchets est une infraction pénale au Maroc. Amende et poursuites possibles. La déchetterie la plus proche est à votre service.',
         titleEn: 'Don\'t litter — Law 28-00',
-        descEn: 'Littering is a criminal offence in Morocco. Fines and prosecution possible. Your nearest recycling centre is at your service.'),
+        titleAr: 'لا ترمِ في الطبيعة — القانون 28-00',
+        descEn: 'Littering is a criminal offence in Morocco. Fines and prosecution possible. Your nearest recycling centre is at your service.',
+        descAr: 'إلقاء النفايات جريمة جنائية في المغرب. غرامات ومتابعات قضائية ممكنة. أقرب مركز إعادة تدوير في خدمتك.'),
   ];
 
   @override
@@ -1845,64 +1933,118 @@ class _Item {
 class _Bin {
   final String name;
   final String nameEn;
+  final String nameAr;
   final String subtitle;
   final String subtitleEn;
+  final String subtitleAr;
   final Color color;
   final IconData icon;
   final List<String> items;
   final List<String> itemsEn;
+  final List<String> itemsAr;
   const _Bin(this.name, this.subtitle, this.color, this.icon, this.items, {
-    this.nameEn = '', this.subtitleEn = '', this.itemsEn = const [],
+    this.nameEn = '', this.nameAr = '',
+    this.subtitleEn = '', this.subtitleAr = '',
+    this.itemsEn = const [], this.itemsAr = const [],
   });
-  String nameFor(String lang) => (lang != 'fr' && nameEn.isNotEmpty) ? nameEn : name;
-  String subtitleFor(String lang) => (lang != 'fr' && subtitleEn.isNotEmpty) ? subtitleEn : subtitle;
-  List<String> itemsFor(String lang) => (lang != 'fr' && itemsEn.isNotEmpty) ? itemsEn : items;
+  String nameFor(String lang) {
+    if (lang == 'ar' && nameAr.isNotEmpty) return nameAr;
+    if (lang != 'fr' && nameEn.isNotEmpty) return nameEn;
+    return name;
+  }
+  String subtitleFor(String lang) {
+    if (lang == 'ar' && subtitleAr.isNotEmpty) return subtitleAr;
+    if (lang != 'fr' && subtitleEn.isNotEmpty) return subtitleEn;
+    return subtitle;
+  }
+  List<String> itemsFor(String lang) {
+    if (lang == 'ar' && itemsAr.isNotEmpty) return itemsAr;
+    if (lang != 'fr' && itemsEn.isNotEmpty) return itemsEn;
+    return items;
+  }
 }
 
 class _Legal {
   final String code;
   final String title;
   final String titleEn;
+  final String titleAr;
   final IconData icon;
   final String desc;
   final String descEn;
+  final String descAr;
   const _Legal(this.code, this.title, this.icon, this.desc, {
-    this.titleEn = '', this.descEn = '',
+    this.titleEn = '', this.titleAr = '', this.descEn = '', this.descAr = '',
   });
-  String titleFor(String lang) => (lang != 'fr' && titleEn.isNotEmpty) ? titleEn : title;
-  String descFor(String lang) => (lang != 'fr' && descEn.isNotEmpty) ? descEn : desc;
+  String titleFor(String lang) {
+    if (lang == 'ar' && titleAr.isNotEmpty) return titleAr;
+    if (lang != 'fr' && titleEn.isNotEmpty) return titleEn;
+    return title;
+  }
+  String descFor(String lang) {
+    if (lang == 'ar' && descAr.isNotEmpty) return descAr;
+    if (lang != 'fr' && descEn.isNotEmpty) return descEn;
+    return desc;
+  }
 }
 
 class _Operator {
   final String name;
   final String role;
   final String roleEn;
+  final String roleAr;
   final IconData icon;
   final Color color;
   final String desc;
   final String descEn;
+  final String descAr;
   const _Operator(this.name, this.role, this.icon, this.color, this.desc, {
-    this.roleEn = '', this.descEn = '',
+    this.roleEn = '', this.roleAr = '', this.descEn = '', this.descAr = '',
   });
-  String roleFor(String lang) => (lang != 'fr' && roleEn.isNotEmpty) ? roleEn : role;
-  String descFor(String lang) => (lang != 'fr' && descEn.isNotEmpty) ? descEn : desc;
+  String roleFor(String lang) {
+    if (lang == 'ar' && roleAr.isNotEmpty) return roleAr;
+    if (lang != 'fr' && roleEn.isNotEmpty) return roleEn;
+    return role;
+  }
+  String descFor(String lang) {
+    if (lang == 'ar' && descAr.isNotEmpty) return descAr;
+    if (lang != 'fr' && descEn.isNotEmpty) return descEn;
+    return desc;
+  }
 }
 
 class _Impact {
   final String category;
   final String categoryEn;
+  final String categoryAr;
   final String benefit;
   final String benefitEn;
+  final String benefitAr;
   final String decomp;
   final String decompEn;
+  final String decompAr;
   final IconData icon;
   final Color color;
   const _Impact(this.category, this.benefit, this.decomp, this.icon, this.color, {
-    this.categoryEn = '', this.benefitEn = '', this.decompEn = '',
+    this.categoryEn = '', this.categoryAr = '',
+    this.benefitEn = '',  this.benefitAr = '',
+    this.decompEn = '',   this.decompAr = '',
   });
-  String categoryFor(String lang) => (lang != 'fr' && categoryEn.isNotEmpty) ? categoryEn : category;
-  String benefitFor(String lang)  => (lang != 'fr' && benefitEn.isNotEmpty)  ? benefitEn  : benefit;
-  String decompFor(String lang)   => (lang != 'fr' && decompEn.isNotEmpty)   ? decompEn   : decomp;
+  String categoryFor(String lang) {
+    if (lang == 'ar' && categoryAr.isNotEmpty) return categoryAr;
+    if (lang != 'fr' && categoryEn.isNotEmpty) return categoryEn;
+    return category;
+  }
+  String benefitFor(String lang) {
+    if (lang == 'ar' && benefitAr.isNotEmpty) return benefitAr;
+    if (lang != 'fr' && benefitEn.isNotEmpty) return benefitEn;
+    return benefit;
+  }
+  String decompFor(String lang) {
+    if (lang == 'ar' && decompAr.isNotEmpty) return decompAr;
+    if (lang != 'fr' && decompEn.isNotEmpty) return decompEn;
+    return decomp;
+  }
 }
 
 class _Rule {
@@ -1910,13 +2052,23 @@ class _Rule {
   final Color color;
   final String title;
   final String titleEn;
+  final String titleAr;
   final String desc;
   final String descEn;
+  final String descAr;
   const _Rule(this.icon, this.color, this.title, this.desc, {
-    this.titleEn = '', this.descEn = '',
+    this.titleEn = '', this.titleAr = '', this.descEn = '', this.descAr = '',
   });
-  String titleFor(String lang) => (lang != 'fr' && titleEn.isNotEmpty) ? titleEn : title;
-  String descFor(String lang)  => (lang != 'fr' && descEn.isNotEmpty)  ? descEn  : desc;
+  String titleFor(String lang) {
+    if (lang == 'ar' && titleAr.isNotEmpty) return titleAr;
+    if (lang != 'fr' && titleEn.isNotEmpty) return titleEn;
+    return title;
+  }
+  String descFor(String lang) {
+    if (lang == 'ar' && descAr.isNotEmpty) return descAr;
+    if (lang != 'fr' && descEn.isNotEmpty) return descEn;
+    return desc;
+  }
 }
 
 class _RegionalOp {
