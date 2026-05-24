@@ -190,7 +190,7 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       await user.linkWithCredential(cred);
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'phoneNumber': _phoneCtrl.text.trim(),
+        'phoneNumber': _formatPhone(_prefix, _phoneCtrl.text.trim()),
         'twoFactorEnabled': true,
       });
       if (!mounted) return;

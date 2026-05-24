@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/avatar_provider.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+
+const _kAvatarPathKey = 'user_avatar_path';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -21,7 +24,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _statCtrl;
   late Animation<double> _statAnim;
-  String? _avatarPath;
 
   @override
   void initState() {
@@ -30,49 +32,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         vsync: this, duration: const Duration(milliseconds: 1400));
     _statAnim = CurvedAnimation(parent: _statCtrl, curve: Curves.easeOut);
     _statCtrl.forward();
+    _loadAvatarIntoProvider();
   }
 
-  Future<void> _pickPhoto(AppStrings s) async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
-              title: Text(s.takePhoto, style: const TextStyle(fontFamily: 'Poppins')),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
-              title: Text(s.chooseGallery, style: const TextStyle(fontFamily: 'Poppins')),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-    final picked = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 85,
-      maxWidth: 512,
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _avatarPath = picked.path);
+  Future<void> _loadAvatarIntoProvider() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString(_kAvatarPathKey);
+    if (path != null && File(path).existsSync() && mounted) {
+      ref.read(avatarPathProvider.notifier).state = path;
+    }
   }
 
   @override
@@ -96,6 +64,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(userProvider);
     final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final avatarPath = ref.watch(avatarPathProvider);
     final menuItems = _buildMenuItems(s);
 
     return Scaffold(
@@ -117,64 +86,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      Stack(
-                        children: [
-                          Hero(
-                            tag: 'profile-avatar',
-                            child: Container(
-                              width: 90,
-                              height: 90,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: _avatarPath == null
-                                    ? AppColors.darkPrimaryGradient
-                                    : null,
-                                border: Border.all(color: Colors.white, width: 3),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                    blurRadius: 16,
-                                  ),
-                                ],
-                                image: _avatarPath != null
-                                    ? DecorationImage(
-                                        image: FileImage(File(_avatarPath!)),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
+                      Hero(
+                        tag: 'profile-avatar',
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: avatarPath == null
+                                ? AppColors.darkPrimaryGradient
+                                : null,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 16,
                               ),
-                              child: _avatarPath == null
-                                  ? const Icon(Icons.person_rounded,
-                                      color: Colors.white, size: 46)
-                                  : null,
-                            ),
-                          ).animate().scale(
-                              begin: const Offset(0.7, 0.7),
-                              duration: 600.ms,
-                              curve: Curves.elasticOut),
-                          Positioned(
-                            bottom: 2,
-                            right: 2,
-                            child: GestureDetector(
-                              onTap: () => _pickPhoto(s),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.15),
-                                        blurRadius: 6),
-                                  ],
-                                ),
-                                child: const Icon(Icons.edit_rounded,
-                                    color: AppColors.primary, size: 14),
-                              ),
-                            ),
+                            ],
+                            image: avatarPath != null
+                                ? DecorationImage(
+                                    image: FileImage(File(avatarPath)),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
-                        ],
-                      ),
+                          child: avatarPath == null
+                              ? const Icon(Icons.person_rounded,
+                                  color: Colors.white, size: 46)
+                              : null,
+                        ),
+                      ).animate().scale(
+                          begin: const Offset(0.7, 0.7),
+                          duration: 600.ms,
+                          curve: Curves.elasticOut),
                       const SizedBox(height: 12),
                       Text(
                         user.name,

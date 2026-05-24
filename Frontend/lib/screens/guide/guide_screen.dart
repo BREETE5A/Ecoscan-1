@@ -2356,10 +2356,18 @@ class _Rule {
 
 class _RegionalOp {
   final String name;
-  final String specialty;
+  final String specialty, specialtyEn, specialtyAr, specialtyEs;
   final String phone;
   final String city;
-  const _RegionalOp(this.name, this.specialty, this.phone, this.city);
+  const _RegionalOp(this.name, this.specialty, this.phone, this.city, {
+    this.specialtyEn = '', this.specialtyAr = '', this.specialtyEs = '',
+  });
+  String specialtyFor(String lang) {
+    if (lang == 'ar' && specialtyAr.isNotEmpty) return specialtyAr;
+    if (lang == 'es' && specialtyEs.isNotEmpty) return specialtyEs;
+    if (lang != 'fr' && specialtyEn.isNotEmpty) return specialtyEn;
+    return specialty;
+  }
 }
 
 class _RegionData {
@@ -2369,19 +2377,53 @@ class _RegionData {
 }
 
 class _ImpactDetail {
-  final String category;
+  final String category, categoryEn, categoryAr, categoryEs;
   final IconData icon;
   final Color color;
-  final String co2;
+  final String co2, co2En, co2Ar, co2Es;
   final String energy;
-  final String decomp;
-  final List<String> positifs;
-  final List<String> negatifs;
+  final String decomp, decompEn, decompAr, decompEs;
+  final List<String> positifs, positifsEn, positifsAr, positifsEs;
+  final List<String> negatifs, negatifsEn, negatifsAr, negatifsEs;
   const _ImpactDetail({
-    required this.category, required this.icon, required this.color,
-    required this.co2, required this.energy, required this.decomp,
-    required this.positifs, required this.negatifs,
+    required this.category, this.categoryEn = '', this.categoryAr = '', this.categoryEs = '',
+    required this.icon, required this.color,
+    required this.co2, this.co2En = '', this.co2Ar = '', this.co2Es = '',
+    required this.energy,
+    required this.decomp, this.decompEn = '', this.decompAr = '', this.decompEs = '',
+    required this.positifs, this.positifsEn = const [], this.positifsAr = const [], this.positifsEs = const [],
+    required this.negatifs, this.negatifsEn = const [], this.negatifsAr = const [], this.negatifsEs = const [],
   });
+  String categoryFor(String lang) {
+    if (lang == 'ar' && categoryAr.isNotEmpty) return categoryAr;
+    if (lang == 'es' && categoryEs.isNotEmpty) return categoryEs;
+    if (lang != 'fr' && categoryEn.isNotEmpty) return categoryEn;
+    return category;
+  }
+  String co2For(String lang) {
+    if (lang == 'ar' && co2Ar.isNotEmpty) return co2Ar;
+    if (lang == 'es' && co2Es.isNotEmpty) return co2Es;
+    if (lang != 'fr' && co2En.isNotEmpty) return co2En;
+    return co2;
+  }
+  String decompFor(String lang) {
+    if (lang == 'ar' && decompAr.isNotEmpty) return decompAr;
+    if (lang == 'es' && decompEs.isNotEmpty) return decompEs;
+    if (lang != 'fr' && decompEn.isNotEmpty) return decompEn;
+    return decomp;
+  }
+  List<String> positifsFor(String lang) {
+    if (lang == 'ar' && positifsAr.isNotEmpty) return positifsAr;
+    if (lang == 'es' && positifsEs.isNotEmpty) return positifsEs;
+    if (lang != 'fr' && positifsEn.isNotEmpty) return positifsEn;
+    return positifs;
+  }
+  List<String> negatifsFor(String lang) {
+    if (lang == 'ar' && negatifsAr.isNotEmpty) return negatifsAr;
+    if (lang == 'es' && negatifsEs.isNotEmpty) return negatifsEs;
+    if (lang != 'fr' && negatifsEn.isNotEmpty) return negatifsEn;
+    return negatifs;
+  }
 }
 
 // ── Quick Access Card ─────────────────────────────────────────────────────────
@@ -2570,6 +2612,35 @@ class _BacsDetailPage extends ConsumerWidget {
   }
 }
 
+class _Sanction {
+  final String name, nameEn, nameAr, nameEs;
+  final String fine;
+  final Color color;
+  const _Sanction(this.name, this.fine, this.color, {
+    this.nameEn = '', this.nameAr = '', this.nameEs = '',
+  });
+  String nameFor(String lang) {
+    if (lang == 'ar' && nameAr.isNotEmpty) return nameAr;
+    if (lang == 'es' && nameEs.isNotEmpty) return nameEs;
+    if (lang != 'fr' && nameEn.isNotEmpty) return nameEn;
+    return name;
+  }
+}
+
+class _Norme {
+  final String code;
+  final String desc, descEn, descAr, descEs;
+  const _Norme(this.code, this.desc, {
+    this.descEn = '', this.descAr = '', this.descEs = '',
+  });
+  String descFor(String lang) {
+    if (lang == 'ar' && descAr.isNotEmpty) return descAr;
+    if (lang == 'es' && descEs.isNotEmpty) return descEs;
+    if (lang != 'fr' && descEn.isNotEmpty) return descEn;
+    return desc;
+  }
+}
+
 // ── Cadre légal page ──────────────────────────────────────────────────────────
 
 class _LegalDetailPage extends ConsumerWidget {
@@ -2601,8 +2672,7 @@ class _LegalDetailPage extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Le Maroc dispose d\'un cadre légal complet pour la gestion des déchets. '
-                  'Le non-respect de ces lois expose à des sanctions pénales et financières.',
+                  s.guideLegalBanner,
                   style: TextStyle(
                     fontFamily: 'Poppins', fontSize: 12, height: 1.5,
                     color: isDark ? AppColors.darkText : AppColors.textPrimary,
@@ -2634,7 +2704,7 @@ class _LegalDetailPage extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Infractions & Sanctions (Loi 28-00 — mise à jour Décret 2020)',
+                  s.guideSanctionsHeader,
                   style: TextStyle(fontFamily: 'Poppins', fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: isDark ? AppColors.darkText : AppColors.textPrimary),
@@ -2644,13 +2714,13 @@ class _LegalDetailPage extends ConsumerWidget {
           ),
         ).animate().fadeIn(duration: 300.ms),
         const SizedBox(height: 10),
-        ..._sanctions.map((s) => Container(
+        ..._sanctions.map((sanction) => Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkCard : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: s.$3.withValues(alpha: 0.2)),
+            border: Border.all(color: sanction.color.withValues(alpha: 0.2)),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.04), blurRadius: 5)],
           ),
           child: Row(
@@ -2658,19 +2728,19 @@ class _LegalDetailPage extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(color: s.$3.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-                child: Icon(Icons.warning_amber_rounded, color: s.$3, size: 15),
+                decoration: BoxDecoration(color: sanction.color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                child: Icon(Icons.warning_amber_rounded, color: sanction.color, size: 15),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.$1, style: TextStyle(fontFamily: 'Poppins', fontSize: 12,
+                    Text(sanction.nameFor(lang), style: TextStyle(fontFamily: 'Poppins', fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isDark ? AppColors.darkText : AppColors.textPrimary)),
                     const SizedBox(height: 2),
-                    Text(s.$2, style: const TextStyle(fontFamily: 'Poppins', fontSize: 11,
+                    Text(sanction.fine, style: const TextStyle(fontFamily: 'Poppins', fontSize: 11,
                         color: Color(0xFFE74C3C), fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -2700,16 +2770,16 @@ class _LegalDetailPage extends ConsumerWidget {
                         color: isDark ? AppColors.darkText : AppColors.textPrimary)),
               ]),
               const SizedBox(height: 10),
-              ..._normes.map((n) => Padding(
+              ..._normes.map((norme) => Padding(
                 padding: const EdgeInsets.only(bottom: 5),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Container(width: 4, height: 4,
                       margin: const EdgeInsets.fromLTRB(2, 5, 8, 0),
                       decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
                   Expanded(child: RichText(text: TextSpan(children: [
-                    TextSpan(text: '${n.$1} — ', style: const TextStyle(fontFamily: 'Poppins',
+                    TextSpan(text: '${norme.code} — ', style: const TextStyle(fontFamily: 'Poppins',
                         fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                    TextSpan(text: n.$2, style: TextStyle(fontFamily: 'Poppins', fontSize: 11,
+                    TextSpan(text: norme.descFor(lang), style: TextStyle(fontFamily: 'Poppins', fontSize: 11,
                         color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)),
                   ]))),
                 ]),
@@ -2722,28 +2792,85 @@ class _LegalDetailPage extends ConsumerWidget {
   }
 
   static const _sanctions = [
-    ('Dépôt illégal déchets ménagers', '500 à 5 000 DH (Loi 28-00 Art.45)', Color(0xFFE67E22)),
-    ('Abandon déchets sur voie publique', '1 000 à 10 000 DH (Loi 28-00 Art.46)', Color(0xFFE67E22)),
-    ('Décharge sauvage déchets industriels', '10 000 à 100 000 DH + 1 à 3 mois prison (Art.47)', Color(0xFFE74C3C)),
-    ('Rejet déchets dangereux sans autorisation', '100 000 à 500 000 DH + 3 à 12 mois prison (Art.48)', Color(0xFFE74C3C)),
-    ('Fabrication sacs plastiques interdits', '200 000 à 1 000 000 DH + 1 à 3 mois prison (Loi 77-15)', Color(0xFFE74C3C)),
-    ('Commerce sacs plastiques interdits', '1 000 à 10 000 DH (Loi 77-15 Art.13)', Color(0xFFE67E22)),
-    ('Rejet huiles usagées en milieu naturel', '50 000 à 200 000 DH + 1 à 6 mois prison', Color(0xFFE74C3C)),
-    ('Traitement DEEE sans agrément', '50 000 à 500 000 DH + 3 à 12 mois prison (Décret 2-14-782)', Color(0xFFE74C3C)),
-    ('Exportation illégale déchets dangereux', '500 000 à 2 000 000 DH + 6 à 24 mois (Conv. Bâle)', Color(0xFFC0392B)),
-    ('Pollution délibérée nappe phréatique', '1 000 000 DH+ et jusqu\'à 5 ans de prison', Color(0xFFC0392B)),
-    ('Non-déclaration déchets dangereux', '20 000 à 100 000 DH (Loi 28-00 Art.22)', Color(0xFFE67E22)),
-    ('Infraction récidiviste (tous types)', 'Double de l\'amende + doublement de la peine (Art.53)', Color(0xFFE74C3C)),
+    _Sanction('Dépôt illégal déchets ménagers', '500 à 5 000 DH (Loi 28-00 Art.45)', Color(0xFFE67E22),
+        nameEn: 'Illegal deposit of household waste',
+        nameAr: 'إيداع غير قانوني للنفايات المنزلية',
+        nameEs: 'Depósito ilegal de residuos domésticos'),
+    _Sanction('Abandon déchets sur voie publique', '1 000 à 10 000 DH (Loi 28-00 Art.46)', Color(0xFFE67E22),
+        nameEn: 'Littering on public road',
+        nameAr: 'إلقاء النفايات في الطريق العام',
+        nameEs: 'Abandono de residuos en vía pública'),
+    _Sanction('Décharge sauvage déchets industriels', '10 000 à 100 000 DH + 1 à 3 mois prison (Art.47)', Color(0xFFE74C3C),
+        nameEn: 'Illegal industrial waste dumping',
+        nameAr: 'مطرح عشوائي لنفايات صناعية',
+        nameEs: 'Vertido ilegal de residuos industriales'),
+    _Sanction('Rejet déchets dangereux sans autorisation', '100 000 à 500 000 DH + 3 à 12 mois prison (Art.48)', Color(0xFFE74C3C),
+        nameEn: 'Discharge of hazardous waste without permit',
+        nameAr: 'صرف نفايات خطرة بدون ترخيص',
+        nameEs: 'Vertido de residuos peligrosos sin autorización'),
+    _Sanction('Fabrication sacs plastiques interdits', '200 000 à 1 000 000 DH + 1 à 3 mois prison (Loi 77-15)', Color(0xFFE74C3C),
+        nameEn: 'Manufacturing banned plastic bags',
+        nameAr: 'تصنيع أكياس بلاستيكية محظورة',
+        nameEs: 'Fabricación de bolsas de plástico prohibidas'),
+    _Sanction('Commerce sacs plastiques interdits', '1 000 à 10 000 DH (Loi 77-15 Art.13)', Color(0xFFE67E22),
+        nameEn: 'Trading banned plastic bags',
+        nameAr: 'تسويق أكياس بلاستيكية محظورة',
+        nameEs: 'Comercio de bolsas de plástico prohibidas'),
+    _Sanction('Rejet huiles usagées en milieu naturel', '50 000 à 200 000 DH + 1 à 6 mois prison', Color(0xFFE74C3C),
+        nameEn: 'Discharge of used oils in nature',
+        nameAr: 'صرف الزيوت المستعملة في البيئة الطبيعية',
+        nameEs: 'Vertido de aceites usados en la naturaleza'),
+    _Sanction('Traitement DEEE sans agrément', '50 000 à 500 000 DH + 3 à 12 mois prison (Décret 2-14-782)', Color(0xFFE74C3C),
+        nameEn: 'WEEE treatment without approval',
+        nameAr: 'معالجة DEEE بدون اعتماد',
+        nameEs: 'Tratamiento RAEE sin autorización'),
+    _Sanction('Exportation illégale déchets dangereux', '500 000 à 2 000 000 DH + 6 à 24 mois (Conv. Bâle)', Color(0xFFC0392B),
+        nameEn: 'Illegal export of hazardous waste',
+        nameAr: 'تصدير غير قانوني للنفايات الخطرة',
+        nameEs: 'Exportación ilegal de residuos peligrosos'),
+    _Sanction('Pollution délibérée nappe phréatique', '1 000 000 DH+ et jusqu\'à 5 ans de prison', Color(0xFFC0392B),
+        nameEn: 'Deliberate groundwater pollution',
+        nameAr: 'تلوث متعمد للمياه الجوفية',
+        nameEs: 'Contaminación deliberada de aguas subterráneas'),
+    _Sanction('Non-déclaration déchets dangereux', '20 000 à 100 000 DH (Loi 28-00 Art.22)', Color(0xFFE67E22),
+        nameEn: 'Non-declaration of hazardous waste',
+        nameAr: 'عدم التصريح بالنفايات الخطرة',
+        nameEs: 'No declaración de residuos peligrosos'),
+    _Sanction('Infraction récidiviste (tous types)', 'Double de l\'amende + doublement de la peine (Art.53)', Color(0xFFE74C3C),
+        nameEn: 'Repeat offence (all types)',
+        nameAr: 'مخالفة متكررة (جميع الأنواع)',
+        nameEs: 'Reincidencia (todos los tipos)'),
   ];
 
   static const _normes = [
-    ('NM 03.7.001', 'Classification des plastiques recyclables par code résine (1 à 7)'),
-    ('NM ISO 17088', 'Plastiques biodégradables et compostables — spécifications'),
-    ('NM 13.030', 'Gestion des déchets solides — terminologie et classification'),
-    ('NM 10.4.034', 'Piles et accumulateurs — collecte, traitement, recyclage'),
-    ('NM ISO 14044', 'Management environnemental — Analyse du Cycle de Vie (ACV)'),
-    ('NM ISO 14001', 'Systèmes de management environnemental — opérateurs recyclage'),
-    ('NM 31.090', 'Appareils électroménagers — conditions de reprise et recyclage'),
+    _Norme('NM 03.7.001', 'Classification des plastiques recyclables par code résine (1 à 7)',
+        descEn: 'Classification of recyclable plastics by resin code (1 to 7)',
+        descAr: 'تصنيف البلاستيك القابل لإعادة التدوير حسب رمز الراتنج (1 إلى 7)',
+        descEs: 'Clasificación de plásticos reciclables por código de resina (1 a 7)'),
+    _Norme('NM ISO 17088', 'Plastiques biodégradables et compostables — spécifications',
+        descEn: 'Biodegradable and compostable plastics — specifications',
+        descAr: 'البلاستيك القابل للتحلل والتسميد — المواصفات',
+        descEs: 'Plásticos biodegradables y compostables — especificaciones'),
+    _Norme('NM 13.030', 'Gestion des déchets solides — terminologie et classification',
+        descEn: 'Solid waste management — terminology and classification',
+        descAr: 'تدبير النفايات الصلبة — المصطلحات والتصنيف',
+        descEs: 'Gestión de residuos sólidos — terminología y clasificación'),
+    _Norme('NM 10.4.034', 'Piles et accumulateurs — collecte, traitement, recyclage',
+        descEn: 'Batteries and accumulators — collection, treatment, recycling',
+        descAr: 'الأعمدة والمراكم — الجمع والمعالجة وإعادة التدوير',
+        descEs: 'Pilas y acumuladores — recogida, tratamiento, reciclaje'),
+    _Norme('NM ISO 14044', 'Management environnemental — Analyse du Cycle de Vie (ACV)',
+        descEn: 'Environmental management — Life Cycle Assessment (LCA)',
+        descAr: 'الإدارة البيئية — تحليل دورة الحياة (ACV)',
+        descEs: 'Gestión ambiental — Análisis del Ciclo de Vida (ACV)'),
+    _Norme('NM ISO 14001', 'Systèmes de management environnemental — opérateurs recyclage',
+        descEn: 'Environmental management systems — recycling operators',
+        descAr: 'أنظمة الإدارة البيئية — مشغلو إعادة التدوير',
+        descEs: 'Sistemas de gestión ambiental — operadores de reciclaje'),
+    _Norme('NM 31.090', 'Appareils électroménagers — conditions de reprise et recyclage',
+        descEn: 'Household appliances — take-back and recycling conditions',
+        descAr: 'الأجهزة المنزلية — شروط الاسترجاع وإعادة التدوير',
+        descEs: 'Electrodomésticos — condiciones de devolución y reciclaje'),
   ];
 }
 
@@ -2755,130 +2882,407 @@ class _ImpactDetailPage extends ConsumerWidget {
 
   static const _details = [
     _ImpactDetail(
-      category: 'Métal & Aluminium',
+      category: 'Métal & Aluminium', categoryEn: 'Metal & Aluminium', categoryAr: 'المعادن والألمنيوم', categoryEs: 'Metal y Aluminio',
       icon: Icons.hardware_rounded, color: AppColors.metal,
-      co2: '8 kg CO₂/kg recyclé', energy: '95% énergie économisée', decomp: '2 700 ans',
+      co2: '8 kg CO₂/kg recyclé', co2En: '8 kg CO₂/kg recycled', co2Ar: '8 كجم CO₂/كجم معاد تدويره', co2Es: '8 kg CO₂/kg reciclado',
+      energy: '95% énergie économisée',
+      decomp: '2 700 ans', decompEn: '2,700 years', decompAr: '2,700 سنة', decompEs: '2.700 años',
       positifs: [
         'Recycler 1 kg d\'alu économise 8 kg CO₂ et évite l\'extraction de 4 kg de bauxite',
         'L\'alu peut être recyclé à l\'infini sans perdre ses propriétés mécaniques',
         '1 tonne d\'acier recyclé économise 1,1 t de minerai de fer et 630 kg de charbon',
         'Une canette recyclée économise assez d\'énergie pour alimenter une TV 3 heures',
       ],
+      positifsEn: [
+        'Recycling 1 kg of aluminium saves 8 kg CO₂ and avoids extracting 4 kg of bauxite',
+        'Aluminium can be recycled infinitely without losing its mechanical properties',
+        '1 tonne of recycled steel saves 1.1 t of iron ore and 630 kg of coal',
+        'A recycled can saves enough energy to power a TV for 3 hours',
+      ],
+      positifsAr: [
+        'إعادة تدوير 1 كجم من الألمنيوم يوفر 8 كجم CO₂ ويتجنب استخراج 4 كجم من البوكسيت',
+        'يمكن إعادة تدوير الألمنيوم إلى ما لا نهاية دون فقدان خصائصه الميكانيكية',
+        '1 طن من الفولاذ المعاد تدويره يوفر 1.1 طن من خام الحديد و630 كجم من الفحم',
+        'علبة معاد تدويرها توفر طاقة كافية لتشغيل تلفزيون لمدة 3 ساعات',
+      ],
+      positifsEs: [
+        'Reciclar 1 kg de aluminio ahorra 8 kg de CO₂ y evita extraer 4 kg de bauxita',
+        'El aluminio se puede reciclar infinitamente sin perder sus propiedades mecánicas',
+        '1 tonelada de acero reciclado ahorra 1,1 t de mineral de hierro y 630 kg de carbón',
+        'Una lata reciclada ahorra suficiente energía para alimentar un televisor 3 horas',
+      ],
       negatifs: [
         'L\'alu met 2 700 ans à se décomposer, libérant des oxydes métalliques toxiques',
         'La corrosion libère des ions qui contaminent les nappes phréatiques',
         'L\'extraction de bauxite détruit les écosystèmes forestiers tropicaux',
       ],
+      negatifsEn: [
+        'Aluminium takes 2,700 years to decompose, releasing toxic metal oxides',
+        'Corrosion releases ions that contaminate groundwater',
+        'Bauxite extraction destroys tropical forest ecosystems',
+      ],
+      negatifsAr: [
+        'يستغرق الألمنيوم 2,700 سنة للتحلل، مطلقاً أكاسيد معدنية سامة',
+        'يطلق التآكل أيونات تلوث المياه الجوفية',
+        'يدمر استخراج البوكسيت النظم البيئية للغابات الاستوائية',
+      ],
+      negatifsEs: [
+        'El aluminio tarda 2.700 años en descomponerse, liberando óxidos metálicos tóxicos',
+        'La corrosión libera iones que contaminan las aguas subterráneas',
+        'La extracción de bauxita destruye los ecosistemas forestales tropicales',
+      ],
     ),
     _ImpactDetail(
-      category: 'Verre',
+      category: 'Verre', categoryEn: 'Glass', categoryAr: 'الزجاج', categoryEs: 'Vidrio',
       icon: Icons.local_bar_outlined, color: AppColors.glass,
-      co2: '300 kg CO₂/tonne recyclée', energy: '26% énergie économisée', decomp: '4 000 ans',
+      co2: '300 kg CO₂/tonne recyclée', co2En: '300 kg CO₂/tonne recycled', co2Ar: '300 كجم CO₂/طن معاد تدويره', co2Es: '300 kg CO₂/tonelada reciclada',
+      energy: '26% énergie économisée',
+      decomp: '4 000 ans', decompEn: '4,000 years', decompAr: '4,000 سنة', decompEs: '4.000 años',
       positifs: [
         'Recycler une tonne de verre économise 300 kg de CO₂ et 130 litres de pétrole',
         'Le verre recycle remplace 1,2 tonne de matières premières vierges',
         'Le verre est recyclable à l\'infini sans aucune perte de qualité ou de pureté',
         'Chaque bouteille recyclée économise assez d\'énergie pour éclairer une LED 4 heures',
       ],
+      positifsEn: [
+        'Recycling one tonne of glass saves 300 kg CO₂ and 130 litres of oil',
+        'Recycled glass replaces 1.2 tonnes of virgin raw materials',
+        'Glass is recyclable infinitely without any loss of quality or purity',
+        'Each recycled bottle saves enough energy to light an LED for 4 hours',
+      ],
+      positifsAr: [
+        'إعادة تدوير طن من الزجاج يوفر 300 كجم CO₂ و130 لتر بترول',
+        'الزجاج المعاد تدويره يستبدل 1.2 طن من المواد الخام البكر',
+        'الزجاج قابل للتدوير إلى ما لا نهاية دون فقدان الجودة أو النقاء',
+        'كل زجاجة معاد تدويرها توفر طاقة كافية لإضاءة LED لمدة 4 ساعات',
+      ],
+      positifsEs: [
+        'Reciclar una tonelada de vidrio ahorra 300 kg de CO₂ y 130 litros de petróleo',
+        'El vidrio reciclado reemplaza 1,2 toneladas de materias primas vírgenes',
+        'El vidrio es reciclable infinitamente sin pérdida de calidad o pureza',
+        'Cada botella reciclada ahorra suficiente energía para iluminar un LED 4 horas',
+      ],
       negatifs: [
         'Le verre met 4 000 ans à se désintégrer — le plus long de tous les matériaux courants',
         'Les éclats blessent la faune et s\'infiltrent dans la chaîne alimentaire marine',
         'L\'extraction de sable siliceux pour production neuve détruit les plages',
       ],
+      negatifsEn: [
+        'Glass takes 4,000 years to disintegrate — the longest of all common materials',
+        'Shards injure wildlife and infiltrate the marine food chain',
+        'Extraction of silica sand for new production destroys beaches',
+      ],
+      negatifsAr: [
+        'يستغرق الزجاج 4,000 سنة للتفتت — الأطول بين جميع المواد الشائعة',
+        'الشظايا تجرح الحياة البرية وتتسلل إلى السلسلة الغذائية البحرية',
+        'استخراج الرمل الصواني للإنتاج الجديد يدمر الشواطئ',
+      ],
+      negatifsEs: [
+        'El vidrio tarda 4.000 años en desintegrarse — el más duradero de todos los materiales comunes',
+        'Los fragmentos hieren a la fauna y se infiltran en la cadena alimentaria marina',
+        'La extracción de arena de sílice para nueva producción destruye las playas',
+      ],
     ),
     _ImpactDetail(
-      category: 'Plastique PET & Emballages',
+      category: 'Plastique PET & Emballages', categoryEn: 'PET Plastic & Packaging', categoryAr: 'البلاستيك PET والتغليف', categoryEs: 'Plástico PET y Envases',
       icon: Icons.opacity_rounded, color: AppColors.plastic,
-      co2: '1,5 kg CO₂/kg recyclé', energy: '76% énergie économisée', decomp: '500 ans',
+      co2: '1,5 kg CO₂/kg recyclé', co2En: '1.5 kg CO₂/kg recycled', co2Ar: '1.5 كجم CO₂/كجم معاد تدويره', co2Es: '1,5 kg CO₂/kg reciclado',
+      energy: '76% énergie économisée',
+      decomp: '500 ans', decompEn: '500 years', decompAr: '500 سنة', decompEs: '500 años',
       positifs: [
         'Recycler 1 kg de PET économise 1,5 kg CO₂ et 17 litres d\'eau',
         '1 bouteille PET recyclée = matière première pour 2 t-shirts en polyester recyclé',
         'Le HDPE recyclé (bidons, flacons) économise 1,8 kg CO₂ par kg traité',
         'Le polypropylène recyclé réduit de 73% les émissions vs production vierge',
       ],
+      positifsEn: [
+        'Recycling 1 kg of PET saves 1.5 kg CO₂ and 17 litres of water',
+        '1 recycled PET bottle = raw material for 2 recycled polyester t-shirts',
+        'Recycled HDPE (jugs, bottles) saves 1.8 kg CO₂ per kg processed',
+        'Recycled polypropylene reduces emissions by 73% vs virgin production',
+      ],
+      positifsAr: [
+        'إعادة تدوير 1 كجم من PET يوفر 1.5 كجم CO₂ و17 لتر ماء',
+        'زجاجة PET معاد تدويرها = مادة خام لقميصين من البوليستر المعاد تدويره',
+        'HDPE المعاد تدويره يوفر 1.8 كجم CO₂ لكل كجم معالج',
+        'البولي بروبيلين المعاد تدويره يقلل الانبعاثات بنسبة 73٪ مقارنة بالإنتاج البكر',
+      ],
+      positifsEs: [
+        'Reciclar 1 kg de PET ahorra 1,5 kg de CO₂ y 17 litros de agua',
+        '1 botella PET reciclada = materia prima para 2 camisetas de poliéster reciclado',
+        'El HDPE reciclado (garrafas, botellas) ahorra 1,8 kg CO₂ por kg procesado',
+        'El polipropileno reciclado reduce las emisiones un 73% frente a la producción virgen',
+      ],
       negatifs: [
         'Le PET met 500 ans à se dégrader, se fragmentant en microplastiques invisibles',
         'Les microplastiques ont été retrouvés dans le sang humain, les poumons et le placenta',
         'En Méditerranée (côte marocaine), le plastique est la 1ère pollution marine observée',
       ],
+      negatifsEn: [
+        'PET takes 500 years to degrade, fragmenting into invisible microplastics',
+        'Microplastics have been found in human blood, lungs and placenta',
+        'In the Mediterranean (Moroccan coast), plastic is the #1 marine pollution observed',
+      ],
+      negatifsAr: [
+        'PET يستغرق 500 سنة للتحلل، متفتتاً إلى جسيمات دقيقة غير مرئية',
+        'تم العثور على الجسيمات الدقيقة في الدم البشري والرئتين والمشيمة',
+        'في البحر الأبيض المتوسط (الساحل المغربي)، البلاستيك هو التلوث البحري رقم 1',
+      ],
+      negatifsEs: [
+        'El PET tarda 500 años en degradarse, fragmentándose en microplásticos invisibles',
+        'Los microplásticos se han encontrado en sangre humana, pulmones y placenta',
+        'En el Mediterráneo (costa marroquí), el plástico es la 1ª contaminación marina observada',
+      ],
     ),
     _ImpactDetail(
-      category: 'Papier & Carton',
+      category: 'Papier & Carton', categoryEn: 'Paper & Cardboard', categoryAr: 'الورق والكرتون', categoryEs: 'Papel y Cartón',
       icon: Icons.article_outlined, color: AppColors.paper,
-      co2: '900 kg CO₂/tonne évités', energy: '60% énergie économisée', decomp: '3–6 mois',
+      co2: '900 kg CO₂/tonne évités', co2En: '900 kg CO₂/tonne avoided', co2Ar: '900 كجم CO₂/طن مُتجنَّب', co2Es: '900 kg CO₂/tonelada evitada',
+      energy: '60% énergie économisée',
+      decomp: '3–6 mois', decompEn: '3–6 months', decompAr: '3-6 أشهر', decompEs: '3-6 meses',
       positifs: [
         'Recycler une tonne de papier sauve 17 arbres et économise 7 000 litres d\'eau',
         'Le papier journal peut être recyclé jusqu\'à 7 fois avant que les fibres soient trop courtes',
         '1 tonne de carton ondulé recyclé économise 900 kg de CO₂ équivalent',
         'Le recyclage du papier réduit les déchets en décharge et la production de méthane',
       ],
+      positifsEn: [
+        'Recycling one tonne of paper saves 17 trees and 7,000 litres of water',
+        'Newspaper can be recycled up to 7 times before fibres are too short',
+        '1 tonne of recycled corrugated cardboard saves 900 kg CO₂ equivalent',
+        'Paper recycling reduces landfill waste and methane production',
+      ],
+      positifsAr: [
+        'إعادة تدوير طن من الورق ينقذ 17 شجرة ويوفر 7,000 لتر ماء',
+        'يمكن إعادة تدوير صحيفة الجريدة حتى 7 مرات قبل أن تصبح الألياف قصيرة جداً',
+        'طن من الكرتون المموج المعاد تدويره يوفر 900 كجم CO₂ مكافئ',
+        'إعادة تدوير الورق تقلل من نفايات المطارح وإنتاج الميثان',
+      ],
+      positifsEs: [
+        'Reciclar una tonelada de papel salva 17 árboles y ahorra 7.000 litros de agua',
+        'El papel de periódico puede reciclarse hasta 7 veces antes de que las fibras sean demasiado cortas',
+        '1 tonelada de cartón ondulado reciclado ahorra 900 kg de CO₂ equivalente',
+        'El reciclaje de papel reduce los residuos en vertedero y la producción de metano',
+      ],
       negatifs: [
         'Bien que biodégradable (3-6 mois), le papier enfoui produit du méthane (GES x25 vs CO₂)',
         'La production de papier vierge est l\'une des industries les plus gourmandes en eau douce',
         'Les encres et vernis sur certains papiers contaminent les sols lors de la décomposition',
       ],
+      negatifsEn: [
+        'Although biodegradable (3-6 months), buried paper produces methane (GHG x25 vs CO₂)',
+        'Virgin paper production is one of the most freshwater-intensive industries',
+        'Inks and varnishes on some papers contaminate soils during decomposition',
+      ],
+      negatifsAr: [
+        'رغم قابليته للتحلل (3-6 أشهر)، الورق المدفون ينتج ميثاناً (غاز اصطباح x25 مقارنة بـCO₂)',
+        'إنتاج الورق البكر من أكثر الصناعات استهلاكاً للمياه العذبة',
+        'الأحبار والورنيشات على بعض الأوراق تلوث التربة أثناء التحلل',
+      ],
+      negatifsEs: [
+        'Aunque biodegradable (3-6 meses), el papel enterrado produce metano (GEI x25 vs CO₂)',
+        'La producción de papel virgen es una de las industrias más intensivas en agua dulce',
+        'Las tintas y barnices de algunos papeles contaminan los suelos durante la descomposición',
+      ],
     ),
     _ImpactDetail(
-      category: 'Déchets Organiques',
+      category: 'Déchets Organiques', categoryEn: 'Organic Waste', categoryAr: 'النفايات العضوية', categoryEs: 'Residuos Orgánicos',
       icon: Icons.compost_rounded, color: Color(0xFF795548),
-      co2: '-50% CH₄ en décharge', energy: 'Biogaz utilisable', decomp: '2–6 mois',
+      co2: '-50% CH₄ en décharge', co2En: '-50% CH₄ in landfill', co2Ar: '-50٪ CH₄ في المطرح', co2Es: '-50% CH₄ en vertedero',
+      energy: 'Biogaz utilisable',
+      decomp: '2–6 mois', decompEn: '2–6 months', decompAr: '2-6 أشهر', decompEs: '2-6 meses',
       positifs: [
         '65% des ordures ménagères marocaines sont organiques — le gisement le plus important',
         '1 tonne de déchets organiques compostés produit 300 kg de compost prêt à l\'emploi',
         'La méthanisation produit du biogaz utilisable comme énergie propre',
         'Composter réduit de 50% les émissions de méthane qui se produiraient en décharge',
       ],
+      positifsEn: [
+        '65% of Moroccan household waste is organic — the largest resource',
+        '1 tonne of composted organic waste produces 300 kg of ready-to-use compost',
+        'Methanisation produces biogas usable as clean energy',
+        'Composting reduces methane emissions by 50% vs landfill',
+      ],
+      positifsAr: [
+        '65٪ من النفايات المنزلية المغربية عضوية — أكبر مورد',
+        'طن من النفايات العضوية المُسمَّدة ينتج 300 كجم من السماد جاهز للاستخدام',
+        'التخمير الحيوي ينتج غازاً حيوياً قابلاً للاستخدام كطاقة نظيفة',
+        'التسميد يقلل انبعاثات الميثان بنسبة 50٪ مقارنة بالمطرح',
+      ],
+      positifsEs: [
+        'El 65% de los residuos domésticos marroquíes son orgánicos — el mayor recurso',
+        '1 tonelada de residuos orgánicos compostados produce 300 kg de compost listo para usar',
+        'La metanización produce biogás utilizable como energía limpia',
+        'Compostar reduce un 50% las emisiones de metano vs vertedero',
+      ],
       negatifs: [
         'En décharge, les biodéchets fermentent en anaérobie et produisent du méthane (GES 25x CO₂)',
         'Les lixiviats (jus de putréfaction) contaminent les nappes phréatiques marocaines',
         'En été au Maroc, la chaleur accélère la putréfaction et dégrade la qualité de l\'air',
       ],
+      negatifsEn: [
+        'In landfill, organic waste ferments anaerobically producing methane (GHG 25x CO₂)',
+        'Leachate (putrefaction juice) contaminates Moroccan groundwater',
+        'In summer in Morocco, heat accelerates putrefaction and degrades air quality',
+      ],
+      negatifsAr: [
+        'في المطرح، تتخمر المخلفات العضوية لاهوائياً منتجةً الميثان (غاز 25 ضعف CO₂)',
+        'العصارة (عصير التعفن) تلوث المياه الجوفية المغربية',
+        'في الصيف بالمغرب، الحرارة تسرع التعفن وتدهور جودة الهواء',
+      ],
+      negatifsEs: [
+        'En vertedero, los residuos orgánicos fermentan anaeróbicamente produciendo metano (GEI 25x CO₂)',
+        'Los lixiviados (jugo de putrefacción) contaminan los acuíferos marroquíes',
+        'En verano en Marruecos, el calor acelera la putrefacción y degrada la calidad del aire',
+      ],
     ),
     _ImpactDetail(
-      category: 'Déchets Électroniques (DEEE)',
+      category: 'Déchets Électroniques (DEEE)', categoryEn: 'Electronic Waste (WEEE)', categoryAr: 'النفايات الإلكترونية (DEEE)', categoryEs: 'Residuos Electrónicos (RAEE)',
       icon: Icons.electrical_services_rounded, color: AppColors.electronics,
-      co2: '70 kg CO₂/ordinateur recyclé', energy: 'Or, Cuivre, Lithium, Cobalt récupérés', decomp: '> 1 000 ans',
+      co2: '70 kg CO₂/ordinateur recyclé', co2En: '70 kg CO₂/computer recycled', co2Ar: '70 كجم CO₂/حاسوب معاد تدويره', co2Es: '70 kg CO₂/ordenador reciclado',
+      energy: 'Or, Cuivre, Lithium, Cobalt récupérés',
+      decomp: '> 1 000 ans', decompEn: '> 1,000 years', decompAr: '> 1,000 سنة', decompEs: '> 1.000 años',
       positifs: [
         'Recycler un ordinateur économise 70 kg CO₂ et récupère cuivre, or, argent et palladium',
         '1 tonne de téléphones contient 250 g d\'or — 80x plus riche qu\'une mine d\'or',
         'Le recyclage du lithium réduit la dépendance aux mines d\'Amérique du Sud',
         'Le Maroc génère ~100 000 tonnes de DEEE/an — un gisement de métaux précieux',
       ],
+      positifsEn: [
+        'Recycling a computer saves 70 kg CO₂ and recovers copper, gold, silver and palladium',
+        '1 tonne of phones contains 250 g of gold — 80x richer than a gold mine',
+        'Lithium recycling reduces dependence on South American mines',
+        'Morocco generates ~100,000 tonnes of WEEE/year — a precious metal resource',
+      ],
+      positifsAr: [
+        'إعادة تدوير حاسوب يوفر 70 كجم CO₂ ويسترد النحاس والذهب والفضة والبلاديوم',
+        'طن من الهواتف يحتوي 250 جرام من الذهب — أغنى 80 مرة من منجم ذهب',
+        'إعادة تدوير الليثيوم يقلل الاعتماد على مناجم أمريكا الجنوبية',
+        'المغرب ينتج ~100,000 طن من DEEE/سنة — مورد للمعادن الثمينة',
+      ],
+      positifsEs: [
+        'Reciclar un ordenador ahorra 70 kg de CO₂ y recupera cobre, oro, plata y paladio',
+        '1 tonelada de teléfonos contiene 250 g de oro — 80x más rico que una mina de oro',
+        'El reciclaje del litio reduce la dependencia de las minas de América del Sur',
+        'Marruecos genera ~100.000 toneladas de RAEE/año — un recurso de metales preciosos',
+      ],
       negatifs: [
         'Les batteries contiennent du plomb, cadmium et mercure qui s\'infiltrent dans les sols',
         'Le plomb des écrans CRT cause des maladies neurologiques graves, surtout chez les enfants',
         'Les DEEE brûlés informellement dégagent des dioxines et furanes — cancérigènes avérés',
       ],
+      negatifsEn: [
+        'Batteries contain lead, cadmium and mercury that seep into soils',
+        'Lead from CRT screens causes serious neurological diseases, especially in children',
+        'Informally burned WEEE releases dioxins and furans — proven carcinogens',
+      ],
+      negatifsAr: [
+        'البطاريات تحتوي رصاصاً وكادميوماً وزئبقاً تتسرب إلى التربة',
+        'رصاص شاشات CRT يسبب أمراضاً عصبية خطيرة خاصة لدى الأطفال',
+        'DEEE المحروق بشكل غير رسمي يطلق ديوكسينات وفورانات — مسرطنات مؤكدة',
+      ],
+      negatifsEs: [
+        'Las baterías contienen plomo, cadmio y mercurio que se filtran en los suelos',
+        'El plomo de las pantallas CRT causa enfermedades neurológicas graves, especialmente en niños',
+        'Los RAEE quemados informalmente emiten dioxinas y furanos — cancerígenos probados',
+      ],
     ),
     _ImpactDetail(
-      category: 'Textiles',
+      category: 'Textiles', categoryEn: 'Textiles', categoryAr: 'المنسوجات', categoryEs: 'Textiles',
       icon: Icons.checkroom_rounded, color: Color(0xFF9B59B6),
-      co2: '5,5 kg CO₂/kg recyclé', energy: '3 200 L eau économisés/kg coton', decomp: '200 ans (synthétiques)',
+      co2: '5,5 kg CO₂/kg recyclé', co2En: '5.5 kg CO₂/kg recycled', co2Ar: '5.5 كجم CO₂/كجم معاد تدويره', co2Es: '5,5 kg CO₂/kg reciclado',
+      energy: '3 200 L eau économisés/kg coton',
+      decomp: '200 ans (synthétiques)', decompEn: '200 years (synthetics)', decompAr: '200 سنة (اصطناعية)', decompEs: '200 años (sintéticos)',
       positifs: [
         'Recycler 1 kg de coton économise 3 200 litres d\'eau — ressource précieuse au Maroc',
         'Des vêtements en bon état donnés prolongent leur cycle de vie de 2 à 9 ans',
         '1 jean recyclé nécessite 7x moins d\'eau qu\'un jean en coton vierge',
         'Le secteur textile marocain (leader export) peut intégrer des fibres recyclées',
       ],
+      positifsEn: [
+        'Recycling 1 kg of cotton saves 3,200 litres of water — a precious resource in Morocco',
+        'Good condition donated clothes extend their life cycle by 2 to 9 years',
+        '1 recycled pair of jeans requires 7x less water than virgin cotton jeans',
+        'The Moroccan textile sector (export leader) can integrate recycled fibres',
+      ],
+      positifsAr: [
+        'إعادة تدوير 1 كجم من القطن يوفر 3,200 لتر ماء — مورد ثمين بالمغرب',
+        'الملابس الموهوبة في حالة جيدة تطيل دورة حياتها من 2 إلى 9 سنوات',
+        'جينز معاد تدويره يحتاج 7 مرات ماء أقل من جينز قطن بكر',
+        'القطاع النسيجي المغربي (رائد التصدير) يمكنه إدماج ألياف معاد تدويرها',
+      ],
+      positifsEs: [
+        'Reciclar 1 kg de algodón ahorra 3.200 litros de agua — recurso precioso en Marruecos',
+        'La ropa en buen estado donada prolonga su ciclo de vida de 2 a 9 años',
+        '1 vaquero reciclado necesita 7x menos agua que unos vaqueros de algodón virgen',
+        'El sector textil marroquí (líder exportador) puede integrar fibras recicladas',
+      ],
       negatifs: [
         'Les textiles synthétiques (polyester, nylon) mettent 200 ans à se décomposer',
         'Chaque lavage libère 700 000 microfibres plastiques dans les eaux usées',
         'Les teintures non traitées contaminent les cours d\'eau (visible dans certains oueds)',
       ],
+      negatifsEn: [
+        'Synthetic textiles (polyester, nylon) take 200 years to decompose',
+        'Each wash releases 700,000 plastic microfibres into wastewater',
+        'Untreated dyes contaminate waterways (visible in some oueds)',
+      ],
+      negatifsAr: [
+        'المنسوجات الاصطناعية (بوليستر، نايلون) تستغرق 200 سنة للتحلل',
+        'كل غسيل يطلق 700,000 ألياف دقيقة بلاستيكية في مياه الصرف',
+        'الأصباغ غير المعالجة تلوث مجاري المياه (مرئي في بعض الأودية)',
+      ],
+      negatifsEs: [
+        'Los textiles sintéticos (poliéster, nylon) tardan 200 años en descomponerse',
+        'Cada lavado libera 700.000 microfibras plásticas en las aguas residuales',
+        'Los tintes no tratados contaminan los cursos de agua (visible en algunos ueds)',
+      ],
     ),
     _ImpactDetail(
-      category: 'Déchets Dangereux',
+      category: 'Déchets Dangereux', categoryEn: 'Hazardous Waste', categoryAr: 'النفايات الخطرة', categoryEs: 'Residuos Peligrosos',
       icon: Icons.warning_amber_rounded, color: Color(0xFFE74C3C),
-      co2: '1 pile = 1 m² de sol pollué 50 ans', energy: '1 L huile = 1 million L eau polluée', decomp: 'Permanent sans traitement',
+      co2: '1 pile = 1 m² sol pollué 50 ans', co2En: '1 battery = 1 m² soil polluted 50 yrs', co2Ar: '1 بطارية = 1 م² تربة ملوثة 50 سنة', co2Es: '1 pila = 1 m² suelo contaminado 50 años',
+      energy: '1 L huile = 1 million L eau polluée',
+      decomp: 'Permanent sans traitement', decompEn: 'Permanent without treatment', decompAr: 'دائم بدون معالجة', decompEs: 'Permanente sin tratamiento',
       positifs: [
         'Un traitement approprié évite la contamination permanente des sols et nappes',
         'Les métaux des piles et batteries (plomb, cadmium) sont récupérables et valorisables',
         'Les huiles usagées traitées produisent un combustible alternatif pour l\'industrie',
       ],
+      positifsEn: [
+        'Proper treatment prevents permanent contamination of soils and groundwater',
+        'Metals from batteries (lead, cadmium) can be recovered and valorised',
+        'Treated used oils produce an alternative fuel for industry',
+      ],
+      positifsAr: [
+        'المعالجة المناسبة تمنع التلوث الدائم للتربة والمياه الجوفية',
+        'يمكن استرداد وتثمين المعادن من البطاريات (رصاص، كادميوم)',
+        'الزيوت المستعملة المعالجة تنتج وقوداً بديلاً للصناعة',
+      ],
+      positifsEs: [
+        'El tratamiento adecuado evita la contaminación permanente de suelos y acuíferos',
+        'Los metales de las baterías (plomo, cadmio) pueden recuperarse y valorizarse',
+        'Los aceites usados tratados producen un combustible alternativo para la industria',
+      ],
       negatifs: [
         'Une pile jetée en décharge pollue 1 m² de sol pendant 50 ans avec mercure et cadmium',
         'Les produits chimiques enfouis migrent vers les nappes phréatiques en quelques années',
         'L\'incinération sauvage de déchets dangereux libère des dioxines cancérigènes dans l\'air',
+      ],
+      negatifsEn: [
+        'A battery thrown in landfill pollutes 1 m² of soil for 50 years with mercury and cadmium',
+        'Buried chemicals migrate to groundwater within a few years',
+        'Informal burning of hazardous waste releases cancerogenic dioxins into the air',
+      ],
+      negatifsAr: [
+        'بطارية ملقاة في مطرح تلوث 1 م² من التربة لمدة 50 سنة بالزئبق والكادميوم',
+        'المواد الكيميائية المدفونة تهاجر نحو المياه الجوفية خلال سنوات قليلة',
+        'الحرق غير الرسمي للنفايات الخطرة يطلق ديوكسينات مسرطنة في الهواء',
+      ],
+      negatifsEs: [
+        'Una pila arrojada en vertedero contamina 1 m² de suelo durante 50 años con mercurio y cadmio',
+        'Los productos químicos enterrados migran hacia los acuíferos en pocos años',
+        'La quema informal de residuos peligrosos libera dioxinas cancerígenas al aire',
       ],
     ),
   ];
@@ -2944,7 +3348,7 @@ class _ImpactDetailPage extends ConsumerWidget {
                       Icon(d.icon, color: d.color, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(d.category,
+                        child: Text(d.categoryFor(lang),
                             style: TextStyle(fontFamily: 'Poppins', fontSize: 13,
                                 fontWeight: FontWeight.bold, color: textPrimary)),
                       ),
@@ -2956,9 +3360,9 @@ class _ImpactDetailPage extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
                     children: [
-                      _StatChip(label: d.co2, icon: Icons.co2_rounded, color: d.color),
+                      _StatChip(label: d.co2For(lang), icon: Icons.co2_rounded, color: d.color),
                       const SizedBox(width: 6),
-                      _StatChip(label: d.decomp, icon: Icons.hourglass_bottom_rounded, color: Colors.orange),
+                      _StatChip(label: d.decompFor(lang), icon: Icons.hourglass_bottom_rounded, color: Colors.orange),
                     ],
                   ),
                 ),
@@ -2975,7 +3379,7 @@ class _ImpactDetailPage extends ConsumerWidget {
                             fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF27AE60))),
                       ]),
                       const SizedBox(height: 4),
-                      ...d.positifs.map((p) => Padding(
+                      ...d.positifsFor(lang).map((p) => Padding(
                         padding: const EdgeInsets.only(bottom: 3),
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Container(width: 4, height: 4, margin: const EdgeInsets.fromLTRB(2, 5, 6, 0),
@@ -3005,7 +3409,7 @@ class _ImpactDetailPage extends ConsumerWidget {
                             fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFE74C3C))),
                       ]),
                       const SizedBox(height: 4),
-                      ...d.negatifs.map((n) => Padding(
+                      ...d.negatifsFor(lang).map((n) => Padding(
                         padding: const EdgeInsets.only(bottom: 3),
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Container(width: 4, height: 4, margin: const EdgeInsets.fromLTRB(2, 5, 6, 0),
@@ -3092,65 +3496,188 @@ class _OperateursDetailPage extends ConsumerWidget {
 
   static const _regionDir = [
     _RegionData('Casablanca-Settat', [
-      _RegionalOp('LYDEC', 'Gestion déchets + signalement pollutions', '0801 00 48 48', 'Casablanca'),
-      _RegionalOp('Mairie de Casablanca', 'Éco-points, collecte municipale, centres de tri', '0522 27 81 00', 'Casablanca'),
-      _RegionalOp('ECOVALOR — Aïn Sebaâ', 'Tri & valorisation plastique/métal/papier', '0522 35 66 00', 'Aïn Sebaâ'),
-      _RegionalOp('TECMED — Mohammedia', 'Collecte DEEE (ordi, téléphones, TV)', '0523 32 00 00', 'Mohammedia'),
-      _RegionalOp('Déchetterie Lissasfa', 'Tous déchets — tous types', '0522 91 02 03', 'Lissasfa'),
-      _RegionalOp('H&M Collect', 'Bornes collecte textile', '0522 20 30 40', 'Casablanca Mall'),
+      _RegionalOp('LYDEC', 'Gestion déchets + signalement pollutions', '0801 00 48 48', 'Casablanca',
+          specialtyEn: 'Waste management + pollution reporting',
+          specialtyAr: 'تدبير النفايات + الإبلاغ عن التلوث',
+          specialtyEs: 'Gestión de residuos + denuncia de contaminación'),
+      _RegionalOp('Mairie de Casablanca', 'Éco-points, collecte municipale, centres de tri', '0522 27 81 00', 'Casablanca',
+          specialtyEn: 'Eco-points, municipal collection, sorting centres',
+          specialtyAr: 'نقاط بيئية، جمع بلدي، مراكز الفرز',
+          specialtyEs: 'Eco-puntos, recogida municipal, centros de clasificación'),
+      _RegionalOp('ECOVALOR — Aïn Sebaâ', 'Tri & valorisation plastique/métal/papier', '0522 35 66 00', 'Aïn Sebaâ',
+          specialtyEn: 'Sorting & recovery of plastic/metal/paper',
+          specialtyAr: 'فرز وتثمين البلاستيك/المعادن/الورق',
+          specialtyEs: 'Clasificación y valorización de plástico/metal/papel'),
+      _RegionalOp('TECMED — Mohammedia', 'Collecte DEEE (ordi, téléphones, TV)', '0523 32 00 00', 'Mohammedia',
+          specialtyEn: 'WEEE collection (computers, phones, TV)',
+          specialtyAr: 'جمع DEEE (حواسيب، هواتف، تلفزيون)',
+          specialtyEs: 'Recogida RAEE (ordenadores, teléfonos, TV)'),
+      _RegionalOp('Déchetterie Lissasfa', 'Tous déchets — tous types', '0522 91 02 03', 'Lissasfa',
+          specialtyEn: 'All waste — all types',
+          specialtyAr: 'جميع النفايات — جميع الأنواع',
+          specialtyEs: 'Todos los residuos — todos los tipos'),
+      _RegionalOp('H&M Collect', 'Bornes collecte textile', '0522 20 30 40', 'Casablanca Mall',
+          specialtyEn: 'Textile collection bins',
+          specialtyAr: 'صناديق جمع المنسوجات',
+          specialtyEs: 'Puntos de recogida textil'),
     ]),
     _RegionData('Rabat-Salé-Kénitra', [
-      _RegionalOp('Mairie de Rabat', 'Tri sélectif, éco-points Agdal & Hassan', '0537 76 36 36', 'Rabat'),
-      _RegionalOp('AVERDA — Rabat', 'Collecte OM Rabat, Salé, Témara', '0537 71 10 10', 'Rabat'),
-      _RegionalOp('SITA Salé', 'Collecte & traitement déchets', '0537 85 22 33', 'Salé'),
-      _RegionalOp('Centre Tri Témara', 'Tri sélectif plastique, papier, métal', '0537 74 55 66', 'Témara'),
-      _RegionalOp('RADEEF / Kénitra', 'Gestion déchets Kénitra', '0537 37 10 10', 'Kénitra'),
+      _RegionalOp('Mairie de Rabat', 'Tri sélectif, éco-points Agdal & Hassan', '0537 76 36 36', 'Rabat',
+          specialtyEn: 'Selective sorting, eco-points Agdal & Hassan',
+          specialtyAr: 'فرز انتقائي، نقاط بيئية أكدال والحسن',
+          specialtyEs: 'Clasificación selectiva, eco-puntos Agdal y Hassan'),
+      _RegionalOp('AVERDA — Rabat', 'Collecte OM Rabat, Salé, Témara', '0537 71 10 10', 'Rabat',
+          specialtyEn: 'Household waste collection Rabat, Salé, Témara',
+          specialtyAr: 'جمع النفايات المنزلية بالرباط وسلا وتمارة',
+          specialtyEs: 'Recogida RSU Rabat, Salé, Témara'),
+      _RegionalOp('SITA Salé', 'Collecte & traitement déchets', '0537 85 22 33', 'Salé',
+          specialtyEn: 'Waste collection & treatment',
+          specialtyAr: 'جمع ومعالجة النفايات',
+          specialtyEs: 'Recogida y tratamiento de residuos'),
+      _RegionalOp('Centre Tri Témara', 'Tri sélectif plastique, papier, métal', '0537 74 55 66', 'Témara',
+          specialtyEn: 'Selective sorting: plastic, paper, metal',
+          specialtyAr: 'فرز انتقائي: بلاستيك، ورق، معادن',
+          specialtyEs: 'Clasificación selectiva: plástico, papel, metal'),
+      _RegionalOp('RADEEF / Kénitra', 'Gestion déchets Kénitra', '0537 37 10 10', 'Kénitra',
+          specialtyEn: 'Waste management Kénitra',
+          specialtyAr: 'تدبير النفايات بالقنيطرة',
+          specialtyEs: 'Gestión de residuos Kénitra'),
     ]),
     _RegionData('Marrakech-Safi', [
-      _RegionalOp('Mairie de Marrakech', 'Collecte OM, éco-points médina & Guéliz', '0524 44 94 95', 'Marrakech'),
-      _RegionalOp('PIZZORNO Environnement', 'Collecte et traitement déchets', '0524 33 44 55', 'Marrakech'),
-      _RegionalOp('Centre Tri Marrakech', 'Tri plastique, papier, métal, verre', '0524 30 20 10', 'Marrakech'),
-      _RegionalOp('Déchetterie Rte Casablanca', 'Encombrants, DEEE, dangereux', '0524 31 00 00', 'Marrakech'),
+      _RegionalOp('Mairie de Marrakech', 'Collecte OM, éco-points médina & Guéliz', '0524 44 94 95', 'Marrakech',
+          specialtyEn: 'Household collection, eco-points medina & Guéliz',
+          specialtyAr: 'جمع المنزلي، نقاط بيئية المدينة القديمة وكيليز',
+          specialtyEs: 'Recogida doméstica, eco-puntos medina y Guéliz'),
+      _RegionalOp('PIZZORNO Environnement', 'Collecte et traitement déchets', '0524 33 44 55', 'Marrakech',
+          specialtyEn: 'Waste collection and treatment',
+          specialtyAr: 'جمع ومعالجة النفايات',
+          specialtyEs: 'Recogida y tratamiento de residuos'),
+      _RegionalOp('Centre Tri Marrakech', 'Tri plastique, papier, métal, verre', '0524 30 20 10', 'Marrakech',
+          specialtyEn: 'Sorting: plastic, paper, metal, glass',
+          specialtyAr: 'فرز: بلاستيك، ورق، معادن، زجاج',
+          specialtyEs: 'Clasificación: plástico, papel, metal, vidrio'),
+      _RegionalOp('Déchetterie Rte Casablanca', 'Encombrants, DEEE, dangereux', '0524 31 00 00', 'Marrakech',
+          specialtyEn: 'Bulky waste, WEEE, hazardous',
+          specialtyAr: 'نفايات ضخمة، DEEE، خطرة',
+          specialtyEs: 'Residuos voluminosos, RAEE, peligrosos'),
     ]),
     _RegionData('Tanger-Tétouan-Al Hoceïma', [
-      _RegionalOp('Mairie de Tanger', 'Collecte OM, tri sélectif, éco-points', '0539 93 27 00', 'Tanger'),
-      _RegionalOp('TECMED Nord', 'DEEE, électronique, batteries', '0539 33 44 55', 'Tanger'),
-      _RegionalOp('Centre Tri Tanger Med', 'Tri industriel zone portuaire', '0539 34 00 00', 'Tanger Med'),
-      _RegionalOp('Mairie Tétouan', 'Collecte OM Tétouan, Martil', '0539 96 22 00', 'Tétouan'),
-      _RegionalOp('Déchetterie Ibn Batouta', 'Tous déchets — triage initial', '0539 31 22 33', 'Tanger'),
+      _RegionalOp('Mairie de Tanger', 'Collecte OM, tri sélectif, éco-points', '0539 93 27 00', 'Tanger',
+          specialtyEn: 'Household collection, selective sorting, eco-points',
+          specialtyAr: 'جمع منزلي، فرز انتقائي، نقاط بيئية',
+          specialtyEs: 'Recogida doméstica, clasificación selectiva, eco-puntos'),
+      _RegionalOp('TECMED Nord', 'DEEE, électronique, batteries', '0539 33 44 55', 'Tanger',
+          specialtyEn: 'WEEE, electronics, batteries',
+          specialtyAr: 'DEEE، إلكترونيات، بطاريات',
+          specialtyEs: 'RAEE, electrónica, baterías'),
+      _RegionalOp('Centre Tri Tanger Med', 'Tri industriel zone portuaire', '0539 34 00 00', 'Tanger Med',
+          specialtyEn: 'Industrial sorting — port zone',
+          specialtyAr: 'فرز صناعي — منطقة الميناء',
+          specialtyEs: 'Clasificación industrial — zona portuaria'),
+      _RegionalOp('Mairie Tétouan', 'Collecte OM Tétouan, Martil', '0539 96 22 00', 'Tétouan',
+          specialtyEn: 'Household collection Tétouan, Martil',
+          specialtyAr: 'جمع منزلي تطوان ومارتيل',
+          specialtyEs: 'Recogida doméstica Tetuán, Martil'),
+      _RegionalOp('Déchetterie Ibn Batouta', 'Tous déchets — triage initial', '0539 31 22 33', 'Tanger',
+          specialtyEn: 'All waste — initial sorting',
+          specialtyAr: 'جميع النفايات — فرز أولي',
+          specialtyEs: 'Todos los residuos — clasificación inicial'),
     ]),
     _RegionData('Fès-Meknès', [
-      _RegionalOp('Mairie de Fès', 'Collecte OM, programme tri sélectif', '0535 62 47 00', 'Fès'),
-      _RegionalOp('AMENSOUSS Meknès', 'Gestion déchets Meknès', '0535 52 20 30', 'Meknès'),
-      _RegionalOp('Centre Tri Sidi Brahim', 'Tri papier, plastique, métal', '0535 64 30 40', 'Fès'),
-      _RegionalOp('DEEE Point Collecte Meknès', 'Électronique, piles, batteries', '0535 51 30 40', 'Meknès'),
+      _RegionalOp('Mairie de Fès', 'Collecte OM, programme tri sélectif', '0535 62 47 00', 'Fès',
+          specialtyEn: 'Household collection, selective sorting programme',
+          specialtyAr: 'جمع منزلي، برنامج الفرز الانتقائي',
+          specialtyEs: 'Recogida doméstica, programa de clasificación selectiva'),
+      _RegionalOp('AMENSOUSS Meknès', 'Gestion déchets Meknès', '0535 52 20 30', 'Meknès',
+          specialtyEn: 'Waste management Meknès',
+          specialtyAr: 'تدبير النفايات بمكناس',
+          specialtyEs: 'Gestión de residuos Meknès'),
+      _RegionalOp('Centre Tri Sidi Brahim', 'Tri papier, plastique, métal', '0535 64 30 40', 'Fès',
+          specialtyEn: 'Sorting: paper, plastic, metal',
+          specialtyAr: 'فرز: ورق، بلاستيك، معادن',
+          specialtyEs: 'Clasificación: papel, plástico, metal'),
+      _RegionalOp('DEEE Point Collecte Meknès', 'Électronique, piles, batteries', '0535 51 30 40', 'Meknès',
+          specialtyEn: 'Electronics, batteries, cells',
+          specialtyAr: 'إلكترونيات، بطاريات، خلايا',
+          specialtyEs: 'Electrónica, pilas, baterías'),
     ]),
     _RegionData('Souss-Massa (Agadir)', [
-      _RegionalOp('Mairie d\'Agadir', 'Collecte OM, éco-points Agadir', '0528 84 36 36', 'Agadir'),
-      _RegionalOp('SOUSS RECYCLAGE', 'Plastique, métal, papier — toute la région', '0528 83 12 34', 'Agadir'),
-      _RegionalOp('AMENSOUSS SA', 'Gestion déchets Agadir, Tiznit, Taroudant', '0528 82 30 40', 'Agadir'),
-      _RegionalOp('Déchetterie Aït Melloul', 'Encombrants, DEEE, dangereux', '0528 83 50 60', 'Aït Melloul'),
+      _RegionalOp('Mairie d\'Agadir', 'Collecte OM, éco-points Agadir', '0528 84 36 36', 'Agadir',
+          specialtyEn: 'Household collection, eco-points Agadir',
+          specialtyAr: 'جمع منزلي، نقاط بيئية أكادير',
+          specialtyEs: 'Recogida doméstica, eco-puntos Agadir'),
+      _RegionalOp('SOUSS RECYCLAGE', 'Plastique, métal, papier — toute la région', '0528 83 12 34', 'Agadir',
+          specialtyEn: 'Plastic, metal, paper — entire region',
+          specialtyAr: 'بلاستيك، معادن، ورق — كامل الجهة',
+          specialtyEs: 'Plástico, metal, papel — toda la región'),
+      _RegionalOp('AMENSOUSS SA', 'Gestion déchets Agadir, Tiznit, Taroudant', '0528 82 30 40', 'Agadir',
+          specialtyEn: 'Waste management Agadir, Tiznit, Taroudant',
+          specialtyAr: 'تدبير النفايات أكادير وتيزنيت وتارودانت',
+          specialtyEs: 'Gestión de residuos Agadir, Tiznit, Taroudant'),
+      _RegionalOp('Déchetterie Aït Melloul', 'Encombrants, DEEE, dangereux', '0528 83 50 60', 'Aït Melloul',
+          specialtyEn: 'Bulky waste, WEEE, hazardous',
+          specialtyAr: 'نفايات ضخمة، DEEE، خطرة',
+          specialtyEs: 'Residuos voluminosos, RAEE, peligrosos'),
     ]),
     _RegionData('Oriental (Oujda)', [
-      _RegionalOp('Mairie d\'Oujda', 'Collecte OM, éco-points Oujda', '0536 68 24 00', 'Oujda'),
-      _RegionalOp('RADEEO', 'Gestion déchets et eau Oujda', '0536 68 14 00', 'Oujda'),
-      _RegionalOp('Centre Tri Oujda', 'Tri plastique, métal, papier', '0536 68 30 40', 'Oujda'),
-      _RegionalOp('Nador Propreté', 'Collecte OM Nador, Zayo', '0536 33 22 33', 'Nador'),
+      _RegionalOp('Mairie d\'Oujda', 'Collecte OM, éco-points Oujda', '0536 68 24 00', 'Oujda',
+          specialtyEn: 'Household collection, eco-points Oujda',
+          specialtyAr: 'جمع منزلي، نقاط بيئية وجدة',
+          specialtyEs: 'Recogida doméstica, eco-puntos Oujda'),
+      _RegionalOp('RADEEO', 'Gestion déchets et eau Oujda', '0536 68 14 00', 'Oujda',
+          specialtyEn: 'Waste and water management Oujda',
+          specialtyAr: 'تدبير النفايات والماء بوجدة',
+          specialtyEs: 'Gestión de residuos y agua Oujda'),
+      _RegionalOp('Centre Tri Oujda', 'Tri plastique, métal, papier', '0536 68 30 40', 'Oujda',
+          specialtyEn: 'Sorting: plastic, metal, paper',
+          specialtyAr: 'فرز: بلاستيك، معادن، ورق',
+          specialtyEs: 'Clasificación: plástico, metal, papel'),
+      _RegionalOp('Nador Propreté', 'Collecte OM Nador, Zayo', '0536 33 22 33', 'Nador',
+          specialtyEn: 'Household collection Nador, Zayo',
+          specialtyAr: 'جمع منزلي الناظور وزايو',
+          specialtyEs: 'Recogida doméstica Nador, Zayo'),
     ]),
     _RegionData('Béni Mellal-Khénifra', [
-      _RegionalOp('Mairie de Béni Mellal', 'Collecte OM, éco-points', '0523 48 22 00', 'Béni Mellal'),
-      _RegionalOp('Centre Tri Béni Mellal', 'Plastique, papier, métal', '0523 48 30 40', 'Béni Mellal'),
-      _RegionalOp('RADEE Khénifra', 'Gestion déchets Khénifra', '0535 58 10 20', 'Khénifra'),
+      _RegionalOp('Mairie de Béni Mellal', 'Collecte OM, éco-points', '0523 48 22 00', 'Béni Mellal',
+          specialtyEn: 'Household collection, eco-points',
+          specialtyAr: 'جمع منزلي، نقاط بيئية',
+          specialtyEs: 'Recogida doméstica, eco-puntos'),
+      _RegionalOp('Centre Tri Béni Mellal', 'Plastique, papier, métal', '0523 48 30 40', 'Béni Mellal',
+          specialtyEn: 'Plastic, paper, metal',
+          specialtyAr: 'بلاستيك، ورق، معادن',
+          specialtyEs: 'Plástico, papel, metal'),
+      _RegionalOp('RADEE Khénifra', 'Gestion déchets Khénifra', '0535 58 10 20', 'Khénifra',
+          specialtyEn: 'Waste management Khénifra',
+          specialtyAr: 'تدبير النفايات بخنيفرة',
+          specialtyEs: 'Gestión de residuos Khénifra'),
     ]),
     _RegionData('Drâa-Tafilalet', [
-      _RegionalOp('Mairie d\'Errachidia', 'Collecte OM, éco-points', '0535 57 22 00', 'Errachidia'),
-      _RegionalOp('Mairie de Ouarzazate', 'Collecte OM, tri sélectif touristique', '0524 88 22 00', 'Ouarzazate'),
-      _RegionalOp('ONEE — Signalement', 'Rejets illégaux, pollution eau', '0800 00 20 20', 'National'),
+      _RegionalOp('Mairie d\'Errachidia', 'Collecte OM, éco-points', '0535 57 22 00', 'Errachidia',
+          specialtyEn: 'Household collection, eco-points',
+          specialtyAr: 'جمع منزلي، نقاط بيئية',
+          specialtyEs: 'Recogida doméstica, eco-puntos'),
+      _RegionalOp('Mairie de Ouarzazate', 'Collecte OM, tri sélectif touristique', '0524 88 22 00', 'Ouarzazate',
+          specialtyEn: 'Household collection, tourist selective sorting',
+          specialtyAr: 'جمع منزلي، فرز انتقائي سياحي',
+          specialtyEs: 'Recogida doméstica, clasificación selectiva turística'),
+      _RegionalOp('ONEE — Signalement', 'Rejets illégaux, pollution eau', '0800 00 20 20', 'National',
+          specialtyEn: 'Illegal discharges, water pollution',
+          specialtyAr: 'الصرف غير القانوني، تلوث المياه',
+          specialtyEs: 'Vertidos ilegales, contaminación del agua'),
     ]),
     _RegionData('Laâyoune & Dakhla', [
-      _RegionalOp('Mairie de Laâyoune', 'Collecte OM, gestion municipale', '0528 89 22 00', 'Laâyoune'),
-      _RegionalOp('Dakhla Propreté', 'Collecte OM Dakhla', '0528 93 22 33', 'Dakhla'),
-      _RegionalOp('Association Sahara Vert', 'Collecte déchets zone saharienne', '0528 89 30 40', 'Laâyoune'),
+      _RegionalOp('Mairie de Laâyoune', 'Collecte OM, gestion municipale', '0528 89 22 00', 'Laâyoune',
+          specialtyEn: 'Household collection, municipal management',
+          specialtyAr: 'جمع منزلي، تدبير بلدي',
+          specialtyEs: 'Recogida doméstica, gestión municipal'),
+      _RegionalOp('Dakhla Propreté', 'Collecte OM Dakhla', '0528 93 22 33', 'Dakhla',
+          specialtyEn: 'Household collection Dakhla',
+          specialtyAr: 'جمع منزلي الداخلة',
+          specialtyEs: 'Recogida doméstica Dakhla'),
+      _RegionalOp('Association Sahara Vert', 'Collecte déchets zone saharienne', '0528 89 30 40', 'Laâyoune',
+          specialtyEn: 'Waste collection in Saharan zone',
+          specialtyAr: 'جمع النفايات في المنطقة الصحراوية',
+          specialtyEs: 'Recogida de residuos en zona sahariana'),
     ]),
   ];
 
@@ -3206,7 +3733,7 @@ class _OperateursDetailPage extends ConsumerWidget {
             const Icon(Icons.map_rounded, color: regionColor, size: 18),
             const SizedBox(width: 10),
             Expanded(
-              child: Text('Répertoire par Région Administrative',
+              child: Text(s.guideRegDir,
                   style: TextStyle(fontFamily: 'Poppins', fontSize: 13,
                       fontWeight: FontWeight.bold, color: textPrimary)),
             ),
@@ -3262,7 +3789,7 @@ class _OperateursDetailPage extends ConsumerWidget {
                               Text(op.name,
                                   style: TextStyle(fontFamily: 'Poppins', fontSize: 12,
                                       fontWeight: FontWeight.w600, color: textPrimary)),
-                              Text(op.specialty,
+                              Text(op.specialtyFor(lang),
                                   style: TextStyle(fontFamily: 'Poppins', fontSize: 11,
                                       color: textSec)),
                             ],
@@ -3341,75 +3868,124 @@ class _ContactsDetailPage extends ConsumerWidget {
     _ContactInfo('ONEE — Pollution Eau/Sol', '0800 00 20 20',
         'info@onee.ma', '',
         Icons.water_rounded, Color(0xFFE74C3C),
-        'Numéro vert gratuit 24h/24. Signalement de tout rejet illégal, pollution eau ou sol sur le territoire national.'),
+        'Numéro vert gratuit 24h/24. Signalement de tout rejet illégal, pollution eau ou sol sur le territoire national.',
+        descEn: 'Free green number 24/7. Report any illegal discharge, water or soil pollution on national territory.',
+        descAr: 'رقم أخضر مجاني 24/24. الإبلاغ عن أي صرف غير قانوني أو تلوث مائي أو أرضي على الأراضي الوطنية.',
+        descEs: 'Número verde gratuito 24h/24. Denuncia cualquier vertido ilegal, contaminación del agua o del suelo en el territorio nacional.'),
     _ContactInfo('Protection Civile', '15',
         '', '',
         Icons.local_fire_department_rounded, Color(0xFFE74C3C),
-        'Urgence absolue en cas de déversement chimique accidentel, incendie de décharge ou accident industriel.'),
+        'Urgence absolue en cas de déversement chimique accidentel, incendie de décharge ou accident industriel.',
+        descEn: 'Absolute emergency in case of accidental chemical spill, landfill fire or industrial accident.',
+        descAr: 'طوارئ مطلقة في حالة تسرب كيميائي عرضي أو حريق مطرح أو حادث صناعي.',
+        descEs: 'Emergencia absoluta en caso de derrame químico accidental, incendio en vertedero o accidente industrial.'),
     _ContactInfo('Marine Royale — Pollution Marine', '10911',
         '', '',
         Icons.sailing_rounded, Color(0xFF1A5276),
-        'Signalement pollution marine sur les côtes marocaines. Disponible 24h/24. Priorité côtes atlantique et méditerranée.'),
+        'Signalement pollution marine sur les côtes marocaines. Disponible 24h/24. Priorité côtes atlantique et méditerranée.',
+        descEn: 'Marine pollution reporting on Moroccan coasts. Available 24/7. Priority: Atlantic and Mediterranean coasts.',
+        descAr: 'الإبلاغ عن التلوث البحري على السواحل المغربية. متوفر 24/24. الأولوية: السواحل الأطلسية والمتوسطية.',
+        descEs: 'Denuncia de contaminación marina en las costas marroquíes. Disponible 24h/24. Prioridad: costas atlántica y mediterránea.'),
     // ── Institutions gouvernementales ─────────────────────────────────────────
     _ContactInfo('Ministère Transition Énergétique (MTEDD)', '0537 57 93 00',
         'info@environnement.gov.ma', 'www.environnement.gov.ma',
         Icons.account_balance_rounded, Color(0xFF27AE60),
-        'Autorité de tutelle. Élabore la réglementation, délivre les agréments, contrôle les plans directeurs et inspecte les opérateurs.'),
+        'Autorité de tutelle. Élabore la réglementation, délivre les agréments, contrôle les plans directeurs et inspecte les opérateurs.',
+        descEn: 'Supervisory authority. Drafts regulations, issues approvals, controls masterplans and inspects operators.',
+        descAr: 'سلطة الوصاية. تضع اللوائح، تمنح التراخيص، تراقب المخططات التوجيهية وتتفتش على المشغلين.',
+        descEs: 'Autoridad de tutela. Elabora la normativa, concede licencias, controla los planes directores e inspecciona los operadores.'),
     _ContactInfo('AMEE — Agence Marocaine Efficacité Énergétique', '0537 57 25 00',
         '', 'www.amee.ma',
         Icons.energy_savings_leaf_rounded, Color(0xFF2ECC71),
-        'Pilote les programmes d\'économie circulaire, valorisation déchets industriels et programme AMEP plastiques.'),
+        'Pilote les programmes d\'économie circulaire, valorisation déchets industriels et programme AMEP plastiques.',
+        descEn: 'Leads circular economy programmes, industrial waste recovery and AMEP plastics programme.',
+        descAr: 'تقود برامج الاقتصاد الدائري وتثمين النفايات الصناعية وبرنامج AMEP للبلاستيك.',
+        descEs: 'Lidera los programas de economía circular, valorización de residuos industriales y programa AMEP de plásticos.'),
     _ContactInfo('Wilaya de Casablanca', '0522 22 36 36',
         '', '',
         Icons.location_city_rounded, Color(0xFF2C3E50),
-        'Urgences environnement Casablanca. Signalement pollutions, décharges sauvages et déversements chimiques dans la région.'),
+        'Urgences environnement Casablanca. Signalement pollutions, décharges sauvages et déversements chimiques dans la région.',
+        descEn: 'Environmental emergencies in Casablanca. Report pollution, illegal dumps and chemical spills in the region.',
+        descAr: 'طوارئ البيئة بالدار البيضاء. الإبلاغ عن التلوث والمطارح العشوائية والتسريبات الكيميائية في الجهة.',
+        descEs: 'Emergencias medioambientales en Casablanca. Denuncia contaminación, vertederos ilegales y derrames químicos en la región.'),
     _ContactInfo('Wilaya de Rabat', '0537 72 72 72',
         '', '',
         Icons.location_city_rounded, Color(0xFF34495E),
-        'Urgences environnement Rabat. Signalement pollutions, décharges sauvages et déversements chimiques dans la région.'),
+        'Urgences environnement Rabat. Signalement pollutions, décharges sauvages et déversements chimiques dans la région.',
+        descEn: 'Environmental emergencies in Rabat. Report pollution, illegal dumps and chemical spills in the region.',
+        descAr: 'طوارئ البيئة بالرباط. الإبلاغ عن التلوث والمطارح العشوائية والتسريبات الكيميائية في الجهة.',
+        descEs: 'Emergencias medioambientales en Rabat. Denuncia contaminación, vertederos ilegales y derrames químicos en la región.'),
     // ── ONGs nationales ────────────────────────────────────────────────────────
     _ContactInfo('Association Zéro Zbel', '',
         'contact@zerozabel.ma', 'www.zerozabel.ma',
         Icons.volunteer_activism_rounded, Color(0xFF7D6608),
-        'ONG pionnière du tri sélectif au Maroc. Sensibilisation dans les écoles, entreprises et communes. Programmes de compostage.'),
+        'ONG pionnière du tri sélectif au Maroc. Sensibilisation dans les écoles, entreprises et communes. Programmes de compostage.',
+        descEn: 'Pioneer NGO for selective sorting in Morocco. Awareness in schools, companies and municipalities. Composting programmes.',
+        descAr: 'منظمة غير حكومية رائدة في الفرز الانتقائي بالمغرب. توعية في المدارس والشركات والبلديات. برامج التسميد.',
+        descEs: 'ONG pionera en clasificación selectiva en Marruecos. Sensibilización en escuelas, empresas y municipios. Programas de compostaje.'),
     _ContactInfo('Green Morocco', '0522 55 11 22',
         '', '',
         Icons.park_rounded, Color(0xFF1E8449),
-        'Plages propres, nettoyages collectifs. Projets de sensibilisation au recyclage communautaire à l\'échelle nationale.'),
+        'Plages propres, nettoyages collectifs. Projets de sensibilisation au recyclage communautaire à l\'échelle nationale.',
+        descEn: 'Clean beaches, collective cleanups. Recycling awareness projects at national community level.',
+        descAr: 'شواطئ نظيفة وحملات تنظيف جماعية. مشاريع التوعية بإعادة التدوير المجتمعية على المستوى الوطني.',
+        descEs: 'Playas limpias, limpiezas colectivas. Proyectos de sensibilización sobre reciclaje comunitario a escala nacional.'),
     _ContactInfo('Plastic Free Morocco', '',
         'plasticfreemo@gmail.com', '',
         Icons.do_not_disturb_on_rounded, Color(0xFF8E44AD),
-        'Réduction plastique à usage unique. Sensibilisation et lobbying pour l\'application stricte de la Loi 77-15.'),
+        'Réduction plastique à usage unique. Sensibilisation et lobbying pour l\'application stricte de la Loi 77-15.',
+        descEn: 'Single-use plastic reduction. Awareness and lobbying for strict enforcement of Law 77-15.',
+        descAr: 'تقليص البلاستيك أحادي الاستخدام. توعية وضغط من أجل التطبيق الصارم للقانون 77-15.',
+        descEs: 'Reducción del plástico de un solo uso. Sensibilización y presión para la aplicación estricta de la Ley 77-15.'),
     _ContactInfo('GreenWish Maroc', '0522 44 55 66',
         '', '',
         Icons.eco_rounded, Color(0xFF16A085),
-        'Projets recyclage communautaires. Financement de micro-projets de tri et compostage dans les quartiers.'),
+        'Projets recyclage communautaires. Financement de micro-projets de tri et compostage dans les quartiers.',
+        descEn: 'Community recycling projects. Funding for micro-projects for sorting and composting in neighbourhoods.',
+        descAr: 'مشاريع إعادة التدوير المجتمعية. تمويل مشاريع صغيرة للفرز والتسميد في الأحياء.',
+        descEs: 'Proyectos de reciclaje comunitarios. Financiación de microproyectos de clasificación y compostaje en los barrios.'),
     _ContactInfo('Caritas Maroc', '0522 29 11 22',
         '', '',
         Icons.favorite_rounded, Color(0xFFE74C3C),
-        'Collecte et redistribution de vêtements, objets usagés. Points de dépôt à Casablanca, Rabat, Tanger, Marrakech.'),
+        'Collecte et redistribution de vêtements, objets usagés. Points de dépôt à Casablanca, Rabat, Tanger, Marrakech.',
+        descEn: 'Collection and redistribution of clothing and used items. Drop-off points in Casablanca, Rabat, Tangier, Marrakech.',
+        descAr: 'جمع وإعادة توزيع الملابس والمواد المستعملة. نقاط إيداع في الدار البيضاء والرباط وطنجة ومراكش.',
+        descEs: 'Recogida y redistribución de ropa y objetos usados. Puntos de entrega en Casablanca, Rabat, Tánger, Marrakech.'),
     _ContactInfo('Secours Catholique', '0537 73 44 55',
         '', '',
         Icons.volunteer_activism_rounded, Color(0xFFE67E22),
-        'Don de vêtements et objets usagés. Redistribution aux personnes dans le besoin. Base : Rabat.'),
+        'Don de vêtements et objets usagés. Redistribution aux personnes dans le besoin. Base : Rabat.',
+        descEn: 'Donation of clothing and used items. Redistribution to people in need. Base: Rabat.',
+        descAr: 'تبرع بالملابس والمواد المستعملة. إعادة توزيعها على المحتاجين. المقر: الرباط.',
+        descEs: 'Donación de ropa y objetos usados. Redistribución a personas necesitadas. Base: Rabat.'),
     // ── Régies et opérateurs ─────────────────────────────────────────────────
     _ContactInfo('ECOVALOR', '0522 35 66 00',
         '', '',
         Icons.recycling_rounded, Color(0xFF27AE60),
-        'Tri et valorisation plastique/métal/papier. Usine Aïn Sebaâ, Casablanca. Principal opérateur national de recyclage matériaux.'),
+        'Tri et valorisation plastique/métal/papier. Usine Aïn Sebaâ, Casablanca. Principal opérateur national de recyclage matériaux.',
+        descEn: 'Plastic/metal/paper sorting and recovery. Aïn Sebaâ plant, Casablanca. Main national materials recycling operator.',
+        descAr: 'فرز وتثمين البلاستيك والمعادن والورق. مصنع عين السبع، الدار البيضاء. المشغل الوطني الرئيسي لإعادة تدوير المواد.',
+        descEs: 'Clasificación y valorización de plástico/metal/papel. Planta Aïn Sebaâ, Casablanca. Principal operador nacional de reciclaje de materiales.'),
     _ContactInfo('AVERDA Maroc', '0537 71 10 10',
         '', '',
         Icons.local_shipping_rounded, Color(0xFF2980B9),
-        'Opérateur collecte OM dans plusieurs villes. Siège : Rabat. Gestion déléguée des déchets ménagers à l\'échelle nationale.'),
+        'Opérateur collecte OM dans plusieurs villes. Siège : Rabat. Gestion déléguée des déchets ménagers à l\'échelle nationale.',
+        descEn: 'Household waste collection operator in several cities. HQ: Rabat. Delegated management of household waste at national scale.',
+        descAr: 'مشغل جمع النفايات المنزلية في عدة مدن. المقر: الرباط. تدبير مفوض للنفايات المنزلية على الصعيد الوطني.',
+        descEs: 'Operador de recogida de RSU en varias ciudades. Sede: Rabat. Gestión delegada de residuos domésticos a escala nacional.'),
     _ContactInfo('TECMED', '0523 32 00 00',
         '', '',
         Icons.electrical_services_rounded, Color(0xFFF39C12),
-        'Collecte et traitement DEEE. Sites à Mohammedia et Tanger Nord. Agréé Ministère Transition Énergétique.'),
+        'Collecte et traitement DEEE. Sites à Mohammedia et Tanger Nord. Agréé Ministère Transition Énergétique.',
+        descEn: 'WEEE collection and treatment. Sites in Mohammedia and Tangier North. Approved by Ministry of Energy Transition.',
+        descAr: 'جمع ومعالجة DEEE. مواقع في المحمدية وطنجة الشمالية. معتمد من وزارة الانتقال الطاقي.',
+        descEs: 'Recogida y tratamiento de RAEE. Instalaciones en Mohammedia y Tánger Norte. Autorizado por el Ministerio de Transición Energética.'),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
     return _DetailPageBase(
       title: s.guideContacts,
       subtitle: s.guideContactsSubtitle,
@@ -3479,7 +4055,7 @@ class _ContactsDetailPage extends ConsumerWidget {
                       ]),
                     ],
                     const SizedBox(height: 4),
-                    Text(c.desc,
+                    Text(c.descFor(lang),
                         style: TextStyle(
                           fontFamily: 'Poppins', fontSize: 11, height: 1.4,
                           color: isDark
@@ -3508,6 +4084,15 @@ class _ContactInfo {
   final IconData icon;
   final Color color;
   final String desc;
+  final String descEn, descAr, descEs;
   const _ContactInfo(this.name, this.phone, this.email, this.website,
-      this.icon, this.color, this.desc);
+      this.icon, this.color, this.desc, {
+    this.descEn = '', this.descAr = '', this.descEs = '',
+  });
+  String descFor(String lang) {
+    if (lang == 'ar' && descAr.isNotEmpty) return descAr;
+    if (lang == 'es' && descEs.isNotEmpty) return descEs;
+    if (lang != 'fr' && descEn.isNotEmpty) return descEn;
+    return desc;
+  }
 }

@@ -1,13 +1,20 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/avatar_provider.dart';
 import '../../theme/app_theme.dart';
+
+const _kAvatarPathKey = 'user_avatar_path';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -21,6 +28,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _bioCtrl;
   bool _saving = false;
   String _title = '';
+  String? _avatarPath;
 
   static const _titleKeys = [
     'beginner', 'citizen', 'warrior', 'guardian', 'master',
@@ -33,6 +41,85 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameCtrl = TextEditingController(text: user?.displayName ?? '');
     _bioCtrl = TextEditingController();
     _title = _titleKeys[2];
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Charger avatar
+    final path = prefs.getString(_kAvatarPathKey);
+    // Charger bio depuis Firestore
+    String bio = '';
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        bio = (doc.data()?['bio'] as String?) ?? '';
+      }
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        if (path != null && File(path).existsSync()) _avatarPath = path;
+        _bioCtrl.text = bio;
+      });
+      if (path != null && File(path).existsSync()) {
+        ref.read(avatarPathProvider.notifier).state = path;
+      }
+    }
+  }
+
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+              title: const Text('Caméra', style: TextStyle(fontFamily: 'Poppins')),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+              title: const Text('Galerie', style: TextStyle(fontFamily: 'Poppins')),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 512,
+    );
+    if (picked == null || !mounted) return;
+
+    final appDir = await getApplicationDocumentsDirectory();
+    final dest = File('${appDir.path}/profile_avatar.jpg');
+    await File(picked.path).copy(dest.path);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kAvatarPathKey, dest.path);
+
+    if (mounted) {
+      setState(() => _avatarPath = dest.path);
+      ref.read(avatarPathProvider.notifier).state = dest.path;
+    }
   }
 
   @override
@@ -52,13 +139,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       // 1. Mettre à jour Firebase Auth
       await user.updateDisplayName(name);
-      // 2. Mettre à jour Firestore
+      // 2. Mettre à jour Firestore (nom + bio)
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .update({'displayName': name});
-      // 3. Mettre à jour le provider en mémoire (mise à jour immédiate de l'UI)
-      ref.read(userProvider.notifier).updateProfile(name: name);
+          .update({
+            'displayName': name,
+            'bio': _bioCtrl.text.trim(),
+          });
+      // 3. Recharger le provider depuis Firestore pour propager partout
+      await ref.read(userProvider.notifier).loadFromStorage(
+        firebaseName: name,
+        firebaseUid: user.uid,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -106,46 +199,57 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           children: [
             // Avatar
             Center(
-              child: Stack(
-                children: [
-                  Hero(
-                    tag: 'profile-avatar',
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppColors.primaryGradient,
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          width: 3,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                            blurRadius: 16,
+              child: GestureDetector(
+                onTap: _pickPhoto,
+                child: Stack(
+                  children: [
+                    Hero(
+                      tag: 'profile-avatar',
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: _avatarPath == null ? AppColors.primaryGradient : null,
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            width: 3,
                           ),
-                        ],
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                              blurRadius: 16,
+                            ),
+                          ],
+                          image: _avatarPath != null
+                              ? DecorationImage(
+                                  image: FileImage(File(_avatarPath!)),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: _avatarPath == null
+                            ? const Icon(Icons.person_rounded,
+                                color: Colors.white, size: 50)
+                            : null,
                       ),
-                      child: const Icon(Icons.person_rounded,
-                          color: Colors.white, size: 50),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 2,
-                    right: 2,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                    Positioned(
+                      bottom: 2,
+                      right: 2,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded,
+                            color: Colors.white, size: 16),
                       ),
-                      child: const Icon(Icons.camera_alt_rounded,
-                          color: Colors.white, size: 16),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ).animate().scale(
                 begin: const Offset(0.8, 0.8),
