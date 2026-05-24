@@ -37,6 +37,13 @@
             {
               "client_id": "1089511172826-66neb2j17dkgh0ssnahoaqplgjulp80n.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1089511172826-i7ov6am9mpkq72ip0feci0jugbd67sal.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ecoscan.ecoscan"
+              }
             }
           ]
         }
