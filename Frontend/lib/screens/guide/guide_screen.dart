@@ -2450,7 +2450,8 @@ class _ImpactDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
     final textPrimary = isDark ? AppColors.darkText : AppColors.textPrimary;
     final textSec = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     final cardBg = isDark ? AppColors.darkCard : Colors.white;
@@ -2475,6 +2476,7 @@ class _ImpactDetailPage extends ConsumerWidget {
                 impact: _ConsignesTab._impacts[i],
                 isDark: isDark,
                 isLast: i == _ConsignesTab._impacts.length - 1,
+                lang: lang,
               );
             }),
           ),
@@ -2719,7 +2721,8 @@ class _OperateursDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
     final cardBg = isDark ? AppColors.darkCard : Colors.white;
     final textPrimary = isDark ? AppColors.darkText : AppColors.textPrimary;
     final textSec = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
@@ -2750,7 +2753,7 @@ class _OperateursDetailPage extends ConsumerWidget {
         ),
       ),
       ...List.generate(_ConsignesTab._operators.length, (i) =>
-          _OperatorCard(op: _ConsignesTab._operators[i], isDark: isDark)
+          _OperatorCard(op: _ConsignesTab._operators[i], isDark: isDark, lang: lang)
               .animate(delay: (i * 40).ms).fadeIn(duration: 280.ms).slideX(begin: 0.04)),
 
       const SizedBox(height: 16),
@@ -2872,7 +2875,8 @@ class _ReglesDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final lang = ref.watch(localeProvider).languageCode;
+    final s = AppStrings.of(lang);
     return _DetailPageBase(
       title: s.guideGoldenRules,
       subtitle: s.guideGoldenRulesSubtitle,
@@ -2881,7 +2885,7 @@ class _ReglesDetailPage extends ConsumerWidget {
       isDark: isDark,
       children: [
         ...List.generate(_ConsignesTab._rules.length, (i) {
-          return _RuleCard(rule: _ConsignesTab._rules[i], isDark: isDark)
+          return _RuleCard(rule: _ConsignesTab._rules[i], isDark: isDark, lang: lang)
               .animate(delay: (i * 60).ms)
               .fadeIn(duration: 300.ms)
               .slideX(begin: 0.05);

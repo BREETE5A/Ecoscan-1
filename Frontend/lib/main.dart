@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +19,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await NotificationService.init();
+  if (!kIsWeb) {
+    await NotificationService.init();
+  }
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
