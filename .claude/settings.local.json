@@ -3,7 +3,32 @@
     "allow": [
       "Bash(adb devices *)",
       "Bash(ipconfig)",
-      "Bash(findstr \"IPv4\")"
+      "Bash(findstr \"IPv4\")",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(flutter clean *)",
+      "Bash(git commit -m ' *)",
+      "Bash(flutter gen-l10n *)",
+      "Bash(dir \".dart_tool\\\\flutter_gen\\\\gen_l10n\")",
+      "Bash(find .dart_tool -name \"app_localizations*\")",
+      "Bash(find lib *)",
+      "Bash(dir \"c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\Backend\\\\chroma_ecoscan\")",
+      "Bash(powershell -command \"\\(Get-Item 'c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\Backend\\\\chroma_ecoscan\\\\chroma.sqlite3'\\).Length\")",
+      "Bash(powershell -command \"\\(Get-Item 'c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\assets\\\\models\\\\ecoscan_model_efficientNet.tflite'\\).Length\")",
+      "Bash(powershell -command ' *)",
+      "Bash(python -c \"import sqlite3; conn=sqlite3.connect\\(r'c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\Backend\\\\chroma_ecoscan\\\\chroma.sqlite3'\\); cur=conn.cursor\\(\\); cur.execute\\(\\\\\"SELECT name FROM sqlite_master WHERE type='table'\\\\\"\\); tables=cur.fetchall\\(\\); print\\('Tables:',tables\\); [print\\(f'  {t[0]}: {cur.execute\\(f\\\\\"SELECT count\\(*\\) FROM \\\\\\\\\\\\\"{t[0]}\\\\\\\\\\\\\"\\\\\"\\).fetchone\\(\\)[0]} rows'\\) for t in tables]; conn.close\\(\\)\")",
+      "Bash(findstr \"package=\")",
+      "Bash(Get-Content \"c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\android\\\\app\\\\src\\\\main\\\\AndroidManifest.xml\")",
+      "Bash(Select-String \"package=\")",
+      "Bash(adb -s R58N65TGM2J uninstall com.ecoscan.ecoscan)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s R58N65TGM2J uninstall com.ecoscan.ecoscan)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s R58N65TGM2J install \"c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\" 2>&1)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s R58N65TGM2J shell am start -n com.ecoscan.ecoscan/.MainActivity 2>&1)",
+      "Bash(adb -s R58N65TGM2J install -r \"build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\")",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s R58N65TGM2J install -r \"c:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\" 2>&1)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan\\\\lib\\\\screens\" -Recurse -Filter \"*.dart\")",
+      "Bash(git mv *)"
     ]
   }
 }
