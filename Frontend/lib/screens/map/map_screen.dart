@@ -654,6 +654,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
                       point: all[_tapped!],
                       isDark: isDark,
                       distance: _distanceText(all[_tapped!]),
+                      lang: ref.watch(localeProvider).languageCode,
+                      s: s,
                     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.2),
                   ),
 
@@ -928,8 +930,11 @@ class _InfoCard extends StatelessWidget {
   final _Point point;
   final bool isDark;
   final String distance;
+  final String lang;
+  final AppStrings s;
   const _InfoCard(
-      {required this.point, required this.isDark, required this.distance});
+      {required this.point, required this.isDark, required this.distance,
+       required this.lang, required this.s});
 
   Future<void> _openMaps() async {
     final lat = point.latLng.latitude;
@@ -1001,7 +1006,7 @@ class _InfoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  point.label,
+                  point.labelFor(lang),
                   style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,
@@ -1016,7 +1021,7 @@ class _InfoCard extends StatelessWidget {
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
-                        point.displayHours,
+                        point.displayHoursFor(lang),
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 10,
@@ -1054,7 +1059,7 @@ class _InfoCard extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: _openMaps,
             icon: const Icon(Icons.directions_rounded, size: 14),
-            label: const Text('Y aller'),
+            label: Text(s.directions),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -1117,20 +1122,164 @@ class _Point {
   const _Point(
       this.name, this.label, this.latLng, this.color, this.icon, this.category);
 
-  String get displayHours {
+  String get displayHours => displayHoursFor('fr');
+
+  String displayHoursFor(String lang) {
     final n = name.toLowerCase();
-    if (n.contains('marjane')) return '7j/7  ·  9h00 – 22h00';
+    if (n.contains('marjane')) {
+      switch (lang) {
+        case 'ar': return '7 أيام/7  ·  9:00 – 22:00';
+        case 'es': return '7d/7  ·  9:00 – 22:00';
+        case 'en': return '7d/7  ·  9:00 am – 10:00 pm';
+        default:   return '7j/7  ·  9h00 – 22h00';
+      }
+    }
     if (n.contains('geocycle') || n.contains('eco zalagh') || n.contains('logipro')) {
-      return 'Lun – Ven  ·  8h00 – 17h00';
+      switch (lang) {
+        case 'ar': return 'الإثنين – الجمعة  ·  8:00 – 17:00';
+        case 'es': return 'Lun – Vie  ·  8:00 – 17:00';
+        case 'en': return 'Mon – Fri  ·  8:00 am – 5:00 pm';
+        default:   return 'Lun – Ven  ·  8h00 – 17h00';
+      }
     }
     if (category == 'Verre' || category == 'Plastique' ||
         category == 'Papier' || category == 'Compost') {
-      return '24h/24  ·  7j/7';
+      return lang == 'ar' ? '24/7' : '24h/24  ·  7j/7';
     }
-    if (category == 'Textile') return 'Lun – Sam  ·  9h00 – 18h00';
-    if (category == 'Piles') return 'Selon horaires du magasin';
-    if (n.contains('déchetterie')) return 'Lun – Sam  ·  8h00 – 16h00';
-    return 'Lun – Sam  ·  8h00 – 17h00';
+    if (category == 'Textile') {
+      switch (lang) {
+        case 'ar': return 'الإثنين – السبت  ·  9:00 – 18:00';
+        case 'es': return 'Lun – Sáb  ·  9:00 – 18:00';
+        case 'en': return 'Mon – Sat  ·  9:00 am – 6:00 pm';
+        default:   return 'Lun – Sam  ·  9h00 – 18h00';
+      }
+    }
+    if (category == 'Piles') {
+      switch (lang) {
+        case 'ar': return 'حسب ساعات المتجر';
+        case 'es': return 'Según horario de tienda';
+        case 'en': return 'According to store hours';
+        default:   return 'Selon horaires du magasin';
+      }
+    }
+    if (n.contains('déchetterie')) {
+      switch (lang) {
+        case 'ar': return 'الإثنين – السبت  ·  8:00 – 16:00';
+        case 'es': return 'Lun – Sáb  ·  8:00 – 16:00';
+        case 'en': return 'Mon – Sat  ·  8:00 am – 4:00 pm';
+        default:   return 'Lun – Sam  ·  8h00 – 16h00';
+      }
+    }
+    switch (lang) {
+      case 'ar': return 'الإثنين – السبت  ·  8:00 – 17:00';
+      case 'es': return 'Lun – Sáb  ·  8:00 – 17:00';
+      case 'en': return 'Mon – Sat  ·  8:00 am – 5:00 pm';
+      default:   return 'Lun – Sam  ·  8h00 – 17h00';
+    }
+  }
+
+  String labelFor(String lang) {
+    switch (label) {
+      case 'Tri • Valorisation déchets':
+        switch (lang) {
+          case 'ar': return 'الفرز • تثمين النفايات';
+          case 'es': return 'Clasificación • Valorización';
+          case 'en': return 'Sorting • Waste recovery';
+          default:   return label;
+        }
+      case 'Co-traitement industriel':
+        switch (lang) {
+          case 'ar': return 'المعالجة الصناعية المشتركة';
+          case 'es': return 'Co-tratamiento industrial';
+          case 'en': return 'Industrial co-processing';
+          default:   return label;
+        }
+      case 'Électronique • Électroménager':
+        switch (lang) {
+          case 'ar': return 'الإلكترونيات • الأجهزة المنزلية';
+          case 'es': return 'Electrónica • Electrodomésticos';
+          case 'en': return 'Electronics • Appliances';
+          default:   return label;
+        }
+      case 'Plastique • Papier • Métal':
+        switch (lang) {
+          case 'ar': return 'بلاستيك • ورق • معادن';
+          case 'es': return 'Plástico • Papel • Metal';
+          case 'en': return 'Plastic • Paper • Metal';
+          default:   return label;
+        }
+      case 'Piles • Batteries':
+        switch (lang) {
+          case 'ar': return 'بطاريات';
+          case 'es': return 'Pilas • Baterías';
+          case 'en': return 'Batteries';
+          default:   return label;
+        }
+      case 'Bouteilles • Bocaux':
+        switch (lang) {
+          case 'ar': return 'زجاجات • برطمانات';
+          case 'es': return 'Botellas • Tarros';
+          case 'en': return 'Bottles • Jars';
+          default:   return label;
+        }
+      case 'Tous types de déchets':
+        switch (lang) {
+          case 'ar': return 'جميع أنواع النفايات';
+          case 'es': return 'Todo tipo de residuos';
+          case 'en': return 'All types of waste';
+          default:   return label;
+        }
+      case 'Journaux • Cartons':
+        switch (lang) {
+          case 'ar': return 'جرائد • كراتين';
+          case 'es': return 'Periódicos • Cartón';
+          case 'en': return 'Newspapers • Cardboard';
+          default:   return label;
+        }
+      case 'Vêtements • Chaussures':
+        switch (lang) {
+          case 'ar': return 'ملابس • أحذية';
+          case 'es': return 'Ropa • Calzado';
+          case 'en': return 'Clothing • Shoes';
+          default:   return label;
+        }
+      case 'Déchets organiques':
+        switch (lang) {
+          case 'ar': return 'نفايات عضوية';
+          case 'es': return 'Residuos orgánicos';
+          case 'en': return 'Organic waste';
+          default:   return label;
+        }
+      case 'Plastique • Verre':
+        switch (lang) {
+          case 'ar': return 'بلاستيك • زجاج';
+          case 'es': return 'Plástico • Vidrio';
+          case 'en': return 'Plastic • Glass';
+          default:   return label;
+        }
+      case 'Plastique • Papier':
+        switch (lang) {
+          case 'ar': return 'بلاستيك • ورق';
+          case 'es': return 'Plástico • Papel';
+          case 'en': return 'Plastic • Paper';
+          default:   return label;
+        }
+      case 'Électroménager • Câbles':
+        switch (lang) {
+          case 'ar': return 'أجهزة منزلية • كابلات';
+          case 'es': return 'Electrodomésticos • Cables';
+          case 'en': return 'Appliances • Cables';
+          default:   return label;
+        }
+      case 'Tri • Recyclage général':
+        switch (lang) {
+          case 'ar': return 'الفرز • إعادة التدوير العام';
+          case 'es': return 'Clasificación • Reciclaje general';
+          case 'en': return 'Sorting • General recycling';
+          default:   return label;
+        }
+      default: return label;
+    }
   }
 
   String get displayAddress {
