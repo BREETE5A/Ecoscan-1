@@ -17,7 +17,7 @@ class _CountryEntry {
   String get display => '$flag $code';
 }
 
-enum _Step { phone, otp, done }
+enum _Step { active, phone, otp, done }
 
 class TwoFactorScreen extends ConsumerStatefulWidget {
   const TwoFactorScreen({super.key});
@@ -31,10 +31,11 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
   final _otpCtrl   = TextEditingController();
   final _formKey   = GlobalKey<FormState>();
 
-  _Step _step     = _Step.phone;
-  bool  _loading  = false;
+  _Step _step       = _Step.phone;
+  bool  _loading    = false;
   String _verificationId = '';
   int _countryIndex = 0;
+  String _savedPhone = '';
 
   static const _countries = [
     _CountryEntry('🇲🇦', 'Maroc',            '+212'),
@@ -64,9 +65,20 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
     if (uid == null) return;
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final saved = (doc.data()?['phoneNumber'] as String?)?.trim() ?? '';
+      final data = doc.data() ?? {};
+      final saved = (data['phoneNumber'] as String?)?.trim() ?? '';
+      final enabled = (data['twoFactorEnabled'] as bool?) ?? false;
+
+      if (saved.isNotEmpty && enabled && mounted) {
+        // 2FA déjà activé — afficher l'écran "actif"
+        setState(() {
+          _savedPhone = saved;
+          _step = _Step.active;
+        });
+        return;
+      }
+      // Pré-remplir le formulaire si numéro existant mais 2FA désactivé
       if (saved.isNotEmpty && mounted) {
-        // Trouver le bon indicatif et pré-remplir le numéro
         for (int i = 0; i < _countries.length; i++) {
           if (saved.startsWith(_countries[i].code)) {
             setState(() {
@@ -78,6 +90,21 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
         }
       }
     } catch (_) {}
+  }
+
+  Future<void> _disable2FA() async {
+    setState(() => _loading = true);
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'twoFactorEnabled': false,
+        });
+      }
+      if (mounted) setState(() { _step = _Step.phone; _savedPhone = ''; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -246,6 +273,14 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: switch (_step) {
+            _Step.active => _ActiveStep(
+                phone: _savedPhone,
+                isDark: isDark,
+                loading: _loading,
+                onDisable: _disable2FA,
+                onChange: () => setState(() => _step = _Step.phone),
+                s: s,
+              ),
             _Step.phone => _PhoneStep(
                 formKey: _formKey,
                 ctrl: _phoneCtrl,
@@ -647,6 +682,124 @@ class _DoneStep extends StatelessWidget {
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+        ).animate().fadeIn(delay: 400.ms),
+      ],
+    );
+  }
+}
+
+class _ActiveStep extends StatelessWidget {
+  final String phone;
+  final bool isDark;
+  final bool loading;
+  final VoidCallback onDisable;
+  final VoidCallback onChange;
+  final AppStrings s;
+
+  const _ActiveStep({
+    required this.phone,
+    required this.isDark,
+    required this.loading,
+    required this.onDisable,
+    required this.onChange,
+    required this.s,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 32),
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.verified_user_rounded,
+              color: AppColors.primary, size: 38),
+        ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+        const SizedBox(height: 24),
+        Text(
+          s.twoFactorDone,
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ).animate().fadeIn(delay: 150.ms),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.phone_android_rounded,
+                  color: AppColors.primary, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  phone,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const Icon(Icons.check_circle_rounded,
+                  color: AppColors.primary, size: 20),
+            ],
+          ),
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.05),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: onChange,
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            label: const Text(
+              'Changer le numéro',
+              style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+            ),
+          ),
+        ).animate().fadeIn(delay: 300.ms),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: loading ? null : onDisable,
+            icon: loading
+                ? const SizedBox(
+                    width: 18, height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.shield_outlined, size: 18),
+            label: const Text(
+              'Désactiver la 2FA',
+              style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
           ),
         ).animate().fadeIn(delay: 400.ms),

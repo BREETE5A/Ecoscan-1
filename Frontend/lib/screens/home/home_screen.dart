@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/did_you_know_data.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/avatar_provider.dart';
 import '../../models/user_model.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
@@ -56,6 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final s    = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(userProvider);
+    final avatarPath = ref.watch(avatarPathProvider);
 
     final quickActions = [
       (Icons.emoji_events_rounded,    s.qaBadges,       '/badges',      const Color(0xFFF39C12)),
@@ -191,9 +194,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                   border: Border.all(
                                       color: Colors.white.withValues(alpha: 0.5),
                                       width: 2),
+                                  image: avatarPath != null
+                                      ? DecorationImage(
+                                          image: FileImage(File(avatarPath)),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
                                 ),
-                                child: const Icon(Icons.person_rounded,
-                                    color: Colors.white, size: 22),
+                                child: avatarPath == null
+                                    ? const Icon(Icons.person_rounded,
+                                        color: Colors.white, size: 22)
+                                    : null,
                               ),
                             ),
                           ],

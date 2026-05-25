@@ -116,6 +116,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kAvatarPathKey, dest.path);
 
+    // Vider le cache image pour forcer le rechargement depuis le disque
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+
     if (mounted) {
       setState(() => _avatarPath = dest.path);
       ref.read(avatarPathProvider.notifier).state = dest.path;
@@ -143,10 +147,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .update({
+          .set({
             'displayName': name,
             'bio': _bioCtrl.text.trim(),
-          });
+          }, SetOptions(merge: true));
       // 3. Recharger le provider depuis Firestore pour propager partout
       await ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: name,
@@ -166,8 +170,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
         context.go('/profile');
       }
-    } catch (_) {
-      if (mounted) setState(() => _saving = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : $e',
+                style: const TextStyle(fontFamily: 'Poppins')),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
     }
   }
 

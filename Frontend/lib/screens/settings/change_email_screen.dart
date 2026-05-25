@@ -117,10 +117,33 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
   }
 }
 
-class _SuccessView extends StatelessWidget {
+class _SuccessView extends StatefulWidget {
   final String email;
   final AppStrings s;
   const _SuccessView({required this.email, required this.s});
+
+  @override
+  State<_SuccessView> createState() => _SuccessViewState();
+}
+
+class _SuccessViewState extends State<_SuccessView> {
+  bool _checking = false;
+  bool _notYet = false;
+
+  Future<void> _checkVerification() async {
+    setState(() { _checking = true; _notYet = false; });
+    try {
+      await FirebaseAuth.instance.currentUser?.reload();
+      final newEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+      if (newEmail == widget.email && mounted) {
+        context.pop();
+        return;
+      }
+      if (mounted) setState(() { _checking = false; _notYet = true; });
+    } catch (_) {
+      if (mounted) setState(() { _checking = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +162,7 @@ class _SuccessView extends StatelessWidget {
         ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
         const SizedBox(height: 24),
         Text(
-          s.emailVerifSent,
+          widget.s.emailVerifSent,
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 20,
@@ -149,7 +172,7 @@ class _SuccessView extends StatelessWidget {
         ).animate().fadeIn(delay: 200.ms),
         const SizedBox(height: 12),
         Text(
-          s.emailVerifConfirm(email),
+          widget.s.emailVerifConfirm(widget.email),
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 14,
@@ -157,27 +180,68 @@ class _SuccessView extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 300.ms),
-        const SizedBox(height: 40),
+        if (_notYet) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.hourglass_top_rounded,
+                    color: Colors.orange, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Email pas encore vérifié. Cliquez sur le lien dans votre boîte mail puis réessayez.',
+                    style: const TextStyle(
+                        fontFamily: 'Poppins', fontSize: 12, color: Colors.orange),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: () => context.pop(),
+            onPressed: _checking ? null : _checkVerification,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
-            child: Text(
-              s.backToSettings,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: _checking
+                ? const SizedBox(
+                    width: 22, height: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: Colors.white))
+                : Text(
+                    'J\'ai vérifié mon email',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ).animate().fadeIn(delay: 400.ms),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(
+            widget.s.backToSettings,
+            style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: AppColors.textSecondary,
+                fontSize: 13),
+          ),
+        ).animate().fadeIn(delay: 500.ms),
       ],
     );
   }

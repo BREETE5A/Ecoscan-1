@@ -362,48 +362,64 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       showDialog(
         context: context,
         builder: (ctx) => StatefulBuilder(
-          builder: (ctx, setDlgState) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(s.deleteAccount,
-                style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(s.deleteAccountConfirm,
-                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: passCtrl,
-                  obscureText: obscure,
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: '••••••••',
-                    hintStyle: const TextStyle(fontFamily: 'Poppins'),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    suffixIcon: IconButton(
-                      icon: Icon(obscure
-                          ? Icons.visibility_off_rounded
-                          : Icons.visibility_rounded, size: 18),
-                      onPressed: () => setDlgState(() => obscure = !obscure),
+          builder: (ctx, setDlgState) {
+            bool deleting = false;
+            String? errorMsg;
+            return StatefulBuilder(
+              builder: (ctx, setInner) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                title: Text(s.deleteAccount,
+                    style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(s.deleteAccountConfirm,
+                        style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passCtrl,
+                      obscureText: obscure,
+                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: '••••••••',
+                        hintStyle: const TextStyle(fontFamily: 'Poppins'),
+                        errorText: errorMsg,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        suffixIcon: IconButton(
+                          icon: Icon(obscure
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded, size: 18),
+                          onPressed: () => setDlgState(() => obscure = !obscure),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
+                actions: [
+                  TextButton(
+                    onPressed: deleting ? null : () => Navigator.pop(ctx),
+                    child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
+                  ),
+                  ElevatedButton(
+                    onPressed: deleting ? null : () async {
+                      setInner(() { deleting = true; errorMsg = null; });
+                      final err = await _deleteAccountPassword(ctx, passCtrl.text, s);
+                      if (err != null && ctx.mounted) {
+                        setInner(() { deleting = false; errorMsg = err; });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                    child: deleting
+                        ? const SizedBox(width: 18, height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text(s.delete,
+                            style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () => _deleteAccountPassword(ctx, passCtrl.text, s),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                child: Text(s.delete,
-                    style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       );
     }
@@ -435,25 +451,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _deleteAccountPassword(BuildContext dlgCtx, String password, AppStrings s) async {
-    Navigator.pop(dlgCtx);
+  Future<String?> _deleteAccountPassword(BuildContext dlgCtx, String password, AppStrings s) async {
     try {
       final user = FirebaseAuth.instance.currentUser!;
       final uid = user.uid;
       final cred = EmailAuthProvider.credential(email: user.email!, password: password);
       await user.reauthenticateWithCredential(cred);
+      // Mot de passe correct — fermer le dialog et supprimer
+      if (dlgCtx.mounted) Navigator.pop(dlgCtx);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');
+      return null;
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      final msg = e.code == 'wrong-password' || e.code == 'invalid-credential'
+      return e.code == 'wrong-password' || e.code == 'invalid-credential'
           ? s.wrongPassword
           : 'Erreur : ${e.message}';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
-        backgroundColor: AppColors.danger,
-      ));
     }
   }
 }
