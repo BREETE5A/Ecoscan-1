@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/storage_service.dart';
@@ -298,47 +299,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  bool get _isGoogleUser => FirebaseAuth.instance.currentUser?.providerData
+      .any((p) => p.providerId == 'google.com') ?? false;
+
   void _confirmDelete(BuildContext context) {
     final s = AppStrings.of(ref.read(localeProvider).languageCode);
-    final passCtrl = TextEditingController();
-    bool obscure = true;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlgState) => AlertDialog(
+    if (_isGoogleUser) {
+      // Utilisateur Google — pas de mot de passe, re-auth via Google
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            s.deleteAccount,
-            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
-          ),
+          title: Text(s.deleteAccount,
+              style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                s.deleteAccountConfirm,
-                style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: passCtrl,
-                obscureText: obscure,
-                style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: '••••••••',
-                  hintStyle: const TextStyle(fontFamily: 'Poppins'),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  suffixIcon: IconButton(
-                    icon: Icon(obscure
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
-                        size: 18),
-                    onPressed: () => setDlgState(() => obscure = !obscure),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset('assets/icons/app_icon.png', width: 20, height: 20,
+                        errorBuilder: (_, e, s) => const Icon(Icons.g_mobiledata_rounded,
+                            color: AppColors.info, size: 20)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('Vous serez invité à confirmer via Google.',
+                          style: const TextStyle(fontFamily: 'Poppins', fontSize: 12,
+                              color: AppColors.info)),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 12),
+              Text(s.deleteAccountConfirm,
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
             ],
           ),
           actions: [
@@ -347,30 +347,101 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
             ),
             ElevatedButton(
-              onPressed: () => _deleteAccount(ctx, passCtrl.text, s),
+              onPressed: () => _deleteAccountGoogle(ctx, s),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
               child: Text(s.delete,
                   style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
             ),
           ],
         ),
-      ),
-    );
+      );
+    } else {
+      // Utilisateur email/mot de passe
+      final passCtrl = TextEditingController();
+      bool obscure = true;
+      showDialog(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setDlgState) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(s.deleteAccount,
+                style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(s.deleteAccountConfirm,
+                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passCtrl,
+                  obscureText: obscure,
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: '••••••••',
+                    hintStyle: const TextStyle(fontFamily: 'Poppins'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscure
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded, size: 18),
+                      onPressed: () => setDlgState(() => obscure = !obscure),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
+              ),
+              ElevatedButton(
+                onPressed: () => _deleteAccountPassword(ctx, passCtrl.text, s),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                child: Text(s.delete,
+                    style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
-  Future<void> _deleteAccount(BuildContext dlgCtx, String password, AppStrings s) async {
+  Future<void> _deleteAccountGoogle(BuildContext dlgCtx, AppStrings s) async {
     Navigator.pop(dlgCtx);
     try {
       final user = FirebaseAuth.instance.currentUser!;
       final uid = user.uid;
-      if (user.providerData.any((p) => p.providerId == 'password')) {
-        final cred = EmailAuthProvider.credential(
-          email: user.email!,
-          password: password,
-        );
-        await user.reauthenticateWithCredential(cred);
-      }
-      // Supprimer le document Firestore avant de supprimer le compte Auth
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
+      final googleAuth = await googleUser.authentication;
+      final cred = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await user.reauthenticateWithCredential(cred);
+      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+      await user.delete();
+      if (mounted) context.go('/login');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Erreur : ${e.message}',
+            style: const TextStyle(fontFamily: 'Poppins')),
+        backgroundColor: AppColors.danger,
+      ));
+    }
+  }
+
+  Future<void> _deleteAccountPassword(BuildContext dlgCtx, String password, AppStrings s) async {
+    Navigator.pop(dlgCtx);
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      final uid = user.uid;
+      final cred = EmailAuthProvider.credential(email: user.email!, password: password);
+      await user.reauthenticateWithCredential(cred);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');
