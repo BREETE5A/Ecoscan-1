@@ -27,12 +27,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _bioCtrl;
   bool _saving = false;
-  String _title = '';
   String? _avatarPath;
-
-  static const _titleKeys = [
-    'beginner', 'citizen', 'warrior', 'guardian', 'master',
-  ];
 
   @override
   void initState() {
@@ -40,7 +35,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     _nameCtrl = TextEditingController(text: user?.displayName ?? '');
     _bioCtrl = TextEditingController();
-    _title = _titleKeys[2];
     _loadSavedData();
   }
 
@@ -193,14 +187,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final user = FirebaseAuth.instance.currentUser;
 
-    final titles = [
-      s.titleBeginner,
-      s.titleCitizen,
-      s.titleWarrior,
-      s.titleGuardian,
-      s.titleMaster,
-    ];
-
     return Scaffold(
       appBar: AppBar(
         leading: GestureDetector(
@@ -275,7 +261,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
             // Form fields
             _FormSection(
-              title: s.personalInfoSection,
               isDark: isDark,
               children: [
                 _Field(
@@ -304,75 +289,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-
-            // Title selector
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    s.displayedTitle,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.darkText : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: List.generate(titles.length, (i) {
-                      final t = titles[i];
-                      final k = _titleKeys[i];
-                      final selected = k == _title;
-                      return GestureDetector(
-                        onTap: () => setState(() => _title = k),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? AppColors.primary
-                                : (isDark
-                                    ? AppColors.darkInput
-                                    : AppColors.inputBg),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            t,
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: selected
-                                  ? Colors.white
-                                  : (isDark
-                                      ? AppColors.darkText
-                                      : AppColors.textSecondary),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 400.ms).slideY(begin: 0.1),
             const SizedBox(height: 32),
 
             SizedBox(
@@ -398,11 +314,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 }
 
 class _FormSection extends StatelessWidget {
-  final String title;
   final bool isDark;
   final List<Widget> children;
-  const _FormSection(
-      {required this.title, required this.isDark, required this.children});
+  const _FormSection({required this.isDark, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -419,19 +333,7 @@ class _FormSection extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkText : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
+        children: children,
       ),
     ).animate().fadeIn(duration: 400.ms, delay: 50.ms).slideY(begin: 0.1);
   }

@@ -306,50 +306,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final s = AppStrings.of(ref.read(localeProvider).languageCode);
 
     if (_isGoogleUser) {
-      // Utilisateur Google — pas de mot de passe, re-auth via Google
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(s.deleteAccount,
               style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Image.asset('assets/icons/app_icon.png', width: 20, height: 20,
-                        errorBuilder: (_, e, s) => const Icon(Icons.g_mobiledata_rounded,
-                            color: AppColors.info, size: 20)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('Vous serez invité à confirmer via Google.',
-                          style: const TextStyle(fontFamily: 'Poppins', fontSize: 12,
-                              color: AppColors.info)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(s.deleteAccountConfirm,
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
-            ],
+          content: Text(
+            s.deleteAccountGoogleConfirm,
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
+              child: Text(s.no, style: const TextStyle(fontFamily: 'Poppins')),
             ),
             ElevatedButton(
-              onPressed: () => _deleteAccountGoogle(ctx, s),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _deleteAccountGoogle(s);
+              },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-              child: Text(s.delete,
+              child: Text(s.yes,
                   style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
             ),
           ],
@@ -425,13 +403,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _deleteAccountGoogle(BuildContext dlgCtx, AppStrings s) async {
-    Navigator.pop(dlgCtx);
+  Future<void> _deleteAccountGoogle(AppStrings s) async {
     try {
       final user = FirebaseAuth.instance.currentUser!;
       final uid = user.uid;
-      final googleUser = await GoogleSignIn().signIn();
+      final userEmail = (user.email ?? '').toLowerCase();
+
+      final gsi = GoogleSignIn();
+      await gsi.signOut();
+      final googleUser = await gsi.signIn();
       if (googleUser == null) return;
+
+      // Reject immediately if the wrong Google account was picked
+      if (googleUser.email.toLowerCase() != userEmail) {
+        await gsi.signOut();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(s.wrongGoogleAccount,
+              style: const TextStyle(fontFamily: 'Poppins')),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ));
+        return;
+      }
+
       final googleAuth = await googleUser.authentication;
       final cred = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -447,6 +444,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         content: Text('Erreur : ${e.message}',
             style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ));
     }
   }

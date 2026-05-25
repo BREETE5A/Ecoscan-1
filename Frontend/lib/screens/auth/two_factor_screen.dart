@@ -95,13 +95,22 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
   Future<void> _disable2FA() async {
     setState(() => _loading = true);
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid != null) {
-        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Supprimer le numéro de Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
           'twoFactorEnabled': false,
+          'phoneNumber': '',
         });
+        // Délier le provider téléphone de Firebase Auth (important !)
+        try {
+          await user.unlink('phone');
+        } catch (_) {}
       }
-      if (mounted) setState(() { _step = _Step.phone; _savedPhone = ''; _loading = false; });
+      if (mounted) {
+        _phoneCtrl.clear();
+        setState(() { _step = _Step.phone; _savedPhone = ''; _loading = false; });
+      }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
@@ -215,7 +224,17 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
   Future<void> _linkPhoneCredential(PhoneAuthCredential cred) async {
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      await user.linkWithCredential(cred);
+      try {
+        await user.linkWithCredential(cred);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'provider-already-linked') {
+          // Téléphone encore lié côté Auth — délier puis re-lier
+          await user.unlink('phone');
+          await user.linkWithCredential(cred);
+        } else {
+          rethrow;
+        }
+      }
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'phoneNumber': _formatPhone(_prefix, _phoneCtrl.text.trim()),
         'twoFactorEnabled': true,
@@ -231,9 +250,7 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
       setState(() => _loading = false);
       final msg = e.code == 'credential-already-in-use'
           ? s.phoneLinkedOther
-          : e.code == 'provider-already-linked'
-              ? s.phoneAlreadyLinked
-              : s.errorMsg(e.message ?? '');
+          : s.errorMsg(e.message ?? '');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: AppColors.danger,
@@ -768,9 +785,9 @@ class _ActiveStep extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onChange,
             icon: const Icon(Icons.edit_rounded, size: 18),
-            label: const Text(
-              'Changer le numéro',
-              style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+            label: Text(
+              s.changePhoneNumber,
+              style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
@@ -792,9 +809,9 @@ class _ActiveStep extends StatelessWidget {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.shield_outlined, size: 18),
-            label: const Text(
-              'Désactiver la 2FA',
-              style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+            label: Text(
+              s.disable2FA,
+              style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,

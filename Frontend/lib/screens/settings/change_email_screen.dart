@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -97,7 +98,12 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: _sent
-              ? _SuccessView(email: _emailCtrl.text.trim(), s: s)
+              ? _SuccessView(
+                  email: _emailCtrl.text.trim(),
+                  currentEmail: currentEmail,
+                  password: _passCtrl.text,
+                  s: s,
+                )
               : _FormView(
                   isDark: isDark,
                   currentEmail: currentEmail,
@@ -119,58 +125,242 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
 
 class _SuccessView extends StatefulWidget {
   final String email;
+  final String currentEmail;
+  final String password;
   final AppStrings s;
-  const _SuccessView({required this.email, required this.s});
+  const _SuccessView({
+    required this.email,
+    required this.currentEmail,
+    required this.password,
+    required this.s,
+  });
 
   @override
   State<_SuccessView> createState() => _SuccessViewState();
 }
 
-class _SuccessViewState extends State<_SuccessView> {
-  bool _checking = false;
-  bool _notYet = false;
+class _SuccessViewState extends State<_SuccessView> with WidgetsBindingObserver {
+  bool _verified = false;
+  bool _resending = false;
+  Timer? _pollTimer;
+  Timer? _resendCooldown;
+  int _resendSecondsLeft = 0;
 
-  Future<void> _checkVerification() async {
-    setState(() { _checking = true; _notYet = false; });
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Poll every 4 s as a fallback
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!_verified) _autoCheck();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pollTimer?.cancel();
+    _resendCooldown?.cancel();
+    super.dispose();
+  }
+
+  // Trigger check immediately when user returns from email app
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_verified) {
+      _autoCheck();
+    }
+  }
+
+  bool _emailsMatch(String a, String b) =>
+      a.trim().toLowerCase() == b.trim().toLowerCase();
+
+  Future<void> _handleEmailVerified() async {
+    _pollTimer?.cancel();
+    if (!mounted) return;
+    setState(() => _verified = true);
+    await Future.delayed(const Duration(milliseconds: 2000));
+    if (!mounted) return;
+    await FirebaseAuth.instance.signOut();
+    if (mounted) context.go('/login');
+  }
+
+  Future<void> _autoCheck() async {
+    if (_verified) return;
     try {
-      await FirebaseAuth.instance.currentUser?.reload();
-      final newEmail = FirebaseAuth.instance.currentUser?.email ?? '';
-      if (newEmail == widget.email && mounted) {
-        context.pop();
+      final user = FirebaseAuth.instance.currentUser;
+      // Already signed out = Firebase revoked the session after email change
+      if (user == null) { await _handleEmailVerified(); return; }
+
+      await user.reload();
+
+      // After reload, check if currentUser was nulled (signed out by Firebase)
+      final fresh = FirebaseAuth.instance.currentUser;
+      if (fresh == null) { await _handleEmailVerified(); return; }
+
+      if (_emailsMatch(fresh.email ?? '', widget.email)) {
+        await _handleEmailVerified();
         return;
       }
-      if (mounted) setState(() { _checking = false; _notYet = true; });
-    } catch (_) {
-      if (mounted) setState(() { _checking = false; });
+
+      // Force token refresh — if the session was revoked, this throws
+      try {
+        await fresh.getIdToken(true);
+        // Re-read email after token refresh (SDK may now have the new value)
+        final afterRefresh = FirebaseAuth.instance.currentUser?.email ?? '';
+        if (_emailsMatch(afterRefresh, widget.email) && mounted) {
+          await _handleEmailVerified();
+        }
+      } on FirebaseAuthException {
+        // Any auth exception after email change means session was revoked = verified
+        await _handleEmailVerified();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _resendEmail() async {
+    setState(() => _resending = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      // Re-authenticate first so the session is fresh
+      final cred = EmailAuthProvider.credential(
+        email: widget.currentEmail,
+        password: widget.password,
+      );
+      await user.reauthenticateWithCredential(cred);
+      await user.verifyBeforeUpdateEmail(widget.email);
+      if (mounted) {
+        _startResendCooldown(60);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(widget.s.resendEmail,
+              style: const TextStyle(fontFamily: 'Poppins')),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ));
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final msg = e.code == 'wrong-password' || e.code == 'invalid-credential'
+          ? widget.s.wrongPassword
+          : widget.s.errorMsg(e.message ?? '');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        backgroundColor: AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ));
+    } finally {
+      if (mounted) setState(() => _resending = false);
     }
+  }
+
+  void _startResendCooldown(int seconds) {
+    setState(() => _resendSecondsLeft = seconds);
+    _resendCooldown?.cancel();
+    _resendCooldown = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() => _resendSecondsLeft--);
+      if (_resendSecondsLeft <= 0) t.cancel();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_verified) {
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 100, height: 100,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.verified_rounded,
+                  color: AppColors.primary, size: 54),
+            ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+            const SizedBox(height: 20),
+            const Text('✅', style: TextStyle(fontSize: 44))
+                .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+            const SizedBox(height: 20),
+            const Text(
+              'Email vérifié !',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(delay: 200.ms),
+            const SizedBox(height: 10),
+            const Text(
+              'Redirection vers la connexion...',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(delay: 300.ms),
+            const SizedBox(height: 24),
+            const SizedBox(
+              width: 28, height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.primary,
+              ),
+            ).animate().fadeIn(delay: 400.ms),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
-        const SizedBox(height: 60),
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
+        const SizedBox(height: 50),
+        // Spinner around the email icon
+        SizedBox(
+          width: 100, height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const SizedBox(
+                width: 100, height: 100,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: AppColors.primary,
+                ),
+              ),
+              Container(
+                width: 76, height: 76,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.mark_email_read_rounded,
+                    color: AppColors.primary, size: 38),
+              ),
+            ],
           ),
-          child: const Icon(Icons.mark_email_read_rounded,
-              color: AppColors.primary, size: 44),
-        ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
-        const SizedBox(height: 24),
+        ).animate().fadeIn(duration: 500.ms),
+        const SizedBox(height: 28),
         Text(
-          widget.s.emailVerifSent,
+          widget.s.waitingVerif,
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
-        ).animate().fadeIn(delay: 200.ms),
-        const SizedBox(height: 12),
+        ).animate().fadeIn(delay: 150.ms),
+        const SizedBox(height: 10),
         Text(
           widget.s.emailVerifConfirm(widget.email),
           style: const TextStyle(
@@ -179,58 +369,51 @@ class _SuccessViewState extends State<_SuccessView> {
             color: AppColors.textSecondary,
           ),
           textAlign: TextAlign.center,
-        ).animate().fadeIn(delay: 300.ms),
-        if (_notYet) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.hourglass_top_rounded,
-                    color: Colors.orange, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Email pas encore vérifié. Cliquez sur le lien dans votre boîte mail puis réessayez.',
-                    style: const TextStyle(
-                        fontFamily: 'Poppins', fontSize: 12, color: Colors.orange),
-                  ),
-                ),
-              ],
-            ),
+        ).animate().fadeIn(delay: 220.ms),
+        const SizedBox(height: 16),
+        // Spam hint
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
           ),
-        ],
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.amber, size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Si vous ne trouvez pas l\'email, vérifiez votre dossier Spams / Indésirables.',
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Colors.amber),
+                ),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(delay: 300.ms),
         const SizedBox(height: 32),
+        // Resend button
         SizedBox(
           width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: _checking ? null : _checkVerification,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+          height: 50,
+          child: OutlinedButton.icon(
+            onPressed: (_resending || _resendSecondsLeft > 0) ? null : _resendEmail,
+            icon: _resending
+                ? const SizedBox(width: 16, height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(
+              _resendSecondsLeft > 0
+                  ? '${widget.s.resendIn} ${_resendSecondsLeft}s'
+                  : widget.s.resendEmail,
+              style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
             ),
-            child: _checking
-                ? const SizedBox(
-                    width: 22, height: 22,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: Colors.white))
-                : Text(
-                    'J\'ai vérifié mon email',
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
           ),
-        ).animate().fadeIn(delay: 400.ms),
+        ).animate().fadeIn(delay: 350.ms),
         const SizedBox(height: 12),
         TextButton(
           onPressed: () => context.pop(),
@@ -241,7 +424,7 @@ class _SuccessViewState extends State<_SuccessView> {
                 color: AppColors.textSecondary,
                 fontSize: 13),
           ),
-        ).animate().fadeIn(delay: 500.ms),
+        ).animate().fadeIn(delay: 420.ms),
       ],
     );
   }

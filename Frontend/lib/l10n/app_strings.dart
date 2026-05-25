@@ -281,6 +281,23 @@ class AppStrings {
     'This action is irreversible. Confirm with your password.',
     'هذا الإجراء لا رجعة فيه. أكد بكلمة المرور.',
     'Esta acción es irreversible. Confirma con tu contraseña.');
+  String get deleteAccountGoogleConfirm => _t(
+    '⚠️ Cette action est irréversible.\nToutes vos données seront définitivement supprimées.\n\nÊtes-vous sûr de vouloir supprimer votre compte ?',
+    '⚠️ This action is irreversible.\nAll your data will be permanently deleted.\n\nAre you sure you want to delete your account?',
+    '⚠️ هذا الإجراء لا رجعة فيه.\nسيتم حذف جميع بياناتك نهائياً.\n\nهل أنت متأكد من حذف حسابك؟',
+    '⚠️ Esta acción es irreversible.\nTodos tus datos serán eliminados permanentemente.\n\n¿Estás seguro de que quieres eliminar tu cuenta?');
+  String get emailUpdatedRelogin => _t(
+    'Email mis à jour ! Reconnectez-vous avec votre nouvelle adresse.',
+    'Email updated! Please sign in with your new address.',
+    'تم تحديث البريد الإلكتروني! يرجى تسجيل الدخول بعنوانك الجديد.',
+    '¡Correo actualizado! Inicia sesión con tu nueva dirección.');
+  String get changePhoneNumber   => _t('Changer le numéro', 'Change number', 'تغيير الرقم', 'Cambiar número');
+  String get disable2FA          => _t('Désactiver la 2FA', 'Disable 2FA', 'تعطيل المصادقة الثنائية', 'Desactivar 2FA');
+  String get wrongGoogleAccount  => _t(
+    'Compte Google incorrect. Veuillez choisir le compte associé à cette application.',
+    'Wrong Google account. Please select the account linked to this app.',
+    'حساب Google خاطئ. يرجى اختيار الحساب المرتبط بهذا التطبيق.',
+    'Cuenta Google incorrecta. Selecciona la cuenta vinculada a esta app.');
   String get wrongPassword   => _t('Mot de passe incorrect.', 'Wrong password.', 'كلمة مرور غير صحيحة.', 'Contraseña incorrecta.');
   String get currentPassword => _t('Mot de passe actuel', 'Current password', 'كلمة المرور الحالية', 'Contraseña actual');
   String get newPassword     => _t('Nouveau mot de passe', 'New password', 'كلمة مرور جديدة', 'Nueva contraseña');
