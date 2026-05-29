@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/challenges_provider.dart';
 import '../../theme/app_theme.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -299,6 +300,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
       ..repeat(reverse: true);
 
     _initLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(challengesProvider.notifier).openMap();
+    });
   }
 
   @override

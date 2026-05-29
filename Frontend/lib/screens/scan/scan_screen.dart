@@ -12,7 +12,9 @@ import '../../models/scan_entry.dart';
 import '../../models/scan_result_model.dart';
 import '../../providers/scan_history_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/challenges_provider.dart';
 import '../../services/classifier_service.dart';
+import '../../services/scan_api_service.dart';
 
 enum _DetectionState { idle, analyzing, recyclable, dangerous }
 
@@ -228,10 +230,28 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     ScanEntry entry;
     List<({String label, double score})> allScores = [];
     try {
-      final result = await _classifier.classify(imageToClassify);
-      allScores = result.allScores;
-      debugPrint('Classification: ${result.label} (${(result.confidence * 100).toStringAsFixed(1)}%)');
-      entry = ScanEntry.fromClassification(result.label, result.confidence);
+      // Essaie d'abord l'API online (YOLOv8)
+      final onlineResult = await ScanApiService.classify(imageToClassify);
+      if (onlineResult != null) {
+        debugPrint('Online YOLOv8: ${onlineResult.topLabel} (${(onlineResult.topConfidence * 100).toStringAsFixed(1)}%)');
+        entry = ScanEntry.fromClassification(onlineResult.topLabel, onlineResult.topConfidence);
+        entry = ScanEntry(
+          id: entry.id, name: entry.name, category: entry.category,
+          recyclable: entry.recyclable, dangerous: entry.dangerous,
+          points: entry.points, co2Saved: entry.co2Saved,
+          recyclability: entry.recyclability, binColor: entry.binColor,
+          scannedAt: entry.scannedAt, mode: 'cloud',
+        );
+        allScores = onlineResult.detections
+            .map((d) => (label: d.label, score: d.confidence))
+            .toList();
+      } else {
+        // Fallback TFLite local
+        final result = await _classifier.classify(imageToClassify);
+        allScores = result.allScores;
+        debugPrint('TFLite local: ${result.label} (${(result.confidence * 100).toStringAsFixed(1)}%)');
+        entry = ScanEntry.fromClassification(result.label, result.confidence);
+      }
     } catch (e) {
       debugPrint('Classify error: $e');
       _showError(AppStrings.of(ref.read(localeProvider).languageCode).analysisError(e.toString()));
@@ -330,6 +350,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     );
     if (mounted) {
       await ref.read(userProvider.notifier).recordScan(scanResult);
+      ref.read(challengesProvider.notifier).incrementScan();
     }
 
     setState(() {

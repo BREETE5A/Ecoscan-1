@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/H.Badreddine/Desktop/PFE/Modele Offline version final-/**)",
+      "Read(//c/Users/H.Badreddine/Desktop/PFE/MODELS YOLOv8/**)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\H.Badreddine\\\\Desktop\\\\PFE\\\\ecoscan-scan-api\\\\app\" 2>&1)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\H.Badreddine\\Desktop\\PFE\\ecoscan-scan-api"
+    ]
+  }
+}

@@ -43,10 +43,22 @@ class UserNotifier extends StateNotifier<UserModel> {
           final fsPoints = (data['ecoPoints']  as num?)?.toInt()    ?? 0;
           final fsScans  = (data['scansCount'] as num?)?.toInt()    ?? 0;
           final fsCo2    = (data['co2Saved']   as num?)?.toDouble() ?? 0.0;
+          final fsStreak = (data['streak']     as num?)?.toInt()    ?? 0;
           final rawName  = ((data['displayName'] as String?) ?? '').trim();
           final fsName   = rawName.isNotEmpty ? rawName : (firebaseName?.trim().isNotEmpty == true ? firebaseName!.trim() : 'Utilisateur');
           final rawCity  = ((data['city'] as String?) ?? '').trim();
           final fsCity   = rawCity.isNotEmpty ? rawCity : (firebaseCity?.trim().isNotEmpty == true ? firebaseCity!.trim() : 'Maroc');
+
+          // Calcul du rang réel (utilisateurs avec plus de points)
+          int fsRank = 1;
+          try {
+            final countSnap = await FirebaseFirestore.instance
+                .collection('users')
+                .where('ecoPoints', isGreaterThan: fsPoints)
+                .count()
+                .get();
+            fsRank = (countSnap.count ?? 0) + 1;
+          } catch (_) {}
 
           // Synchroniser SharedPreferences avec Firestore
           await StorageService.setPoints(fsPoints);
@@ -61,7 +73,7 @@ class UserNotifier extends StateNotifier<UserModel> {
             points:         fsPoints,
             scans:          fsScans,
             badges:         _computeBadges(fsScans, fsPoints),
-            rank:           (data['rank'] as num?)?.toInt() ?? 0,
+            rank:           fsRank,
             level:          (fsPoints ~/ 200) + 1,
             xp:             fsPoints % 200,
             xpMax:          200,
@@ -69,6 +81,7 @@ class UserNotifier extends StateNotifier<UserModel> {
             weeklyGoalKg:   10.0,
             weeklyProgress: (fsCo2 / 10000).clamp(0.0, 1.0),
             recentScans:    history.take(4).toList(),
+            streak:         fsStreak,
           );
           return;
         }

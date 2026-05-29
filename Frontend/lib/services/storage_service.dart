@@ -59,11 +59,34 @@ class StorageService {
     if (uid != null) {
       try {
         final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+
+        // Calcul du streak
+        final userSnap = await userRef.get();
+        final userData = userSnap.data() ?? {};
+        final lastScanAt = (userData['lastScanAt'] as Timestamp?)?.toDate();
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        int newStreak = (userData['streak'] as num?)?.toInt() ?? 0;
+        if (lastScanAt != null) {
+          final lastDay = DateTime(lastScanAt.year, lastScanAt.month, lastScanAt.day);
+          final diff = today.difference(lastDay).inDays;
+          if (diff == 0) {
+            // Même jour — streak inchangé
+          } else if (diff == 1) {
+            newStreak += 1;
+          } else {
+            newStreak = 1;
+          }
+        } else {
+          newStreak = 1;
+        }
+
         await userRef.update({
           'ecoPoints':  FieldValue.increment(pointsEarned),
           'scansCount': FieldValue.increment(1),
           'co2Saved':   FieldValue.increment(result.co2SavedPerKg * 100),
           'lastScanAt': FieldValue.serverTimestamp(),
+          'streak':     newStreak,
         });
         await userRef.collection('scans').add({
           'category':   result.category,

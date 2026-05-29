@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/challenges_provider.dart';
 import '../../l10n/app_strings.dart';
 
 class GuideScreen extends ConsumerStatefulWidget {
@@ -772,6 +773,9 @@ class _GuideScreenState extends ConsumerState<GuideScreen>
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
     _tabCtrl.addListener(() => setState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(challengesProvider.notifier).viewGuide();
+    });
   }
 
   @override

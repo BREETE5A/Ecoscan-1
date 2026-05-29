@@ -6,9 +6,9 @@ import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ClassifierService {
-  // Ordre exact du dataset d'entraînement (8 classes)
+  // Ordre alphabétique Python (Keras flow_from_directory) — 8 classes
   static const _labels = [
-    'Métal', 'Verre', 'Plastique', 'Papier', 'Organique', 'Électronique', 'Textile', 'Dangereux'
+    'Dangereux', 'Métal', 'Organique', 'Papier', 'Plastique', 'Textile', 'Verre', 'Électronique'
   ];
   static const _inputSize = 224;
 
@@ -69,16 +69,15 @@ class ClassifierService {
       interpreter.run(input, output);
       scores = output[0];
     } else {
-      // Modèle float32 — EfficientNetB0 TF2 inclut sa propre couche de
-      // rescaling → on passe les pixels bruts [0, 255] sans pré-normaliser
+      // Modèle float32 entraîné avec rescale=1./255 → normaliser à [0, 1]
       final inputBuffer = Float32List(_inputSize * _inputSize * 3);
       int idx = 0;
       for (int y = 0; y < _inputSize; y++) {
         for (int x = 0; x < _inputSize; x++) {
           final pixel = resized.getPixel(x, y);
-          inputBuffer[idx++] = pixel.r.toDouble();
-          inputBuffer[idx++] = pixel.g.toDouble();
-          inputBuffer[idx++] = pixel.b.toDouble();
+          inputBuffer[idx++] = pixel.r.toDouble() / 255.0;
+          inputBuffer[idx++] = pixel.g.toDouble() / 255.0;
+          inputBuffer[idx++] = pixel.b.toDouble() / 255.0;
         }
       }
       final input = inputBuffer.reshape([1, _inputSize, _inputSize, 3]);

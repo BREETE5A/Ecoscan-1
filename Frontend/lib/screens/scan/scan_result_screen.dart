@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../theme/app_theme.dart';
 import '../../models/scan_entry.dart';
 import '../../providers/scan_history_provider.dart';
+import '../../providers/challenges_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_strings.dart';
 
@@ -46,6 +47,7 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
       entry.points,
     );
     Share.share(text, subject: 'EcoScan');
+    ref.read(challengesProvider.notifier).shareContent();
   }
 
   @override
@@ -712,7 +714,7 @@ class _DetailCard extends ConsumerWidget {
           _DetailRow(s.labelRecyclable, scan.recyclable ? s.valueYes : s.valueNo, isDark,
               valueColor: scan.recyclable ? AppColors.primary : AppColors.danger),
           _DetailRow(s.sortingInstruction, '${s.binLabel} ${scan.binColor}', isDark),
-          _DetailRow(s.aiConfidence, '97%', isDark, valueColor: AppColors.teal),
+          _DetailRow(s.aiConfidence, '${(scan.recyclability * 100).round()}%', isDark, valueColor: AppColors.teal),
           if (scan.dangerous)
             _DetailRow(s.attentionLabel, s.dangerousWaste, isDark,
                 valueColor: AppColors.danger),
@@ -881,44 +883,40 @@ class _NearbyCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ...[
-            ('Centre de tri Alger', '0.4 km', Icons.recycling_rounded, AppColors.primary),
-            ('Bac jaune Rue Principale', '1.2 km', Icons.delete_outline_rounded, AppColors.accent),
-            ('Point DEEE — Mairie', '2.1 km', Icons.electrical_services_rounded, AppColors.danger),
-          ].map((e) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: e.$4.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(e.$3, color: e.$4, size: 18),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => context.go('/map'),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.map_rounded,
+                      color: AppColors.primary, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    s.viewMap,
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(e.$1,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13,
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.textPrimary,
-                          )),
-                    ),
-                    Text(e.$2,
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.teal,
-                        )),
-                  ],
-                ),
-              )),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: AppColors.primary, size: 13),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

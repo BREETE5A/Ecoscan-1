@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/challenges_provider.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
 
@@ -18,7 +19,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
   late Timer _timer;
-  Duration _timeLeft = const Duration(hours: 18, minutes: 34, seconds: 12);
+  late Duration _timeLeft;
 
   static const _daily = [
     _ChallengeData(
@@ -400,15 +401,24 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     ),
   ];
 
+  static Duration _timeUntilMidnight() {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    return midnight.difference(now);
+  }
+
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _timeLeft = _timeUntilMidnight();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {
         if (_timeLeft.inSeconds > 0) {
           _timeLeft -= const Duration(seconds: 1);
+        } else {
+          _timeLeft = _timeUntilMidnight();
         }
       });
     });
@@ -433,20 +443,38 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     final lang = ref.watch(localeProvider).languageCode;
     final s = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final userScans = ref.watch(userProvider).scans;
+    final user = ref.watch(userProvider);
+    final cp = ref.watch(challengesProvider);
 
-    // Défi "Scanner 3 déchets" : progression réelle depuis user.scans
-    final scanCurrent = userScans.clamp(0, 3);
+    // ── Défis quotidiens avec vraies données ──────────────────────────────────
+    _ChallengeData patch(_ChallengeData base, int current, int total) =>
+        _ChallengeData(
+          icon: base.icon, icon2: base.icon2,
+          title: base.title, titleEn: base.titleEn,
+          titleAr: base.titleAr, titleEs: base.titleEs,
+          desc: base.desc, descEn: base.descEn,
+          descAr: base.descAr, descEs: base.descEs,
+          points: base.points, color: base.color,
+          current: current.clamp(0, total), total: total,
+          progress: (current / total).clamp(0.0, 1.0),
+        );
+
     final dynamicDaily = [
-      _ChallengeData(
-        icon: _daily[0].icon, icon2: _daily[0].icon2,
-        title: _daily[0].title, titleEn: _daily[0].titleEn, titleAr: _daily[0].titleAr,
-        desc: _daily[0].desc, descEn: _daily[0].descEn, descAr: _daily[0].descAr,
-        points: _daily[0].points, color: _daily[0].color,
-        current: scanCurrent, total: 3,
-        progress: (scanCurrent / 3).clamp(0.0, 1.0),
-      ),
-      ..._daily.skip(1),
+      patch(_daily[0], cp.dailyScans, 3),           // Scanner 3 déchets
+      _daily[1],                                       // Recycler plastique
+      patch(_daily[2], cp.shared ? 1 : 0, 1),        // Partager un conseil
+      patch(_daily[3], cp.guideViews, 5),             // Consulter le guide
+      _daily[4],                                       // Scanner déchet organique
+      patch(_daily[5], cp.mapOpened ? 1 : 0, 1),     // Trouver un centre de tri
+      patch(_daily[6], cp.ecoBotUsed ? 1 : 0, 1),    // Utiliser EcoBot
+      ..._daily.skip(7),
+    ];
+
+    final dynamicWeekly = [
+      patch(_weekly[0], user.streak, 7),              // Streak 7 jours
+      ..._weekly.skip(1, ).take(2),
+      patch(_weekly[3], cp.weeklyScans, 20),          // Scanner 20 déchets
+      ..._weekly.skip(4),
     ];
 
     return Scaffold(
@@ -454,8 +482,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(s, isDark),
-            _buildStreakBanner(isDark, s),
+            _buildHeader(s, isDark, user.streak),
+            _buildStreakBanner(isDark, s, user.streak),
             const SizedBox(height: 12),
             _buildTabBar(isDark, s),
             const SizedBox(height: 4),
@@ -464,7 +492,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
                 controller: _tab,
                 children: [
                   _ChallengeList(challenges: dynamicDaily, isDark: isDark, lang: lang),
-                  _ChallengeList(challenges: _weekly, isDark: isDark, lang: lang),
+                  _ChallengeList(challenges: dynamicWeekly, isDark: isDark, lang: lang),
                 ],
               ),
             ),
@@ -474,7 +502,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     );
   }
 
-  Widget _buildHeader(AppStrings s, bool isDark) {
+  Widget _buildHeader(AppStrings s, bool isDark, int streak) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
@@ -509,14 +537,14 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
               gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.local_fire_department_rounded,
+                const Icon(Icons.local_fire_department_rounded,
                     color: Colors.white, size: 18),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
-                  '5 🔥',
-                  style: TextStyle(
+                  '$streak 🔥',
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -531,7 +559,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     );
   }
 
-  Widget _buildStreakBanner(bool isDark, AppStrings s) {
+  Widget _buildStreakBanner(bool isDark, AppStrings s, int streak) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Container(
@@ -560,7 +588,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    s.streakDays(5),
+                    s.streakDays(streak),
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 15,
@@ -586,7 +614,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                s.streakMore(2),
+                s.streakMore((7 - streak).clamp(0, 7)),
                 style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 12,

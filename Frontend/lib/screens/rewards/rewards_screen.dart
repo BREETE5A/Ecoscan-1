@@ -3,8 +3,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/rewards_provider.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+import '../../services/notification_service.dart';
 
 // ── Daily eco-facts (one per day, rotates automatically) ──────────────────────
 const _kEcoFacts = [
@@ -427,7 +429,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
       ? _rewards
       : _rewards.where((r) => r.category == _activeCategory).toList();
 
-  void _showRedeemDialog(BuildContext ctx, _RewardData reward, AppStrings s, int balance) {
+  void _showRedeemDialog(BuildContext ctx, _RewardData reward, AppStrings s, int balance, Set<String> redeemed) {
     final lang = ref.read(localeProvider).languageCode;
     showModalBottomSheet(
       context: ctx,
@@ -437,6 +439,14 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
         balance: balance,
         lang: lang,
         s: s,
+        isRedeemed: redeemed.contains(reward.id),
+        onRedeem: () async {
+          final ok = await ref.read(rewardsProvider.notifier).redeem(reward.id, reward.cost);
+          if (ok && ctx.mounted) {
+            Navigator.pop(ctx);
+            NotificationService.showNewRewardUnlocked(reward.title);
+          }
+        },
       ),
     );
   }
@@ -447,6 +457,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     final s = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final balance = ref.watch(userProvider).points;
+    final redeemed = ref.watch(rewardsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -456,7 +467,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             _buildBalanceCard(s, isDark, balance),
             _buildTabBar(s, isDark),
             Expanded(
-              child: _buildContent(isDark, lang, s, balance),
+              child: _buildContent(isDark, lang, s, balance, redeemed),
             ),
           ],
         ),
@@ -604,7 +615,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     ).animate(delay: 200.ms).fadeIn(duration: 400.ms);
   }
 
-  Widget _buildContent(bool isDark, String lang, AppStrings s, int balance) {
+  Widget _buildContent(bool isDark, String lang, AppStrings s, int balance, Set<String> redeemed) {
     final items = _filtered;
     return CustomScrollView(
       slivers: [
@@ -626,7 +637,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                 lang: lang,
                 balance: balance,
                 delay: i * 80,
-                onTap: () => _showRedeemDialog(ctx, items[i], s, balance),
+                isRedeemed: redeemed.contains(items[i].id),
+                onTap: () => _showRedeemDialog(ctx, items[i], s, balance, redeemed),
               ),
               childCount: items.length,
             ),
@@ -718,6 +730,7 @@ class _RewardCard extends StatefulWidget {
   final String lang;
   final int balance;
   final int delay;
+  final bool isRedeemed;
   final VoidCallback onTap;
 
   const _RewardCard({
@@ -726,6 +739,7 @@ class _RewardCard extends StatefulWidget {
     required this.lang,
     required this.balance,
     required this.delay,
+    required this.isRedeemed,
     required this.onTap,
   });
 
@@ -787,7 +801,7 @@ class _RewardCardState extends State<_RewardCard>
           decoration: BoxDecoration(
             color: widget.isDark ? AppColors.darkCard : Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: widget.reward.redeemed
+            border: widget.isRedeemed
                 ? Border.all(
                     color: AppColors.primary.withValues(alpha: 0.4), width: 1.5)
                 : null,
@@ -807,7 +821,7 @@ class _RewardCardState extends State<_RewardCard>
                 children: [
                   Text(widget.reward.icon,
                       style: const TextStyle(fontSize: 32)),
-                  if (widget.reward.redeemed)
+                  if (widget.isRedeemed)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -874,14 +888,14 @@ class _RewardCardState extends State<_RewardCard>
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: _canAfford && !widget.reward.redeemed
+                      color: _canAfford && !widget.isRedeemed
                           ? widget.reward.color
                           : AppColors.textSecondary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.arrow_forward_rounded,
-                      color: _canAfford && !widget.reward.redeemed
+                      color: _canAfford && !widget.isRedeemed
                           ? Colors.white
                           : AppColors.textSecondary,
                       size: 16,
@@ -909,12 +923,16 @@ class _RedeemSheet extends StatelessWidget {
   final int balance;
   final String lang;
   final AppStrings s;
+  final bool isRedeemed;
+  final VoidCallback onRedeem;
 
   const _RedeemSheet({
     required this.reward,
     required this.balance,
     required this.lang,
     required this.s,
+    required this.isRedeemed,
+    required this.onRedeem,
   });
 
   bool get _canAfford => balance >= reward.cost;
@@ -1006,9 +1024,7 @@ class _RedeemSheet extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _canAfford && !reward.redeemed
-                  ? () => Navigator.pop(context)
-                  : null,
+              onPressed: _canAfford && !isRedeemed ? onRedeem : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: reward.color,
                 foregroundColor: Colors.white,
@@ -1023,7 +1039,7 @@ class _RedeemSheet extends StatelessWidget {
                 ),
               ),
               child: Text(
-                reward.redeemed
+                isRedeemed
                     ? s.redeemed
                     : _canAfford
                         ? s.redeem

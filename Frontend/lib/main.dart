@@ -21,6 +21,8 @@ void main() async {
 
   if (!kIsWeb) {
     await NotificationService.init();
+    await NotificationService.scheduleDailyReminders();
+    await NotificationService.scheduleWeeklyChallengeReminder();
   }
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);

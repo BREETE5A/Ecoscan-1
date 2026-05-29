@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/chat_message.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/challenges_provider.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -32,6 +34,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _dot3 = AnimationController(vsync: this, duration: 600.ms);
     Future.delayed(150.ms, () { if (mounted) _dot2.repeat(reverse: true); });
     Future.delayed(300.ms, () { if (mounted) _dot3.repeat(reverse: true); });
+    // Synchronise le message de bienvenue avec la langue actuelle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final lang = ref.read(localeProvider).languageCode;
+      ref.read(chatProvider.notifier)
+          .updateWelcomeMessage(AppStrings.of(lang).botGreeting);
+    });
   }
 
   @override
@@ -53,6 +62,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _scrollToBottom();
 
     await ref.read(chatProvider.notifier).sendMessage(text);
+    ref.read(challengesProvider.notifier).useEcoBot();
 
     if (mounted) setState(() => _sending = false);
     _scrollToBottom();
@@ -98,8 +108,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             child: ListView.builder(
               controller: _scroll,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              itemCount: messages.length,
+              itemCount: messages.length + (messages.length == 1 ? 1 : 0),
               itemBuilder: (_, i) {
+                // Questions suggérées après le message de bienvenue
+                if (messages.length == 1 && i == 1) {
+                  return _SuggestedQuestions(
+                    lang: lang,
+                    onTap: (q) {
+                      _ctrl.text = q;
+                      _send();
+                    },
+                    isDark: isDark,
+                  ).animate(delay: 300.ms).fadeIn(duration: 400.ms);
+                }
                 final msg = messages[i];
                 if (msg.isLoading) {
                   return _TypingBubble(dot1: _dot1, dot2: _dot2, dot3: _dot3,
@@ -108,10 +129,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       .fadeIn(duration: 300.ms)
                       .slideX(begin: -0.1);
                 }
-                return _ChatBubble(msg: msg, isDark: isDark)
-                    .animate(delay: i < 6 ? (i * 50).ms : 0.ms)
-                    .fadeIn(duration: 300.ms)
-                    .slideX(begin: msg.isUser ? 0.1 : -0.1);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ChatBubble(msg: msg, isDark: isDark)
+                        .animate(delay: i < 6 ? (i * 50).ms : 0.ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideX(begin: msg.isUser ? 0.1 : -0.1),
+                    if (!msg.isUser && !msg.isLoading)
+                      _FeedbackRow(
+                        msg: msg,
+                        isDark: isDark,
+                        onFeedback: (liked) => ref
+                            .read(chatProvider.notifier)
+                            .setFeedback(msg.id, liked),
+                      ),
+                  ],
+                );
               },
             ),
           ),
@@ -235,6 +269,9 @@ class _ChatBubble extends StatelessWidget {
   final bool isDark;
   const _ChatBubble({required this.msg, required this.isDark});
 
+  bool _hasArabic(String text) =>
+      text.contains(RegExp(r'[؀-ۿ]'));
+
   @override
   Widget build(BuildContext context) {
     final isBot = !msg.isUser;
@@ -287,17 +324,22 @@ class _ChatBubble extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Text(
-                    msg.text,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 13,
-                      height: 1.55,
-                      color: isBot
-                          ? (isDark
-                              ? AppColors.darkText
-                              : AppColors.textPrimary)
-                          : Colors.white,
+                  child: Directionality(
+                    textDirection: _hasArabic(msg.text)
+                        ? ui.TextDirection.rtl
+                        : ui.TextDirection.ltr,
+                    child: Text(
+                      msg.text,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        height: 1.55,
+                        color: isBot
+                            ? (isDark
+                                ? AppColors.darkText
+                                : AppColors.textPrimary)
+                            : Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -490,6 +532,176 @@ class _InputBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Questions suggérées ───────────────────────────────────────────────────────
+
+class _SuggestedQuestions extends StatelessWidget {
+  final String lang;
+  final void Function(String) onTap;
+  final bool isDark;
+  const _SuggestedQuestions({required this.lang, required this.onTap, required this.isDark});
+
+  List<String> get _questions {
+    switch (lang) {
+      case 'en':
+        return [
+          'Where to put plastic bottles?',
+          'Are plastic bags banned in Morocco?',
+          'How to recycle electronics?',
+          'What is the yellow ECOVAL bin?',
+          'How to compost at home?',
+        ];
+      case 'ar':
+        return [
+          'أين أضع زجاجات البلاستيك؟',
+          'هل الأكياس البلاستيكية محظورة في المغرب؟',
+          'كيف أعيد تدوير الأجهزة الإلكترونية؟',
+          'ما هو الحاوية الصفراء ECOVAL؟',
+          'كيف أصنع سمادًا منزليًا؟',
+        ];
+      case 'es':
+        return [
+          '¿Dónde poner las botellas de plástico?',
+          '¿Están prohibidas las bolsas plásticas en Marruecos?',
+          '¿Cómo reciclar aparatos electrónicos?',
+          '¿Qué es el cubo amarillo ECOVAL?',
+          '¿Cómo hacer compost en casa?',
+        ];
+      default:
+        return [
+          'Où mettre les bouteilles plastiques ?',
+          'Les sacs plastiques sont-ils interdits au Maroc ?',
+          'Comment recycler les appareils électroniques ?',
+          'Qu\'est-ce que le bac jaune ECOVAL ?',
+          'Comment composter à la maison ?',
+        ];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 48, bottom: 8),
+            child: Text(
+              lang == 'en' ? 'Suggested questions' :
+              lang == 'ar' ? 'أسئلة مقترحة' :
+              lang == 'es' ? 'Preguntas sugeridas' : 'Questions fréquentes',
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _questions.map((q) => GestureDetector(
+              onTap: () => onTap(q),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkCard : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Text(
+                  q,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Feedback 👍/👎 ────────────────────────────────────────────────────────────
+
+class _FeedbackRow extends StatelessWidget {
+  final ChatMessage msg;
+  final bool isDark;
+  final void Function(bool) onFeedback;
+  const _FeedbackRow({required this.msg, required this.isDark, required this.onFeedback});
+
+  @override
+  Widget build(BuildContext context) {
+    if (msg.text.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(left: 48, bottom: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _FeedbackBtn(
+            icon: Icons.thumb_up_rounded,
+            active: msg.feedback == true,
+            activeColor: AppColors.primary,
+            isDark: isDark,
+            onTap: () => onFeedback(true),
+          ),
+          const SizedBox(width: 6),
+          _FeedbackBtn(
+            icon: Icons.thumb_down_rounded,
+            active: msg.feedback == false,
+            activeColor: AppColors.danger,
+            isDark: isDark,
+            onTap: () => onFeedback(false),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedbackBtn extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final Color activeColor;
+  final bool isDark;
+  final VoidCallback onTap;
+  const _FeedbackBtn({required this.icon, required this.active,
+      required this.activeColor, required this.isDark, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: active
+              ? activeColor.withValues(alpha: 0.12)
+              : (isDark ? AppColors.darkCard : Colors.white),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: active
+                ? activeColor.withValues(alpha: 0.5)
+                : AppColors.textSecondary.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 14,
+          color: active ? activeColor : AppColors.textSecondary,
+        ),
       ),
     );
   }

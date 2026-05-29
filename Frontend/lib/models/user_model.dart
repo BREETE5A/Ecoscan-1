@@ -13,6 +13,7 @@ class UserModel {
   final double weeklyGoalKg;
   final double weeklyProgress;
   final List<Map<String, dynamic>> recentScans;
+  final int streak;
 
   const UserModel({
     required this.id,
@@ -29,6 +30,7 @@ class UserModel {
     required this.weeklyGoalKg,
     required this.weeklyProgress,
     this.recentScans = const [],
+    this.streak = 0,
   });
 
   factory UserModel.empty() => const UserModel(
@@ -45,6 +47,7 @@ class UserModel {
         co2Saved: 0,
         weeklyGoalKg: 10.0,
         weeklyProgress: 0.0,
+        streak: 0,
       );
 
   UserModel copyWith({
@@ -61,6 +64,7 @@ class UserModel {
     double? weeklyGoalKg,
     double? weeklyProgress,
     List<Map<String, dynamic>>? recentScans,
+    int? streak,
   }) {
     return UserModel(
       id: id,
@@ -77,6 +81,7 @@ class UserModel {
       weeklyGoalKg: weeklyGoalKg ?? this.weeklyGoalKg,
       weeklyProgress: weeklyProgress ?? this.weeklyProgress,
       recentScans: recentScans ?? this.recentScans,
+      streak: streak ?? this.streak,
     );
   }
 }

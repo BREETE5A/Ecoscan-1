@@ -15,11 +15,14 @@ class ChatService {
     );
   }
 
-  Future<String> sendMessage(String message) async {
+  Future<String> sendMessage(String message, {List<Map<String, String>> history = const []}) async {
     try {
       final response = await _dio.post(
         ApiConstants.chatEndpoint,
-        data: {'message': message},
+        data: {
+          'message': message,
+          'history': history,
+        },
       );
       return response.data['response'] as String;
     } on DioException catch (e) {

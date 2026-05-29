@@ -4,6 +4,7 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
   final bool isLoading;
+  final bool? feedback; // true=👍  false=👎  null=pas encore noté
 
   ChatMessage({
     required this.id,
@@ -11,11 +12,13 @@ class ChatMessage {
     required this.isUser,
     required this.timestamp,
     this.isLoading = false,
+    this.feedback,
   });
 
   ChatMessage copyWith({
     String? text,
     bool? isLoading,
+    bool? feedback,
   }) {
     return ChatMessage(
       id: id,
@@ -23,36 +26,23 @@ class ChatMessage {
       isUser: isUser,
       timestamp: timestamp,
       isLoading: isLoading ?? this.isLoading,
+      feedback: feedback ?? this.feedback,
     );
   }
 
-  static String _uid() =>
-      DateTime.now().microsecondsSinceEpoch.toString();
+  static String _uid() => DateTime.now().microsecondsSinceEpoch.toString();
 
   factory ChatMessage.user(String text) => ChatMessage(
-        id: _uid(),
-        text: text,
-        isUser: true,
-        timestamp: DateTime.now(),
-      );
+        id: _uid(), text: text, isUser: true, timestamp: DateTime.now());
 
   factory ChatMessage.bot(String text) => ChatMessage(
-        id: _uid(),
-        text: text,
-        isUser: false,
-        timestamp: DateTime.now(),
-      );
+        id: _uid(), text: text, isUser: false, timestamp: DateTime.now());
 
   factory ChatMessage.loading() => ChatMessage(
-        id: _uid(),
-        text: '',
-        isUser: false,
-        timestamp: DateTime.now(),
-        isLoading: true,
-      );
+        id: _uid(), text: '', isUser: false,
+        timestamp: DateTime.now(), isLoading: true);
 
   static ChatMessage get welcome => ChatMessage.bot(
-        'Bonjour ! Je suis EcoBot 🌿\n\n'
-        'Posez-moi vos questions sur le tri et le recyclage au Maroc !',
+        'Bonjour ! Je suis EcoBot 🌿\n\nPosez-moi vos questions sur le tri et le recyclage au Maroc !',
       );
 }
