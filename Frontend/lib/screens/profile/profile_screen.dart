@@ -50,13 +50,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   List<(IconData, String, String, Color)> _buildMenuItems(AppStrings s) => [
-    (Icons.edit_rounded,              s.menuEditProfile,    '/profile/edit',  AppColors.primary),
-    (Icons.bar_chart_rounded,         s.menuStats,          '/stats',         AppColors.teal),
-    (Icons.emoji_events_rounded,      s.menuBadges,         '/badges',        const Color(0xFFF39C12)),
-    (Icons.menu_book_rounded,         s.menuGuide,          '/guide',         const Color(0xFF3498DB)),
-    (Icons.leaderboard_rounded,       s.menuLeaderboard,    '/leaderboard',   const Color(0xFF9B59B6)),
-    (Icons.notifications_outlined,    s.menuNotifications,  '/notifications', AppColors.primary),
-    (Icons.settings_outlined,         s.menuSettings,       '/settings',      AppColors.textSecondary),
+    (Icons.edit_rounded,              s.menuEditProfile,    '/profile/edit',    AppColors.primary),
+    (Icons.bar_chart_rounded,         s.menuStats,          '/stats',           AppColors.teal),
+    (Icons.emoji_events_rounded,      s.menuBadges,         '/badges',          const Color(0xFFF39C12)),
+    (Icons.menu_book_rounded,         s.menuGuide,          '/guide',           const Color(0xFF3498DB)),
+    (Icons.leaderboard_rounded,       s.menuLeaderboard,    '/leaderboard',     const Color(0xFF9B59B6)),
+    (Icons.notifications_outlined,    s.menuNotifications,  '/notifications',   AppColors.primary),
+    (Icons.settings_outlined,         s.menuSettings,       '/settings',        AppColors.textSecondary),
+    (Icons.wb_sunny_rounded,          s.menuWeather,        '/weather',         const Color(0xFFFFA726)),
+    (Icons.air_rounded,               s.menuAirQuality,     '/air-quality',     const Color(0xFF26C6DA)),
+    (Icons.water_drop_rounded,        s.menuWaterFoot,      '/water-footprint', const Color(0xFF0288D1)),
+    (Icons.quiz_rounded,              s.menuQuiz,           '/quiz',            const Color(0xFF7E57C2)),
+    (Icons.barcode_reader,            s.menuBarcodeScanner, '/barcode',         const Color(0xFF26A69A)),
   ];
 
   @override
@@ -169,6 +174,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     .animate()
                     .fadeIn(duration: 400.ms, delay: 300.ms),
                 const SizedBox(height: 20),
+                // ── Menu ──────────────────────────────────────────────────
                 Text(
                   s.menu,
                   style: TextStyle(

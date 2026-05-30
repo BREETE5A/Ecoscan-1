@@ -228,7 +228,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     }
 
     ScanEntry entry;
-    List<({String label, double score})> allScores = [];
     try {
       // Essaie d'abord l'API online (YOLOv8)
       final onlineResult = await ScanApiService.classify(imageToClassify);
@@ -242,13 +241,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
           recyclability: entry.recyclability, binColor: entry.binColor,
           scannedAt: entry.scannedAt, mode: 'cloud',
         );
-        allScores = onlineResult.detections
-            .map((d) => (label: d.label, score: d.confidence))
-            .toList();
       } else {
         // Fallback TFLite local
         final result = await _classifier.classify(imageToClassify);
-        allScores = result.allScores;
         debugPrint('TFLite local: ${result.label} (${(result.confidence * 100).toStringAsFixed(1)}%)');
         entry = ScanEntry.fromClassification(result.label, result.confidence);
       }
@@ -266,80 +261,23 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
     await _flash.forward();
     await _flash.reverse();
-    await Future.delayed(const Duration(milliseconds: 700));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
 
-    // Panneau debug — scores de toutes les classes
-    final s = AppStrings.of(ref.read(localeProvider).languageCode);
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A2E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('🔬 Scores du modèle TFLite',
-                style: TextStyle(color: Colors.white, fontFamily: 'Poppins',
-                    fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 12),
-            ...allScores.map((s) {
-              final pct = (s.score * 100);
-              final isTop = s.label == entry.category;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: [
-                    SizedBox(width: 110,
-                        child: Text(s.label,
-                            style: TextStyle(
-                                color: isTop ? Colors.greenAccent : Colors.white70,
-                                fontFamily: 'Poppins', fontSize: 13,
-                                fontWeight: isTop ? FontWeight.bold : FontWeight.normal))),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: s.score.clamp(0.0, 1.0),
-                          backgroundColor: Colors.white12,
-                          color: isTop ? Colors.greenAccent : Colors.white38,
-                          minHeight: 8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('${pct.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                            color: isTop ? Colors.greenAccent : Colors.white54,
-                            fontFamily: 'Poppins', fontSize: 12)),
-                  ],
-                ),
-              );
-            }),
-            const SizedBox(height: 12),
-            SizedBox(width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent,
-                    foregroundColor: Colors.black),
-                onPressed: () => Navigator.pop(context),
-                child: Text(s.continueBtn, style: const TextStyle(fontFamily: 'Poppins')),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (!mounted) return;
+    // Affiche le résultat immédiatement
     ref.read(scanHistoryProvider.notifier).addScan(entry);
     ref.read(currentScanProvider.notifier).state = entry;
 
-    // Mise à jour des stats utilisateur (points, scans, CO₂)
+    setState(() {
+      _scanning = false;
+      _state = _DetectionState.idle;
+      _galleryImage = null;
+    });
+
+    context.go('/scan/result');
+
+    // Mise à jour Firestore en arrière-plan (ne bloque pas la navigation)
     final scanResult = ScanResultModel(
       rawClass: entry.category,
       category: entry.category,
@@ -348,19 +286,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       co2SavedPerKg: entry.co2Saved / 100,
       scannedAt: entry.scannedAt,
     );
-    if (mounted) {
-      await ref.read(userProvider.notifier).recordScan(scanResult);
-      ref.read(challengesProvider.notifier).incrementScan();
-    }
-
-    setState(() {
-      _scanning = false;
-      _state = _DetectionState.idle;
-      _galleryImage = null;
-    });
-
-    if (!mounted) return;
-    context.go('/scan/result');
+    ref.read(userProvider.notifier).recordScan(scanResult).catchError((_) {});
+    ref.read(challengesProvider.notifier).incrementScan();
   }
 
   @override

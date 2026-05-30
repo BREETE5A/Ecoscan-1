@@ -62,9 +62,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _scrollToBottom();
 
     await ref.read(chatProvider.notifier).sendMessage(text);
+    if (!mounted) return;
     ref.read(challengesProvider.notifier).useEcoBot();
-
-    if (mounted) setState(() => _sending = false);
+    setState(() => _sending = false);
     _scrollToBottom();
   }
 

@@ -1,16 +1,17 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ClassifierService {
-  // Ordre alphabétique Python (Keras flow_from_directory) — 8 classes
+  // Ordre alphabétique Python (Keras flow_from_directory) — 8 classes exactes
   static const _labels = [
-    'Dangereux', 'Métal', 'Organique', 'Papier', 'Plastique', 'Textile', 'Verre', 'Électronique'
+    'cardboard', 'electronique', 'metal', 'organique', 'paper', 'plastique', 'trash', 'verre'
   ];
   static const _inputSize = 224;
+  // Seuil de confiance minimum : en dessous → "Objet non reconnu"
+  static const _confidenceThreshold = 0.45;
 
   Interpreter? _interpreter;
   bool _inputIsUint8 = false;
@@ -29,10 +30,9 @@ class ClassifierService {
     );
     final inputTensor = _interpreter!.getInputTensor(0);
     final outputTensor = _interpreter!.getOutputTensor(0);
-    // Vérifie si le modèle attend uint8 (quantisé) ou float32
     _inputIsUint8 = inputTensor.type.toString().contains('uint8') ||
                     inputTensor.type.toString().contains('UInt8');
-    debugPrint('TFLite loaded | input: ${inputTensor.shape} type:${inputTensor.type} | output: ${outputTensor.shape} type:${outputTensor.type} | uint8=$_inputIsUint8');
+    debugPrint('TFLite | input: ${inputTensor.shape} ${inputTensor.type} | output: ${outputTensor.shape} ${outputTensor.type} | uint8=$_inputIsUint8');
   }
 
   Future<({String label, double confidence, List<({String label, double score})> allScores})> classify(File imageFile) async {
@@ -53,7 +53,6 @@ class ClassifierService {
     List<double> scores;
 
     if (_inputIsUint8) {
-      // Modèle quantisé : uint8 [0, 255]
       final inputBuffer = Uint8List(_inputSize * _inputSize * 3);
       int idx = 0;
       for (int y = 0; y < _inputSize; y++) {
@@ -69,15 +68,16 @@ class ClassifierService {
       interpreter.run(input, output);
       scores = output[0];
     } else {
-      // Modèle float32 entraîné avec rescale=1./255 → normaliser à [0, 1]
+      // EfficientNetB0 a une couche Rescaling(1/255) interne
+      // → passer les pixels bruts [0, 255], le modèle normalise lui-même
       final inputBuffer = Float32List(_inputSize * _inputSize * 3);
       int idx = 0;
       for (int y = 0; y < _inputSize; y++) {
         for (int x = 0; x < _inputSize; x++) {
           final pixel = resized.getPixel(x, y);
-          inputBuffer[idx++] = pixel.r.toDouble() / 255.0;
-          inputBuffer[idx++] = pixel.g.toDouble() / 255.0;
-          inputBuffer[idx++] = pixel.b.toDouble() / 255.0;
+          inputBuffer[idx++] = pixel.r.toDouble();
+          inputBuffer[idx++] = pixel.g.toDouble();
+          inputBuffer[idx++] = pixel.b.toDouble();
         }
       }
       final input = inputBuffer.reshape([1, _inputSize, _inputSize, 3]);
@@ -86,31 +86,27 @@ class ClassifierService {
       scores = output[0];
     }
 
-    // Applique softmax si le modèle sort des logits (pas de couche softmax finale)
-    final probabilities = _softmax(scores);
-    debugPrint('TFLite raw scores   : $scores');
-    debugPrint('TFLite probabilities: $probabilities');
+    // Modèle avec softmax → output déjà des probabilités
+    final probabilities = scores;
+    debugPrint('TFLite probs: $probabilities  sum=${scores.reduce((a,b)=>a+b)}');
 
     int maxIdx = 0;
     for (int i = 1; i < probabilities.length; i++) {
       if (probabilities[i] > probabilities[maxIdx]) maxIdx = i;
     }
 
+    final topLabel = probabilities[maxIdx] >= _confidenceThreshold
+        ? _labels[maxIdx]
+        : 'unknown';
+
     return (
-      label: _labels[maxIdx],
+      label: topLabel,
       confidence: probabilities[maxIdx],
       allScores: List<({String label, double score})>.generate(
         _labels.length,
         (i) => (label: _labels[i], score: probabilities[i]),
       ),
     );
-  }
-
-  List<double> _softmax(List<double> logits) {
-    final maxVal = logits.reduce(math.max);
-    final exps = logits.map((l) => math.exp(l - maxVal)).toList();
-    final sum = exps.reduce((a, b) => a + b);
-    return exps.map((e) => e / sum).toList();
   }
 
   void close() {

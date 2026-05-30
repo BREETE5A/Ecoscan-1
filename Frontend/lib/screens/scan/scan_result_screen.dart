@@ -56,22 +56,15 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
     final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final entry = ref.watch(currentScanProvider);
 
-    // Fallback to a default entry if none
-    final scan = entry ??
-        ScanEntry(
-          id: 'fallback',
-          name: 'Bouteille PET',
-          category: 'Plastique',
-          recyclable: true,
-          dangerous: false,
-          points: 15,
-          co2Saved: 45.0,
-          recyclability: 0.92,
-          binColor: 'Jaune',
-          scannedAt: DateTime.now(),
-          mode: 'cloud',
-        );
+    // Redirige vers le scan si aucun résultat disponible
+    if (entry == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/scan');
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
+    final scan = entry;
     final accentColor = scan.dangerous
         ? const Color(0xFFE74C3C)
         : scan.recyclable

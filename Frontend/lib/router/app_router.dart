@@ -29,6 +29,11 @@ import '../screens/language/language_screen.dart';
 import '../screens/challenges/challenges_screen.dart';
 import '../screens/history/history_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
+import '../screens/environment/air_quality_screen.dart';
+import '../screens/environment/water_footprint_screen.dart';
+import '../screens/environment/weather_screen.dart';
+import '../screens/environment/quiz_screen.dart';
+import '../screens/scan/barcode_scan_screen.dart';
 import '../widgets/main_scaffold.dart';
 
 CustomTransitionPage<void> _fadeSlide(BuildContext context, GoRouterState state, Widget child) {
@@ -175,6 +180,26 @@ final appRouter = GoRouter(
         GoRoute(
           path: '/rewards',
           pageBuilder: (c, s) => _fadeSlide(c, s, const RewardsScreen()),
+        ),
+        GoRoute(
+          path: '/air-quality',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const AirQualityScreen()),
+        ),
+        GoRoute(
+          path: '/water-footprint',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const WaterFootprintScreen()),
+        ),
+        GoRoute(
+          path: '/weather',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const WeatherScreen()),
+        ),
+        GoRoute(
+          path: '/quiz',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const QuizScreen()),
+        ),
+        GoRoute(
+          path: '/barcode',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const BarcodeScanScreen()),
         ),
       ],
     ),

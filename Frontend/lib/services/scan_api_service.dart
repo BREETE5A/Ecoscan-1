@@ -6,8 +6,8 @@ class ScanApiService {
   static final _dio = Dio(
     BaseOptions(
       baseUrl: ApiConstants.scanBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: Duration(seconds: ApiConstants.scanTimeoutSeconds),
+      connectTimeout: const Duration(seconds: 8),
+      receiveTimeout: const Duration(seconds: 20),
     ),
   );
 
@@ -63,29 +63,14 @@ class ScanApiService {
     }
   }
 
-  // Traduction labels TACO → labels marocains EcoScan
+  // Les 5 classes exactes du modèle YOLOv8 → catégories EcoScan
   static String _translateLabel(String label) {
     const map = {
-      'Bottle': 'Plastique',
-      'Plastic bottle': 'Plastique',
-      'Can': 'Métal',
-      'Aluminium can': 'Métal',
-      'Carton': 'Papier',
-      'Paper': 'Papier',
-      'Glass bottle': 'Verre',
-      'Cigarette': 'Dangereux',
-      'Battery': 'Électronique',
-      'Plastic bag': 'Plastique',
-      'Styrofoam piece': 'Plastique',
-      'Cup': 'Plastique',
-      'Lid': 'Métal',
-      'Broken glass': 'Verre',
-      'Food waste': 'Organique',
-      'Scrap metal': 'Métal',
-      'Rope': 'Textile',
-      'Shoe': 'Textile',
-      'Tissue': 'Papier',
-      'Pop tab': 'Métal',
+      'Glass':   'verre',
+      'Metal':   'metal',
+      'Paper':   'paper',
+      'Plastic': 'plastique',
+      'Waste':   'trash',
     };
     return map[label] ?? label;
   }

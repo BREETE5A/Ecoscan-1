@@ -232,6 +232,245 @@ class AppStrings {
   String get qaHistory       => _t('Historique', 'History', 'السجل', 'Historial');
   String get qaRewards       => _t('Récompenses', 'Rewards', 'المكافآت', 'Recompensas');
   String get qaCalculator    => _t('Bilan CO₂', 'CO₂ Calculator', 'حاسبة CO₂', 'Calculadora CO₂');
+  String get qaAirQuality    => _t('Qualité de l\'air', 'Air quality',    'جودة الهواء',       'Calidad del aire');
+  String get qaWaterFootprint=> _t('Empreinte eau',     'Water footprint', 'بصمة الماء',        'Huella hídrica');
+  String get qaWeather       => _t('Météo',             'Weather',         'الطقس',             'Clima');
+  String get qaQuiz          => _t('Quiz recyclage',    'Recycling quiz',  'اختبار التدوير',    'Quiz de reciclaje');
+  String get qaBarcode       => _t('Code-barres',       'Barcode',         'الرمز الشريطي',     'Código de barras');
+
+  // ── Weather ───────────────────────────────────────────────────────────────
+  String get weatherTitle        => _t('Météo Éco',                    'Eco Weather',              'الطقس البيئي',                  'Clima Eco');
+  String get weatherLoadError    => _t('Impossible de charger la météo','Cannot load weather',      'تعذّر تحميل الطقس',              'No se pudo cargar el tiempo');
+  String get weatherHumidity     => _t('Humidité',                     'Humidity',                 'رطوبة',                          'Humedad');
+  String get weatherWind         => _t('Vent',                         'Wind',                     'رياح',                           'Viento');
+  String get weatherEcoTipsTitle => _t('Conseils éco du jour',         'Eco Tips',                 'نصائح بيئية',                   'Consejos eco del día');
+  String get weatherHydTitle     => _t('💧 Hydratation du jour',       '💧 Daily Hydration',       '💧 الترطيب اليومي',             '💧 Hidratación diaria');
+  String weatherHydMsg(int temp, int liters) => _t(
+    'Par $temp°C, buvez au moins $liters litres d\'eau aujourd\'hui.',
+    'At $temp°C, drink at least $liters liters of water today.',
+    'بدرجة حرارة $temp°C، اشرب $liters لترات على الأقل من الماء اليوم.',
+    'Con $temp°C, bebe al menos $liters litros de agua hoy.',
+  );
+
+  // ── Eco-tips météo — 7 catégories selon température + condition ─────────────
+
+  // < 5°C — Très froid
+  List<String> get weatherTipsVeryCold { switch (_locale) {
+    case 'en': return ['Avoid using diesel heaters — prefer electric or gas', 'Insulate your home well to save energy', 'Choose public transport — engines pollute more in cold weather'];
+    case 'ar': return ['تجنب المدافئ الديزل — يُفضَّل الكهربائي أو الغاز', 'عازل منزلك جيداً لتوفير الطاقة', 'فضّل وسائل النقل العام — المحركات تلوث أكثر في البرد'];
+    case 'es': return ['Evita calefactores de gasóleo — prefiere eléctrico o gas', 'Aísla bien tu hogar para ahorrar energía', 'Elige transporte público — los motores contaminan más con frío'];
+    default:   return ['Évitez les chauffages au fioul — préférez l\'électrique ou le gaz', 'Isolez bien votre logement pour économiser l\'énergie', 'Choisissez les transports en commun — les moteurs polluent plus par le froid'];
+  }}
+
+  // 5–15°C — Frais
+  List<String> get weatherTipsCold { switch (_locale) {
+    case 'en': return ['Good weather to air out your home without heating', 'Wear layers to avoid overheating — saves energy', 'Day suitable for composting outdoors'];
+    case 'ar': return ['طقس مناسب لتهوية منزلك دون تدفئة', 'ارتدِ طبقات لتجنب التدفئة الزائدة — يوفر الطاقة', 'يوم مناسب للتسميد في الخارج'];
+    case 'es': return ['Buen tiempo para ventilar tu hogar sin calefacción', 'Viste en capas para evitar sobrecalentar — ahorra energía', 'Día adecuado para compostar en exterior'];
+    default:   return ['Beau temps pour aérer votre logement sans chauffer', 'Portez des couches pour éviter de surchauffer — ça économise l\'énergie', 'Journée propice au compostage en extérieur'];
+  }}
+
+  // 15–25°C — Agréable
+  List<String> get weatherTipsMild { switch (_locale) {
+    case 'en': return ['Perfect day to walk or cycle instead of driving', 'Choose local seasonal products to reduce your carbon footprint', 'Keep up your daily recycling and sorting habits'];
+    case 'ar': return ['يوم مثالي للمشي أو ركوب الدراجة عوضاً عن السيارة', 'اختر المنتجات المحلية الموسمية لتقليل بصمتك الكربونية', 'استمر في عادات فرز النفايات اليومية'];
+    case 'es': return ['Día perfecto para caminar o ir en bici en lugar de conducir', 'Elige productos locales de temporada para reducir tu huella', 'Mantén tus hábitos diarios de clasificación de residuos'];
+    default:   return ['Journée idéale pour marcher ou vélo plutôt que prendre la voiture', 'Choisissez des produits locaux de saison pour réduire votre empreinte', 'Continuez vos bonnes habitudes quotidiennes de tri'];
+  }}
+
+  // 25–35°C — Chaud
+  List<String> get weatherTipsWarm { switch (_locale) {
+    case 'en': return ['Water your garden in the evening to reduce evaporation', 'Avoid outdoor burning — heat concentrates pollutants', 'Use public transport or cycle to limit urban heat islands'];
+    case 'ar': return ['اسقِ حديقتك مساءً لتقليل التبخر', 'تجنب الحرق الخارجي — الحرارة تركز الملوثات', 'استخدم وسائل النقل العام أو الدراجة للحد من جزر الحرارة الحضرية'];
+    case 'es': return ['Riega tu jardín por la tarde para reducir la evaporación', 'Evita quemas al aire libre — el calor concentra contaminantes', 'Usa transporte público o bici para limitar islas de calor urbano'];
+    default:   return ['Arrosez votre jardin le soir pour réduire l\'évaporation', 'Évitez les brûlages extérieurs — la chaleur concentre les polluants', 'Utilisez les transports en commun ou le vélo pour limiter les îlots de chaleur'];
+  }}
+
+  // > 35°C — Très chaud
+  List<String> get weatherTipsHot { switch (_locale) {
+    case 'en': return ['Never burn waste — extreme heat makes pollution extremely dangerous', 'Water plants early morning or late evening only', 'Limit car use — engines are major heat sources in cities', 'Drink water from a reusable bottle — avoid single-use plastic'];
+    case 'ar': return ['لا تحرق النفايات أبداً — الحر الشديد يجعل التلوث خطيراً للغاية', 'اسقِ النباتات فقط صباحاً باكراً أو مساءً متأخراً', 'قلّل من استخدام السيارة — المحركات مصدر رئيسي للحرارة في المدن', 'اشرب الماء من زجاجة قابلة لإعادة الاستخدام — تجنب البلاستيك أحادي الاستخدام'];
+    case 'es': return ['Nunca quemes residuos — el calor extremo hace la contaminación muy peligrosa', 'Riega plantas solo de madrugada o al anochecer', 'Limita el uso del coche — los motores son fuentes de calor en ciudades', 'Bebe agua en botella reutilizable — evita el plástico de un solo uso'];
+    default:   return ['Ne brûlez jamais de déchets — la chaleur extrême rend la pollution très dangereuse', 'Arrosez les plantes uniquement tôt le matin ou tard le soir', 'Limitez la voiture — les moteurs sont une source majeure de chaleur en ville', 'Buvez l\'eau dans une gourde réutilisable — évitez le plastique à usage unique'];
+  }}
+
+  // Pluie
+  List<String> get weatherTipsRainy { switch (_locale) {
+    case 'en': return ['Collect rainwater to water your garden', 'Avoid pesticides — rain washes them into groundwater', 'Good day for indoor composting or sorting recycling'];
+    case 'ar': return ['اجمع مياه الأمطار لسقي حديقتك', 'تجنب المبيدات — المطر يجرفها إلى المياه الجوفية', 'يوم جيد للتسميد الداخلي أو فرز النفايات'];
+    case 'es': return ['Recoge agua de lluvia para regar tu jardín', 'Evita pesticidas — la lluvia los arrastra a las aguas subterráneas', 'Buen día para compostar en interior o clasificar reciclaje'];
+    default:   return ['Récupérez l\'eau de pluie pour arroser votre jardin', 'Évitez les pesticides — la pluie les entraîne dans les nappes phréatiques', 'Bonne journée pour composter à l\'intérieur ou trier vos recyclables'];
+  }}
+
+  // Orage
+  List<String> get weatherTipsStormy { switch (_locale) {
+    case 'en': return ['Stay indoors — lightning is dangerous near water or open areas', 'Unplug appliances to save energy during the storm', 'After the storm, check for waste blown into nature and pick it up'];
+    case 'ar': return ['ابقَ في المنزل — البرق خطير بالقرب من المياه أو المناطق المفتوحة', 'افصل الأجهزة الكهربائية لتوفير الطاقة خلال العاصفة', 'بعد العاصفة، تحقق من النفايات المبعثرة في الطبيعة وانقلها'];
+    case 'es': return ['Quédate en casa — los rayos son peligrosos cerca del agua o espacios abiertos', 'Desenchufa aparatos para ahorrar energía durante la tormenta', 'Tras la tormenta, recoge residuos arrastrados a la naturaleza'];
+    default:   return ['Restez chez vous — la foudre est dangereuse près de l\'eau ou en plein air', 'Débranchez les appareils pour économiser l\'énergie pendant la tempête', 'Après l\'orage, ramassez les déchets dispersés dans la nature'];
+  }}
+
+  // Neige
+  List<String> get weatherTipsSnow { switch (_locale) {
+    case 'en': return ['Avoid rock salt on paths — it damages soil and water', 'Do not burn waste to heat yourself — inhaling smoke is dangerous', 'Use an eco-friendly snow-melt product or plain hot water'];
+    case 'ar': return ['تجنب ملح الصخر على الممرات — يضر التربة والمياه', 'لا تحرق النفايات لتدفئة نفسك — استنشاق الدخان خطير', 'استخدم منتجاً صديقاً للبيئة لإذابة الجليد أو الماء الساخن العادي'];
+    case 'es': return ['Evita la sal de roca en los caminos — daña el suelo y el agua', 'No quemes residuos para calentarte — inhalar humo es peligroso', 'Usa un producto fundanieve ecológico o simplemente agua caliente'];
+    default:   return ['Évitez le sel de déneigement sur les chemins — il abîme les sols et l\'eau', 'Ne brûlez pas de déchets pour vous chauffer — inhaler la fumée est dangereux', 'Utilisez un produit déverglaçant écologique ou simplement de l\'eau chaude'];
+  }}
+
+  // Brouillard / Nuages
+  List<String> get weatherTipsMist { switch (_locale) {
+    case 'en': return ['Reduce car speed and prefer public transport on foggy days', 'Fog can trap air pollution — avoid strenuous outdoor activity', 'Good day for indoor eco activities: sorting, composting, repairing'];
+    case 'ar': return ['قلل سرعة السيارة وفضّل النقل العام في أيام الضباب', 'الضباب يحجز تلوث الهواء — تجنب الأنشطة الخارجية المكثفة', 'يوم جيد للأنشطة البيئية الداخلية: الفرز والتسميد والإصلاح'];
+    case 'es': return ['Reduce velocidad y prefiere transporte público en días de niebla', 'La niebla puede atrapar contaminación — evita actividad intensa al aire libre', 'Buen día para actividades eco en interior: clasificar, compostar, reparar'];
+    default:   return ['Réduisez la vitesse et préférez les transports en commun par temps de brouillard', 'Le brouillard piège la pollution — évitez les efforts physiques en extérieur', 'Bonne journée pour les activités éco en intérieur : tri, compostage, réparation'];
+  }}
+
+  // ── Quiz ──────────────────────────────────────────────────────────────────
+  String get quizTitle       => _t('Quiz Recyclage',           'Recycling Quiz',          'اختبار التدوير',            'Quiz de Reciclaje');
+  String get quizNext        => _t('Suivant',                  'Next',                    'التالي',                    'Siguiente');
+  String get quizResult_     => _t('Résultat',                 'Result',                  'النتيجة',                   'Resultado');
+  String get quizExcellent   => _t('Excellent !',              'Excellent!',              'ممتاز!',                    '¡Excelente!');
+  String get quizWellDone    => _t('Bien joué !',              'Well done!',              'جيد جداً!',                 '¡Bien hecho!');
+  String get quizKeepLearning=> _t('Continuez à apprendre !', 'Keep learning!',          'استمر في التعلم!',          '¡Sigue aprendiendo!');
+  String get quizRetry       => _t('Recommencer',              'Try again',               'إعادة المحاولة',            'Intentar de nuevo');
+  String quizScore(int c, int t) => _t(
+    '$c/$t bonnes réponses', '$c/$t correct answers',
+    '$c/$t إجابة صحيحة',    '$c/$t respuestas correctas',
+  );
+
+  // ── Barcode ───────────────────────────────────────────────────────────────
+  String get barcodeTitle         => _t('Scanner code-barres',              'Barcode Scanner',                'مسح الرمز الشريطي',                 'Escáner de código de barras');
+  String get barcodeCamHint       => _t('Pointez la caméra vers le code-barres du produit', 'Point the camera at the product barcode', 'وجّه الكاميرا نحو الرمز الشريطي للمنتج', 'Apunta la cámara al código de barras del producto');
+  String get barcodeNotFound      => _t('Produit introuvable dans la base de données', 'Product not found in the database', 'لم يُعثر على المنتج في قاعدة البيانات', 'Producto no encontrado en la base de datos');
+  String get barcodeScanAgain     => _t('Scanner à nouveau',  'Scan again',      'مسح مجدداً',    'Escanear de nuevo');
+  String get barcodeUnknown       => _t('Produit inconnu',    'Unknown product', 'منتج غير معروف','Producto desconocido');
+  String get barcodePackaging     => _t('Emballage',          'Packaging',       'التغليف',       'Envase');
+  String get barcodeOrigin        => _t('Pays d\'origine',    'Origin',          'بلد المنشأ',    'País de origen');
+  String get barcodeIngred        => _t('Ingrédients',        'Ingredients',     'المكونات',      'Ingredientes');
+  String get barcodeRecyclable    => _t('Recyclable ✓',       'Recyclable ✓',    'قابل للتدوير ✓','Reciclable ✓');
+  String get barcodeNotRecyclable => _t('Non recyclable ✗',   'Not recyclable ✗','غير قابل للتدوير ✗','No reciclable ✗');
+  String get barcodeEcoImpact     => _t('Impact environnemental', 'Environmental impact', 'التأثير البيئي', 'Impacto ambiental');
+  String get barcodeCtaLabel      => _t('Scanner code-barres',  'Scan barcode',  'مسح الباركود',  'Escanear código de barras');
+  String get barcodeCtaSub        => _t('Infos produit & recyclabilité', 'Product info & recyclability', 'معلومات المنتج وقابلية التدوير', 'Info producto y reciclabilidad');
+  String get barcodeDisposalTip   => _t('Consigne de tri',  'Sorting instruction', 'تعليمات الفرز', 'Instrucción de clasificación');
+  String get barcodeHowToRecycle  => _t('Comment recycler ?',   'How to recycle?',       'كيف تُعيد التدوير؟',      '¿Cómo reciclar?');
+  String get barcodeMaterial      => _t('Matériau identifié',   'Identified material',   'المادة المُحددة',         'Material identificado');
+  String get barcodeBin           => _t('Bac recommandé',       'Recommended bin',       'الحاوية الموصى بها',      'Contenedor recomendado');
+  String get barcodeNutriTitle    => _t('Nutri-Score',          'Nutri-Score',           'نيوتري-سكور',             'Nutri-Score');
+  String get barcodeEcoTitle      => _t('Eco-Score',            'Eco-Score',             'إيكو-سكور',               'Eco-Score');
+  String get barcodeNutriSubtitle => _t('Qualité nutritionnelle du produit', 'Product nutritional quality', 'الجودة الغذائية للمنتج', 'Calidad nutricional del producto');
+  String get barcodeEcoSubtitle   => _t('Impact environnemental du produit', 'Product environmental impact', 'التأثير البيئي للمنتج', 'Impacto ambiental del producto');
+
+  // Explication Nutri-Score A→E (4 langues)
+  String nutriExplain(String grade) {
+    switch (grade) {
+      case 'A': return _t('Excellente qualité nutritionnelle',   'Excellent nutritional quality',   'جودة غذائية ممتازة',      'Excelente calidad nutricional');
+      case 'B': return _t('Bonne qualité nutritionnelle',        'Good nutritional quality',        'جودة غذائية جيدة',        'Buena calidad nutricional');
+      case 'C': return _t('Qualité nutritionnelle moyenne',      'Average nutritional quality',     'جودة غذائية متوسطة',      'Calidad nutricional media');
+      case 'D': return _t('Mauvaise qualité nutritionnelle',     'Poor nutritional quality',        'جودة غذائية ضعيفة',       'Mala calidad nutricional');
+      case 'E': return _t('Très mauvaise qualité nutritionnelle','Very poor nutritional quality',   'جودة غذائية سيئة جداً',   'Muy mala calidad nutricional');
+      default:  return _t('Non évalué',                          'Not evaluated',                   'غير مُقيَّم',             'No evaluado');
+    }
+  }
+
+  // Explication Eco-Score A→E (4 langues)
+  String ecoExplain(String grade) {
+    switch (grade) {
+      case 'A': return _t('Très faible impact environnemental',  'Very low environmental impact',   'تأثير بيئي منخفض جداً',   'Impacto ambiental muy bajo');
+      case 'B': return _t('Faible impact environnemental',       'Low environmental impact',        'تأثير بيئي منخفض',        'Bajo impacto ambiental');
+      case 'C': return _t('Impact environnemental modéré',       'Moderate environmental impact',   'تأثير بيئي معتدل',        'Impacto ambiental moderado');
+      case 'D': return _t('Fort impact environnemental',         'High environmental impact',       'تأثير بيئي مرتفع',        'Alto impacto ambiental');
+      case 'E': return _t('Très fort impact environnemental',    'Very high environmental impact',  'تأثير بيئي مرتفع جداً',   'Impacto ambiental muy alto');
+      default:  return _t('Non évalué',                          'Not evaluated',                   'غير مُقيَّم',             'No evaluado');
+    }
+  }
+
+  String get barcodeCategories    => _t('Catégories',            'Categories',            'الفئات',                  'Categorías');
+  String get barcodeScanAgainBtn  => _t('Nouveau scan',          'New scan',              'مسح جديد',                'Nuevo escaneo');
+
+  // Instructions par matériau (4 langues)
+  List<String> barcodeGlassSteps() { switch(_locale) {
+    case 'en': return ['Empty the bottle completely', 'Remove the plastic cap (recycle separately)', 'Do not break the glass', 'Deposit in the green glass column'];
+    case 'ar': return ['أفرغ الزجاجة تماماً', 'أزل الغطاء البلاستيكي (أعد تدويره منفصلاً)', 'لا تكسر الزجاج', 'ضعها في عمود الزجاج الأخضر'];
+    case 'es': return ['Vacía la botella completamente', 'Retira el tapón de plástico (recícla aparte)', 'No romper el vidrio', 'Deposita en la columna verde de vidrio'];
+    default:   return ['Videz la bouteille complètement', 'Retirez le bouchon plastique (recycler séparément)', 'Ne cassez pas le verre', 'Déposez dans la colonne verre verte'];
+  }}
+  List<String> barcodePlasticSteps() { switch(_locale) {
+    case 'en': return ['Empty and rinse the container', 'Crush it to save space', 'Put the cap back on', 'Drop in the yellow ECOVAL bin'];
+    case 'ar': return ['أفرغ العبوة واشطفها', 'اسحقها لتوفير المساحة', 'أعد وضع الغطاء', 'ضعها في الحاوية الصفراء ECOVAL'];
+    case 'es': return ['Vacía y enjuaga el envase', 'Aplástalo para ahorrar espacio', 'Pon el tapón', 'Deposita en el contenedor amarillo ECOVAL'];
+    default:   return ['Videz et rincez l\'emballage', 'Écrasez-le pour gagner de la place', 'Remettez le bouchon', 'Déposez dans le bac jaune ECOVAL'];
+  }}
+  List<String> barcodeMetalSteps() { switch(_locale) {
+    case 'en': return ['Empty the can or tin completely', 'Rinse if greasy', 'Crush if possible', 'Drop in the yellow ECOVAL bin'];
+    case 'ar': return ['أفرغ العلبة تماماً', 'اشطفها إذا كانت دهنية', 'اسحقها إذا أمكن', 'ضعها في الحاوية الصفراء ECOVAL'];
+    case 'es': return ['Vacía la lata completamente', 'Enjuaga si está grasosa', 'Aplástala si es posible', 'Deposita en el contenedor amarillo ECOVAL'];
+    default:   return ['Videz entièrement la boîte ou canette', 'Rincez si elle est grasse', 'Écrasez si possible', 'Déposez dans le bac jaune ECOVAL'];
+  }}
+  List<String> barcodeCardboardSteps() { switch(_locale) {
+    case 'en': return ['Empty and flatten the box', 'Remove plastic windows or labels if possible', 'Do not mix with wet cardboard', 'Drop in the blue bin'];
+    case 'ar': return ['أفرغ العلبة واطوِها', 'أزل النوافذ البلاستيكية إن أمكن', 'لا تخلطه بالكرتون المبلل', 'ضعه في الحاوية الزرقاء'];
+    case 'es': return ['Vacía y aplana la caja', 'Quita ventanas plásticas si es posible', 'No mezclar con cartón mojado', 'Deposita en el contenedor azul'];
+    default:   return ['Videz et aplatissez la boîte', 'Retirez les fenêtres plastiques si possible', 'Ne mélangez pas avec du carton mouillé', 'Déposez dans le bac bleu'];
+  }}
+  List<String> barcodeNonRecyclableSteps() { switch(_locale) {
+    case 'en': return ['This packaging cannot be recycled', 'Place in the black general waste bin', 'Try to favour products with recyclable packaging next time'];
+    case 'ar': return ['هذا التغليف غير قابل للتدوير', 'ضعه في الحاوية السوداء للنفايات العامة', 'حاول اختيار منتجات بتغليف قابل للتدوير في المرة القادمة'];
+    case 'es': return ['Este envase no es reciclable', 'Colócalo en el contenedor negro de residuos generales', 'Intenta elegir productos con envase reciclable la próxima vez'];
+    default:   return ['Cet emballage n\'est pas recyclable', 'Déposez-le dans le bac noir des ordures ménagères', 'Essayez de privilégier des produits à emballage recyclable la prochaine fois'];
+  }}
+
+  // ── Home badges environnement ─────────────────────────────────────────────
+  String get badgeWater        => _t('Eau',    'Water',  'الماء',   'Agua');
+  String get badgeWaterStatus  => _t('Normal', 'Normal', 'عادي',    'Normal');
+
+  // Statuts température
+  String tempStatus(double temp) {
+    if (temp < 0)  return _t('Très froid', 'Very cold',  'بارد جداً', 'Muy frío');
+    if (temp < 15) return _t('Frais',      'Fresh',      'بارد',      'Fresco');
+    if (temp < 25) return _t('Agréable',   'Pleasant',   'معتدل',     'Agradable');
+    if (temp < 35) return _t('Chaud',      'Warm',       'دافئ',      'Cálido');
+    return               _t('Très chaud',  'Very hot',   'حار جداً',  'Muy caliente');
+  }
+
+  // Statuts AQI (selon tableau OMS)
+  String aqiStatus(int aqi) {
+    if (aqi <= 50)  return _t('Bon',           'Good',                    'جيد',            'Bueno');
+    if (aqi <= 100) return _t('Modéré',         'Moderate',               'معتدل',           'Moderado');
+    if (aqi <= 150) return _t('Sensibles',       'Sensitive groups',       'حساسون',          'Sensibles');
+    if (aqi <= 200) return _t('Mauvais',         'Unhealthy',              'غير صحي',         'No saludable');
+    if (aqi <= 300) return _t('Très mauvais',    'Very unhealthy',         'سيء جداً',        'Muy malo');
+    return               _t('Dangereux',         'Hazardous',              'خطر',             'Peligroso');
+  }
+
+  // ── Profil — outils éco ───────────────────────────────────────────────────
+  String get profileEcoTools   => _t('Outils éco',    'Eco tools',    'أدوات بيئية',   'Herramientas eco');
+  String get airQualityGpsError    => _t(
+    'GPS désactivé — données de Casablanca affichées',
+    'GPS disabled — showing Casablanca data',
+    'GPS معطّل — عرض بيانات الدار البيضاء',
+    'GPS desactivado — mostrando datos de Casablanca');
+  String get airQualityGpsHint     => _t(
+    'Activez le GPS pour voir la qualité de l\'air de votre ville',
+    'Enable GPS to see your city\'s air quality',
+    'فعّل GPS لعرض جودة هواء مدينتك',
+    'Activa el GPS para ver la calidad del aire de tu ciudad');
+  String get airQualityPermError   => _t(
+    'Permission GPS refusée — données de Casablanca',
+    'GPS permission denied — Casablanca data',
+    'تم رفض إذن GPS — بيانات الدار البيضاء',
+    'Permiso GPS denegado — datos de Casablanca');
+  String get airQualityNetError    => _t(
+    'Impossible de charger les données. Vérifiez votre connexion.',
+    'Cannot load data. Check your connection.',
+    'تعذّر تحميل البيانات. تحقق من اتصالك.',
+    'No se pueden cargar los datos. Verifica tu conexión.');
+  String get menuWeather       => _t('Météo',          'Weather',      'الطقس',         'Clima');
+  String get menuAirQuality    => _t('Qualité de l\'air', 'Air quality', 'جودة الهواء', 'Calidad del aire');
+  String get menuWaterFoot     => _t('Empreinte eau',  'Water footprint', 'بصمة الماء', 'Huella hídrica');
+  String get menuQuiz          => _t('Quiz recyclage', 'Recycling quiz',  'اختبار التدوير', 'Quiz de reciclaje');
+  String get menuBarcodeScanner=> _t('Code-barres produit', 'Product barcode', 'باركود المنتج', 'Código de barras');
 
   // ── Screen titles ─────────────────────────────────────────────────────────
   String get myStats         => _t('Mes Statistiques', 'My Statistics', 'إحصائياتي', 'Mis Estadísticas');

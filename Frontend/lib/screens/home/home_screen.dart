@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -7,6 +8,7 @@ import '../../data/did_you_know_data.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/avatar_provider.dart';
+import '../../providers/environment_providers.dart';
 import '../../models/user_model.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
@@ -25,6 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late Animation<double> _counterAnim;
   final _scrollCtrl = ScrollController();
   bool _headerCollapsed = false;
+  Timer? _envRefreshTimer;
 
   @override
   void initState() {
@@ -35,6 +38,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     )..forward();
     _counterAnim = CurvedAnimation(parent: _counterCtrl, curve: Curves.easeOut);
     _scrollCtrl.addListener(_onScroll);
+    // RafraÃ®chissement automatique mÃ©tÃ©o + qualitÃ© air toutes les 10 min
+    _envRefreshTimer = Timer.periodic(const Duration(minutes: 10), (_) {
+      if (mounted) {
+        ref.invalidate(weatherEnvProvider);
+        ref.invalidate(airQualityEnvProvider);
+      }
+    });
   }
 
   void _onScroll() {
@@ -47,6 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    _envRefreshTimer?.cancel();
     _counterCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -54,11 +65,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(localeProvider).languageCode;
-    final s    = AppStrings.of(lang);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = ref.watch(userProvider);
-    final avatarPath = ref.watch(avatarPathProvider);
+    final lang        = ref.watch(localeProvider).languageCode;
+    final s           = AppStrings.of(lang);
+    final isDark      = Theme.of(context).brightness == Brightness.dark;
+    final user        = ref.watch(userProvider);
+    final avatarPath  = ref.watch(avatarPathProvider);
+    final weatherAsync = ref.watch(weatherEnvProvider);
+    final aqiAsync     = ref.watch(airQualityEnvProvider);
 
     final quickActions = [
       (Icons.emoji_events_rounded,    s.qaBadges,       '/badges',      const Color(0xFFF39C12)),
@@ -68,21 +81,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       (Icons.emoji_flags_rounded,     s.qaChallenges,   '/challenges',  const Color(0xFFFF6B35)),
       (Icons.history_rounded,         s.qaHistory,      '/history',     const Color(0xFF607D8B)),
       (Icons.card_giftcard_rounded,   s.qaRewards,      '/rewards',     const Color(0xFFE91E63)),
-      (Icons.co2_rounded,             s.qaCalculator,   '/stats',       const Color(0xFF00BCD4)),
+      (Icons.air_rounded,             s.qaAirQuality,     '/air-quality',    const Color(0xFF26C6DA)),
+      (Icons.water_drop_rounded,      s.qaWaterFootprint, '/water-footprint', const Color(0xFF0288D1)),
+      (Icons.wb_sunny_rounded,        s.qaWeather,        '/weather',         const Color(0xFFFFA726)),
+      (Icons.quiz_rounded,            s.qaQuiz,           '/quiz',            const Color(0xFF7E57C2)),
+      (Icons.barcode_reader,          s.qaBarcode,        '/barcode',         const Color(0xFF26A69A)),
     ];
 
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollCtrl,
         slivers: [
-          // ── AppBar ──────────────────────────────────────────────────────
+          // â”€â”€ AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverAppBar(
             expandedHeight: 180,
             floating: false,
             pinned: true,
             backgroundColor:
                 isDark ? AppColors.darkBackground : AppColors.background,
-            // Logo visible uniquement quand la barre est collapsée (scroll)
+            // Logo visible uniquement quand la barre est collapsÃ©e (scroll)
             title: _headerCollapsed
                 ? ClipOval(
                     child: Image.asset(
@@ -103,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Logo + Bonjour + icônes sur la même ligne ──────
+                        // â”€â”€ Logo + Bonjour + icÃ´nes sur la mÃªme ligne â”€â”€â”€â”€â”€â”€
                         Row(
                           children: [
                             // Logo
@@ -136,7 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${s.greetingPrefix}, ${user.name.split(' ').first} 🌿',
+                                    '${s.greetingPrefix}, ${user.name.split(' ').first} ðŸŒ¿',
                                     style: const TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 17,
@@ -155,7 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ],
                               ),
                             ),
-                            // Icônes
+                            // IcÃ´nes
                             GestureDetector(
                               onTap: () => context.go('/notifications'),
                               child: Stack(
@@ -209,17 +226,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             ),
                           ],
                         ).animate().fadeIn(duration: 350.ms),
-                        const SizedBox(height: 16),
-                        // ── Stats mini ─────────────────────────────────────
-                        Row(
-                          children: [
-                            _MiniStat(label: s.points,     value: user.points,          anim: _counterAnim),
-                            const SizedBox(width: 16),
-                            _MiniStat(label: s.scans,      value: user.scans,           anim: _counterAnim),
-                            const SizedBox(width: 16),
-                            _MiniStat(label: s.co2Avoided, value: user.co2Saved.toInt(), anim: _counterAnim),
-                          ],
-                        ),
+                        const SizedBox(height: 14),
+                        // â”€â”€ Badges environnement (remplace les mini-stats) â”€â”€
+                        Row(children: [
+                          _AppBarEnvBadge(
+                            icon:  Icons.wb_sunny_rounded,
+                            value: weatherAsync.when(
+                              data:    (d) => d != null ? '${d.temp.round()}Â°C' : '--',
+                              loading: ()  => '...',
+                              error:   (e, t) => '--',
+                            ),
+                            label: weatherAsync.when(
+                              data:    (d) => d != null ? s.tempStatus(d.temp) : '',
+                              loading: ()  => '',
+                              error:   (e, t) => '',
+                            ),
+                            route: '/weather',
+                          ),
+                          const SizedBox(width: 10),
+                          _AppBarEnvBadge(
+                            icon:  Icons.air_rounded,
+                            value: aqiAsync.when(
+                              data:    (d) => d != null ? 'AQI ${d.aqi}' : '--',
+                              loading: ()  => '...',
+                              error:   (e, t) => '--',
+                            ),
+                            label: aqiAsync.when(
+                              data:    (d) => d != null ? s.aqiStatus(d.aqi) : '',
+                              loading: ()  => '',
+                              error:   (e, t) => '',
+                            ),
+                            route: '/air-quality',
+                          ),
+                          const SizedBox(width: 10),
+                          _AppBarEnvBadge(
+                            icon:  Icons.water_drop_rounded,
+                            value: '150 L',
+                            label: s.badgeWaterStatus,
+                            route: '/water-footprint',
+                          ),
+                        ]),
                       ],
                     ),
                   ),
@@ -233,42 +279,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             sliver: SliverList(
               delegate: SliverChildListDelegate([
 
-                // ── Objectif hebdomadaire ──────────────────────────────
+                // â”€â”€ Objectif hebdomadaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _WeeklyCard(counterAnim: _counterAnim, s: s, user: user)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 130.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 16),
 
-                // ── Impact environnemental (3 cartes) ──────────────────
+                // â”€â”€ Impact environnemental (3 cartes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _ImpactRow(anim: _counterAnim, user: user, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 180.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 16),
 
-                // ── Le saviez-vous ? ───────────────────────────────────
+                // â”€â”€ Le saviez-vous ? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 const DidYouKnowCard()
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 200.ms)
                     .slideY(begin: 0.06),
                 const SizedBox(height: 20),
 
-                // ── Bouton Scan CTA ────────────────────────────────────
+                // â”€â”€ Bouton Code-barres CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                _BarcodeCTACard(label: s.barcodeCtaLabel, sub: s.barcodeCtaSub)
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 210.ms)
+                    .slideY(begin: 0.08),
+                const SizedBox(height: 12),
+
+                // â”€â”€ Bouton Scan CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _ScanCTACard(scanLabel: s.scanProduct, analyzeLabel: s.analyzeEcoImpact)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 220.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 20),
 
-                // ── Défi du jour ───────────────────────────────────────
+                // â”€â”€ DÃ©fi du jour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _DailyChallengeCard(anim: _counterAnim, dailyLabel: s.dailyChallenge, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 260.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 24),
 
-                // ── Actions rapides ────────────────────────────────────
+                // â”€â”€ Actions rapides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _SectionTitle(title: s.quickActions, onSeeAll: null, seeAllLabel: null)
                     .animate().fadeIn(duration: 280.ms, delay: 300.ms),
                 const SizedBox(height: 14),
@@ -295,7 +348,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
                 const SizedBox(height: 24),
 
-                // ── Catégories de tri ──────────────────────────────────
+                // â”€â”€ CatÃ©gories de tri â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _SectionTitle(title: s.sortingCategories, seeAllLabel: s.seeAll, onSeeAll: () => context.go('/guide'))
                     .animate().fadeIn(duration: 280.ms, delay: 360.ms),
                 const SizedBox(height: 12),
@@ -303,21 +356,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     .animate().fadeIn(duration: 350.ms, delay: 380.ms).slideX(begin: 0.08),
                 const SizedBox(height: 24),
 
-                // ── Conseil éco ────────────────────────────────────────
+                // â”€â”€ Conseil Ã©co â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _EcoTipBanner(s: s, lang: lang)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 400.ms)
                     .slideX(begin: 0.08),
                 const SizedBox(height: 20),
 
-                // ── Impact communautaire ───────────────────────────────
+                // â”€â”€ Impact communautaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _CommunityCard(anim: _counterAnim, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 430.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 24),
 
-                // ── Activité récente ───────────────────────────────────
+                // â”€â”€ ActivitÃ© rÃ©cente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _SectionTitle(
                   title: s.recentActivity,
                   seeAllLabel: s.seeAll,
@@ -359,20 +412,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     const catIcons = <String, IconData>{
       'Plastique':    Icons.opacity_rounded,
       'Verre':        Icons.local_bar_outlined,
-      'Métal':        Icons.hardware_rounded,
+      'MÃ©tal':        Icons.hardware_rounded,
       'Papier':       Icons.article_outlined,
       'Organique':    Icons.compost_rounded,
-      'Électronique': Icons.electrical_services_rounded,
+      'Ã‰lectronique': Icons.electrical_services_rounded,
       'Textile':      Icons.checkroom_rounded,
       'Dangereux':    Icons.warning_amber_rounded,
     };
     const catColors = <String, Color>{
       'Plastique':    AppColors.plastic,
       'Verre':        AppColors.glass,
-      'Métal':        AppColors.metal,
+      'MÃ©tal':        AppColors.metal,
       'Papier':       AppColors.paper,
       'Organique':    Color(0xFF795548),
-      'Électronique': AppColors.electronics,
+      'Ã‰lectronique': AppColors.electronics,
       'Textile':      Color(0xFF9B59B6),
       'Dangereux':    Color(0xFFE74C3C),
     };
@@ -402,52 +455,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String get lang => ref.read(localeProvider).languageCode;
 }
 
-// ── Mini stat header ──────────────────────────────────────────────────────────
-class _MiniStat extends StatelessWidget {
+// â”€â”€ Badge environnement dans l'AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _AppBarEnvBadge extends StatelessWidget {
+  final IconData icon;
+  final String value;
   final String label;
-  final int value;
-  final Animation<double> anim;
-  const _MiniStat({required this.label, required this.value, required this.anim});
+  final String route;
+  const _AppBarEnvBadge({
+    required this.icon, required this.value,
+    required this.label, required this.route,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedBuilder(
-              animation: anim,
-              builder: (_, _) => Text(
-                '${(value * anim.value).round()}',
-                style: const TextStyle(
-                  fontFamily: 'Poppins', fontSize: 18,
-                  fontWeight: FontWeight.bold, color: Colors.white,
-                ),
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins', fontSize: 10,
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+      child: GestureDetector(
+        onTap: () => context.push(route),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.22),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, color: Colors.white, size: 17),
+            const SizedBox(height: 3),
+            Text(value, style: const TextStyle(
+              fontFamily: 'Poppins', fontSize: 13,
+              fontWeight: FontWeight.bold, color: Colors.white,
+            )),
+            Text(label, style: TextStyle(
+              fontFamily: 'Poppins', fontSize: 10,
+              color: Colors.white.withValues(alpha: 0.85),
+            ), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ]),
         ),
       ),
     );
   }
 }
 
-// ── Carte objectif hebdomadaire ───────────────────────────────────────────────
+// â”€â”€ Carte objectif hebdomadaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _WeeklyCard extends StatelessWidget {
   final Animation<double> counterAnim;
   final AppStrings s;
@@ -542,7 +591,7 @@ class _WeeklyCard extends StatelessWidget {
   }
 }
 
-// ── Impact environnemental (3 mini-cartes) ────────────────────────────────────
+// â”€â”€ Impact environnemental (3 mini-cartes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ImpactRow extends StatelessWidget {
   final Animation<double> anim;
   final UserModel user;
@@ -612,7 +661,7 @@ class _ImpactRow extends StatelessWidget {
   }
 }
 
-// ── Bouton Scan CTA ───────────────────────────────────────────────────────────
+// â”€â”€ Bouton Scan CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ScanCTACard extends StatefulWidget {
   final String scanLabel;
   final String analyzeLabel;
@@ -709,7 +758,7 @@ class _ScanCTACardState extends State<_ScanCTACard>
   }
 }
 
-// ── Défi du jour ─────────────────────────────────────────────────────────────
+// â”€â”€ DÃ©fi du jour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DailyChallengeCard extends StatelessWidget {
   final Animation<double> anim;
   final String dailyLabel;
@@ -807,7 +856,7 @@ class _DailyChallengeCard extends StatelessWidget {
   }
 }
 
-// ── Catégories de tri (scroll horizontal) ────────────────────────────────────
+// â”€â”€ CatÃ©gories de tri (scroll horizontal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CategoriesRow extends StatelessWidget {
   final AppStrings s;
   const _CategoriesRow({required this.s});
@@ -878,7 +927,7 @@ class _CategoriesRow extends StatelessWidget {
   }
 }
 
-// ── Conseil éco ───────────────────────────────────────────────────────────────
+// â”€â”€ Conseil Ã©co â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EcoTipBanner extends StatelessWidget {
   final AppStrings s;
   final String lang;
@@ -938,7 +987,7 @@ class _EcoTipBanner extends StatelessWidget {
   }
 }
 
-// ── Impact communautaire ──────────────────────────────────────────────────────
+// â”€â”€ Impact communautaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CommunityCard extends StatelessWidget {
   final Animation<double> anim;
   final AppStrings s;
@@ -1052,7 +1101,7 @@ class _CommStat extends StatelessWidget {
   }
 }
 
-// ── Titre de section ──────────────────────────────────────────────────────────
+// â”€â”€ Titre de section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SectionTitle extends StatelessWidget {
   final String title;
   final VoidCallback? onSeeAll;
@@ -1089,7 +1138,7 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// ── Carte action rapide ───────────────────────────────────────────────────────
+// â”€â”€ Carte action rapide â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _QuickActionCard extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -1170,7 +1219,7 @@ class _QuickActionCardState extends State<_QuickActionCard>
   }
 }
 
-// ── Item activité récente ─────────────────────────────────────────────────────
+// â”€â”€ Item activitÃ© rÃ©cente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActivityItem extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -1244,6 +1293,63 @@ class _ActivityItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+// â”€â”€ Bouton Barcode CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _BarcodeCTACard extends StatelessWidget {
+  final String label;
+  final String sub;
+  const _BarcodeCTACard({required this.label, required this.sub});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/barcode'),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF00838F), Color(0xFF26A69A)],
+            begin: Alignment.centerLeft, end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(
+            color: const Color(0xFF26A69A).withValues(alpha: 0.3),
+            blurRadius: 12, offset: const Offset(0, 4),
+          )],
+        ),
+        child: Row(children: [
+          const SizedBox(width: 18),
+          Container(
+            width: 42, height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.2),
+            ),
+            child: const Icon(Icons.barcode_reader, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(
+                fontFamily: 'Poppins', fontSize: 15,
+                fontWeight: FontWeight.bold, color: Colors.white,
+              )),
+              Text(sub, style: const TextStyle(
+                fontFamily: 'Poppins', fontSize: 11, color: Colors.white70,
+              )),
+            ],
+          ),
+          const Spacer(),
+          const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+          const SizedBox(width: 18),
+        ]),
       ),
     );
   }
