@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/did_you_know_data.dart';
@@ -13,6 +14,7 @@ import '../../models/user_model.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/did_you_know_card.dart';
+import '../../services/scan_api_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -38,6 +40,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     )..forward();
     _counterAnim = CurvedAnimation(parent: _counterCtrl, curve: Curves.easeOut);
     _scrollCtrl.addListener(_onScroll);
+    // Réveille le serveur Render en arrière-plan pour éviter le cold start au premier scan
+    ScanApiService.isAvailable();
     // RafraÃ®chissement automatique mÃ©tÃ©o + qualitÃ© air toutes les 10 min
     _envRefreshTimer = Timer.periodic(const Duration(minutes: 10), (_) {
       if (mounted) {
@@ -48,8 +52,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _onScroll() {
-    // expandedHeight(180) - kToolbarHeight(56) = 124
-    final collapsed = _scrollCtrl.offset > 124;
+    // expandedHeight(160) - kToolbarHeight(56) = 104
+    final collapsed = _scrollCtrl.offset > 104;
     if (collapsed != _headerCollapsed) {
       setState(() => _headerCollapsed = collapsed);
     }
@@ -73,6 +77,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final weatherAsync = ref.watch(weatherEnvProvider);
     final aqiAsync     = ref.watch(airQualityEnvProvider);
 
+    // ── Valeurs pré-calculées pour les badges verre dans le header ──────────
+    final tempStr = weatherAsync.when(
+      data:  (d) => d != null ? '${(d as dynamic).temp.round()}°C' : '--',
+      loading: () => '·',
+      error: (e, st) => '--',
+    );
+    final tempLabel = weatherAsync.when(
+      data:  (d) => d != null ? s.tempStatus((d as dynamic).temp as double) : '',
+      loading: () => '',
+      error: (e, st) => '',
+    );
+    final aqiStr = aqiAsync.when(
+      data:  (d) => d != null ? 'AQI ${(d as dynamic).aqi}' : '--',
+      loading: () => '·',
+      error: (e, st) => '--',
+    );
+    final aqiLabel = aqiAsync.when(
+      data:  (d) => d != null ? s.aqiStatus((d as dynamic).aqi as int) : '',
+      loading: () => '',
+      error: (e, st) => '',
+    );
+    final aqiColor = aqiAsync.when(
+      data:  (d) => d != null ? Color((d as dynamic).color as int) : const Color(0xFF26C6DA),
+      loading: () => const Color(0xFF26C6DA),
+      error: (e, st) => const Color(0xFF26C6DA),
+    );
+    final co2Str = user.co2Saved > 0 ? '${user.co2Saved.round()} g' : '0 g';
+
     final quickActions = [
       (Icons.emoji_events_rounded,    s.qaBadges,       '/badges',      const Color(0xFFF39C12)),
       (Icons.menu_book_rounded,       s.qaGuide,        '/guide',       const Color(0xFF3498DB)),
@@ -94,179 +126,149 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         slivers: [
           // â”€â”€ AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverAppBar(
-            expandedHeight: 180,
+            expandedHeight: 160,
             floating: false,
             pinned: true,
-            backgroundColor:
-                isDark ? AppColors.darkBackground : AppColors.background,
-            // Logo visible uniquement quand la barre est collapsÃ©e (scroll)
+            // Même vert que le gradient pour cohérence visuelle (pas de vert foncé)
+            backgroundColor: const Color(0xFF27AE60),
             title: _headerCollapsed
                 ? ClipOval(
-                    child: Image.asset(
-                      'assets/icons/app_icon.png',
-                      width: 34,
-                      height: 34,
-                      fit: BoxFit.cover,
-                    ),
+                    child: Image.asset('assets/icons/app_icon.png',
+                        width: 34, height: 34, fit: BoxFit.cover),
                   )
                 : null,
             centerTitle: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // â”€â”€ Logo + Bonjour + icÃ´nes sur la mÃªme ligne â”€â”€â”€â”€â”€â”€
-                        Row(
-                          children: [
-                            // Logo
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.2),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  width: 1.5,
+              background: ClipPath(
+                clipper: _BottomWaveClipper(),
+                child: CustomPaint(
+                  painter: _NatureHeaderPainter(),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Ligne 1 : Logo + Nom + Icônes ─────────────
+                          Row(
+                            children: [
+                              Container(
+                                width: 42, height: 42,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: ClipOval(
+                                  child: Image.asset('assets/icons/app_icon.png',
+                                      fit: BoxFit.cover),
+                                ),
+                              ).animate().fadeIn(duration: 400.ms).scale(
+                                  begin: const Offset(0.7, 0.7),
+                                  duration: 400.ms, curve: Curves.easeOut),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${s.greetingPrefix}, ${user.name.split(' ').first} \u{1F33F}',
+                                      style: const TextStyle(fontFamily: 'Poppins',
+                                        fontSize: 17, fontWeight: FontWeight.bold,
+                                        color: Colors.white),
+                                    ).animate().fadeIn(duration: 350.ms).slideX(begin: -0.1),
+                                    Text(s.readySubtitle,
+                                      style: TextStyle(fontFamily: 'Poppins',
+                                        fontSize: 11,
+                                        color: Colors.white.withValues(alpha: 0.8)),
+                                    ).animate().fadeIn(duration: 350.ms, delay: 80.ms),
+                                  ],
                                 ),
                               ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/icons/app_icon.png',
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ).animate().fadeIn(duration: 400.ms).scale(
-                              begin: const Offset(0.7, 0.7),
-                              duration: 400.ms,
-                              curve: Curves.easeOut,
-                            ),
-                            const SizedBox(width: 10),
-                            // Bonjour + sous-titre
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${s.greetingPrefix}, ${user.name.split(' ').first} ðŸŒ¿',
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ).animate().fadeIn(duration: 350.ms).slideX(begin: -0.1),
-                                  Text(
-                                    s.readySubtitle,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 11,
-                                      color: Colors.white.withValues(alpha: 0.8),
-                                    ),
-                                  ).animate().fadeIn(duration: 350.ms, delay: 80.ms),
-                                ],
-                              ),
-                            ),
-                            // IcÃ´nes
-                            GestureDetector(
-                              onTap: () => context.go('/notifications'),
-                              child: Stack(
-                                children: [
+                              GestureDetector(
+                                onTap: () => context.go('/notifications'),
+                                child: Stack(children: [
                                   Container(
                                     padding: const EdgeInsets.all(9),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withValues(alpha: 0.2),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(
-                                        Icons.notifications_outlined,
+                                    child: const Icon(Icons.notifications_outlined,
                                         color: Colors.white, size: 20),
                                   ),
-                                  Positioned(
-                                    top: 7, right: 7,
-                                    child: Container(
-                                      width: 8, height: 8,
+                                  Positioned(top: 7, right: 7,
+                                    child: Container(width: 8, height: 8,
                                       decoration: const BoxDecoration(
                                         color: Color(0xFFFF6B6B),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
                                   ),
-                                ],
+                                ]),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => context.go('/profile'),
-                              child: Container(
-                                width: 40, height: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.5),
-                                      width: 2),
-                                  image: avatarPath != null
-                                      ? DecorationImage(
-                                          image: FileImage(File(avatarPath)),
-                                          fit: BoxFit.cover,
-                                        )
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => context.go('/profile'),
+                                child: Container(
+                                  width: 40, height: 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    border: Border.all(
+                                        color: Colors.white.withValues(alpha: 0.5),
+                                        width: 2),
+                                    image: avatarPath != null
+                                        ? DecorationImage(
+                                            image: FileImage(File(avatarPath)),
+                                            fit: BoxFit.cover)
+                                        : null,
+                                  ),
+                                  child: avatarPath == null
+                                      ? const Icon(Icons.person_rounded,
+                                          color: Colors.white, size: 22)
                                       : null,
                                 ),
-                                child: avatarPath == null
-                                    ? const Icon(Icons.person_rounded,
-                                        color: Colors.white, size: 22)
-                                    : null,
                               ),
+                            ],
+                          ).animate().fadeIn(duration: 350.ms),
+
+                          const SizedBox(height: 10),
+
+                          // ── Phrase environnementale (Brush Script) ─────
+                          Text(
+                            s.ecoHeaderQuote,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.dancingScript(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1.4,
+                              shadows: const [
+                                Shadow(
+                                  color: Color(0x66000000),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ).animate().fadeIn(duration: 350.ms),
-                        const SizedBox(height: 14),
-                        // â”€â”€ Badges environnement (remplace les mini-stats) â”€â”€
-                        Row(children: [
-                          _AppBarEnvBadge(
-                            icon:  Icons.wb_sunny_rounded,
-                            value: weatherAsync.when(
-                              data:    (d) => d != null ? '${d.temp.round()}Â°C' : '--',
-                              loading: ()  => '...',
-                              error:   (e, t) => '--',
-                            ),
-                            label: weatherAsync.when(
-                              data:    (d) => d != null ? s.tempStatus(d.temp) : '',
-                              loading: ()  => '',
-                              error:   (e, t) => '',
-                            ),
-                            route: '/weather',
+                          )
+                          .animate()
+                          .fadeIn(duration: 700.ms, delay: 220.ms)
+                          .slideY(begin: 0.10, duration: 700.ms, curve: Curves.easeOut)
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .shimmer(
+                            duration: 2800.ms,
+                            color: Colors.white.withValues(alpha: 0.45),
+                            angle: 0.25,
                           ),
-                          const SizedBox(width: 10),
-                          _AppBarEnvBadge(
-                            icon:  Icons.air_rounded,
-                            value: aqiAsync.when(
-                              data:    (d) => d != null ? 'AQI ${d.aqi}' : '--',
-                              loading: ()  => '...',
-                              error:   (e, t) => '--',
-                            ),
-                            label: aqiAsync.when(
-                              data:    (d) => d != null ? s.aqiStatus(d.aqi) : '',
-                              loading: ()  => '',
-                              error:   (e, t) => '',
-                            ),
-                            route: '/air-quality',
-                          ),
-                          const SizedBox(width: 10),
-                          _AppBarEnvBadge(
-                            icon:  Icons.water_drop_rounded,
-                            value: '150 L',
-                            label: s.badgeWaterStatus,
-                            route: '/water-footprint',
-                          ),
-                        ]),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -274,8 +276,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
 
+          // ── Badges (sous la vague, sur fond blanc) ─────────────────────────
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  _ColoredBadge(
+                    icon: Icons.wb_sunny_rounded,
+                    value: tempStr,
+                    label: tempLabel,
+                    color: const Color(0xFFFF8C00),
+                    route: '/weather',
+                  ),
+                  const SizedBox(width: 10),
+                  _ColoredBadge(
+                    icon: Icons.air_rounded,
+                    value: aqiStr,
+                    label: aqiLabel,
+                    color: aqiColor,
+                    route: '/air-quality',
+                  ),
+                  const SizedBox(width: 10),
+                  _ColoredBadge(
+                    icon: Icons.eco_rounded,
+                    value: co2Str,
+                    label: s.co2Saved,
+                    color: const Color(0xFF00897B),
+                    route: '/stats',
+                  ),
+                ],
+              ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+            ),
+          ),
+
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
 
@@ -293,25 +329,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     .slideY(begin: 0.08),
                 const SizedBox(height: 16),
 
-                // â”€â”€ Le saviez-vous ? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                const DidYouKnowCard()
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 200.ms)
-                    .slideY(begin: 0.06),
-                const SizedBox(height: 20),
-
                 // â”€â”€ Bouton Code-barres CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _BarcodeCTACard(label: s.barcodeCtaLabel, sub: s.barcodeCtaSub)
                     .animate()
-                    .fadeIn(duration: 350.ms, delay: 210.ms)
+                    .fadeIn(duration: 350.ms, delay: 200.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 12),
 
                 // â”€â”€ Bouton Scan CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _ScanCTACard(scanLabel: s.scanProduct, analyzeLabel: s.analyzeEcoImpact)
                     .animate()
-                    .fadeIn(duration: 350.ms, delay: 220.ms)
+                    .fadeIn(duration: 350.ms, delay: 210.ms)
                     .slideY(begin: 0.08),
+                const SizedBox(height: 20),
+
+                // â”€â”€ Le saviez-vous ? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                const DidYouKnowCard()
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 220.ms)
+                    .slideY(begin: 0.06),
                 const SizedBox(height: 20),
 
                 // â”€â”€ DÃ©fi du jour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -456,14 +492,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 }
 
 // â”€â”€ Badge environnement dans l'AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _AppBarEnvBadge extends StatelessWidget {
+// ── Badges environnement (rangée sous le header) ─────────────────────────────
+// ── Badge verre (frosted glass) dans la zone verte ───────────────────────────
+// ── Badge coloré — hors zone verte, légèrement remonté sur la vague ──────────
+class _ColoredBadge extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+  final Color color;
   final String route;
-  const _AppBarEnvBadge({
-    required this.icon, required this.value,
-    required this.label, required this.route,
+  const _ColoredBadge({
+    required this.icon, required this.value, required this.label,
+    required this.color, required this.route,
   });
 
   @override
@@ -472,28 +512,59 @@ class _AppBarEnvBadge extends StatelessWidget {
       child: GestureDetector(
         onTap: () => context.push(route),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.22),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1),
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.38),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, color: Colors.white, size: 17),
-            const SizedBox(height: 3),
+            Icon(icon, color: Colors.white, size: 19),
+            const SizedBox(height: 4),
             Text(value, style: const TextStyle(
-              fontFamily: 'Poppins', fontSize: 13,
+              fontFamily: 'Poppins', fontSize: 12,
               fontWeight: FontWeight.bold, color: Colors.white,
             )),
-            Text(label, style: TextStyle(
-              fontFamily: 'Poppins', fontSize: 10,
-              color: Colors.white.withValues(alpha: 0.85),
-            ), maxLines: 1, overflow: TextOverflow.ellipsis),
+            if (label.isNotEmpty)
+              Text(label,
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 9,
+                    color: Colors.white.withValues(alpha: 0.88)),
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+              ),
           ]),
         ),
       ),
     );
   }
+}
+
+// ── Découpe vague pour le bas de la zone verte ────────────────────────────────
+class _BottomWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 22);
+    path.quadraticBezierTo(
+      size.width * 0.25, size.height + 4,
+      size.width * 0.5,  size.height - 14,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.75, size.height - 32,
+      size.width,        size.height - 10,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_BottomWaveClipper old) => false;
 }
 
 // â”€â”€ Carte objectif hebdomadaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1300,10 +1371,32 @@ class _ActivityItem extends StatelessWidget {
 
 
 // â”€â”€ Bouton Barcode CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _BarcodeCTACard extends StatelessWidget {
+class _BarcodeCTACard extends StatefulWidget {
   final String label;
   final String sub;
   const _BarcodeCTACard({required this.label, required this.sub});
+  @override
+  State<_BarcodeCTACard> createState() => _BarcodeCTACardState();
+}
+
+class _BarcodeCTACardState extends State<_BarcodeCTACard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1324,24 +1417,32 @@ class _BarcodeCTACard extends StatelessWidget {
         ),
         child: Row(children: [
           const SizedBox(width: 18),
-          Container(
-            width: 42, height: 42,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.2),
+          // Icône avec animation pulse identique au bouton scan
+          AnimatedBuilder(
+            animation: _pulseCtrl,
+            builder: (_, child) => Transform.scale(
+              scale: 1.0 + _pulseCtrl.value * 0.1,
+              child: child,
             ),
-            child: const Icon(Icons.barcode_reader, color: Colors.white, size: 24),
+            child: Container(
+              width: 42, height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
+              child: const Icon(Icons.barcode_reader, color: Colors.white, size: 24),
+            ),
           ),
           const SizedBox(width: 14),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(
+              Text(widget.label, style: const TextStyle(
                 fontFamily: 'Poppins', fontSize: 15,
                 fontWeight: FontWeight.bold, color: Colors.white,
               )),
-              Text(sub, style: const TextStyle(
+              Text(widget.sub, style: const TextStyle(
                 fontFamily: 'Poppins', fontSize: 11, color: Colors.white70,
               )),
             ],
@@ -1353,4 +1454,130 @@ class _BarcodeCTACard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Illustration nature — fond du header ─────────────────────────────────────
+class _NatureHeaderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // ── Fond dégradé vert ──────────────────────────────────────────────────
+    final bgPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF27AE60), Color(0xFF1A6B3A)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    // ── Éclat lumineux en haut à gauche ───────────────────────────────────
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF2ECC71).withValues(alpha: 0.35),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(
+        center: Offset(size.width * 0.15, size.height * 0.25),
+        radius: size.width * 0.4,
+      ));
+    canvas.drawCircle(
+      Offset(size.width * 0.15, size.height * 0.25),
+      size.width * 0.4,
+      glowPaint,
+    );
+
+    // ── Arbre principal (droite) ───────────────────────────────────────────
+    final cx = size.width * 0.82;
+    final cy = size.height * 1.05;
+
+    // Tronc
+    final trunkPaint = Paint()
+      ..color = const Color(0xFF145A32)
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final trunkPath = Path()
+      ..moveTo(cx, cy)
+      ..cubicTo(cx - 3, cy - size.height * 0.28,
+                cx + 3, cy - size.height * 0.45,
+                cx, cy - size.height * 0.58);
+    canvas.drawPath(trunkPath, trunkPaint);
+
+    // Branches
+    final branchPaint = Paint()
+      ..color = const Color(0xFF145A32)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (final data in [
+      [cx, cy - size.height * 0.38, cx - 28, cy - size.height * 0.30],
+      [cx, cy - size.height * 0.30, cx + 24, cy - size.height * 0.22],
+      [cx, cy - size.height * 0.48, cx - 18, cy - size.height * 0.42],
+    ]) {
+      canvas.drawLine(
+        Offset(data[0], data[1]),
+        Offset(data[2], data[3]),
+        branchPaint,
+      );
+    }
+
+    // Canopée — plusieurs cercles qui se chevauchent
+    final canopyColors = [
+      [const Color(0xFF1ABC9C), 0.60, cx - 2, cy - size.height * 0.70, size.height * 0.20],
+      [const Color(0xFF27AE60), 0.80, cx - 22, cy - size.height * 0.60, size.height * 0.15],
+      [const Color(0xFF2ECC71), 0.65, cx + 20, cy - size.height * 0.58, size.height * 0.14],
+      [const Color(0xFF1E8449), 0.90, cx,      cy - size.height * 0.58, size.height * 0.13],
+      [const Color(0xFF52BE80), 0.55, cx - 10, cy - size.height * 0.76, size.height * 0.11],
+      [const Color(0xFF27AE60), 0.70, cx + 10, cy - size.height * 0.72, size.height * 0.10],
+    ];
+    for (final c in canopyColors) {
+      final p = Paint()
+        ..color = (c[0] as Color).withValues(alpha: c[1] as double)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(c[2] as double, c[3] as double), c[4] as double, p);
+    }
+
+    // ── Feuilles flottantes (gauche/centre) ────────────────────────────────
+    final leafPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.12)
+      ..style = PaintingStyle.fill;
+
+    for (final pos in [
+      [size.width * 0.06, size.height * 0.22, 6.0, 0.4],
+      [size.width * 0.18, size.height * 0.65, 5.0, -0.6],
+      [size.width * 0.38, size.height * 0.18, 7.0, 0.2],
+      [size.width * 0.52, size.height * 0.70, 5.0, 0.8],
+    ]) {
+      _drawLeaf(canvas, Offset(pos[0], pos[1]), pos[2], pos[3], leafPaint);
+    }
+
+    // ── Petits points lumineux ─────────────────────────────────────────────
+    final dotPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.20)
+      ..style = PaintingStyle.fill;
+    for (final p in [
+      [size.width * 0.10, size.height * 0.10, 2.0],
+      [size.width * 0.28, size.height * 0.38, 1.5],
+      [size.width * 0.46, size.height * 0.12, 2.0],
+      [size.width * 0.60, size.height * 0.55, 1.5],
+    ]) {
+      canvas.drawCircle(Offset(p[0], p[1]), p[2], dotPaint);
+    }
+  }
+
+  void _drawLeaf(Canvas canvas, Offset center, double size, double angle, Paint paint) {
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    final path = Path()
+      ..moveTo(0, -size)
+      ..cubicTo(size * 1.2, -size * 0.5, size * 1.2, size * 0.5, 0, size)
+      ..cubicTo(-size * 1.2, size * 0.5, -size * 1.2, -size * 0.5, 0, -size);
+    canvas.drawPath(path, paint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_NatureHeaderPainter old) => false;
 }

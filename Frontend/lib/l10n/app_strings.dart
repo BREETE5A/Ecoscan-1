@@ -181,6 +181,11 @@ class AppStrings {
                                    'Ready to save the planet?',
                                    'هل أنت مستعد لإنقاذ الكوكب؟',
                                    '¿Listo para salvar el planeta?');
+  String get ecoHeaderQuote  => _t(
+    '🌿 La nature est un trésor fragile — chaque geste compte.',
+    '🌿 Nature is a fragile treasure — every action matters.',
+    '🌿 الطبيعة كنز هش — كل تصرف له أثره.',
+    '🌿 La naturaleza es un tesoro frágil — cada gesto cuenta.');
   String get weeklyGoal      => _t('OBJECTIF HEBDO', 'WEEKLY GOAL', 'الهدف الأسبوعي', 'META SEMANAL');
   String get recycled        => _t('de déchets recyclés', 'of recycled waste', 'من النفايات المُعاد تدويرها', 'de residuos reciclados');
   String get quickActions    => _t('Actions rapides', 'Quick actions', 'الإجراءات السريعة', 'Acciones rápidas');
