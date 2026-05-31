@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 
@@ -13,11 +14,40 @@ class WaterFootprintScreen extends ConsumerStatefulWidget {
 }
 
 class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
-  double _shower = 7;       // minutes
-  double _dishes = 2;       // fois/jour
-  double _laundry = 3;      // fois/semaine
-  double _garden = 0;       // minutes/jour
-  double _toilet = 5;       // chasses/jour
+  double _shower = 7;
+  double _dishes = 2;
+  double _laundry = 3;
+  double _garden = 0;
+  double _toilet = 5;
+
+  static const _kShower  = 'wf_shower';
+  static const _kDishes  = 'wf_dishes';
+  static const _kLaundry = 'wf_laundry';
+  static const _kGarden  = 'wf_garden';
+  static const _kToilet  = 'wf_toilet';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadValues();
+  }
+
+  Future<void> _loadValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _shower  = prefs.getDouble(_kShower)  ?? 7;
+      _dishes  = prefs.getDouble(_kDishes)  ?? 2;
+      _laundry = prefs.getDouble(_kLaundry) ?? 3;
+      _garden  = prefs.getDouble(_kGarden)  ?? 0;
+      _toilet  = prefs.getDouble(_kToilet)  ?? 5;
+    });
+  }
+
+  Future<void> _save(String key, double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(key, value);
+  }
 
   // Consommation en litres
   double get _showerL    => _shower * 10;
@@ -164,35 +194,35 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
           label: lang == 'ar' ? 'مدة الدش' : lang == 'en' ? 'Shower duration' : 'Durée de douche',
           value: _shower, min: 2, max: 30, unit: lang == 'ar' ? 'دقيقة' : lang == 'en' ? 'min' : 'min',
           liters: _showerL, color: const Color(0xFF0288D1), isDark: isDark,
-          onChanged: (v) => setState(() => _shower = v),
+          onChanged: (v) { setState(() => _shower = v);  _save(_kShower,  v); },
         ),
         _WaterSlider(
           icon: Icons.set_meal_rounded,
           label: lang == 'ar' ? 'غسيل الأطباق' : lang == 'en' ? 'Dish washing' : 'Vaisselle',
           value: _dishes, min: 0, max: 6, unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : 'x/jour',
           liters: _dishesL, color: const Color(0xFF00897B), isDark: isDark,
-          onChanged: (v) => setState(() => _dishes = v),
+          onChanged: (v) { setState(() => _dishes = v);  _save(_kDishes,  v); },
         ),
         _WaterSlider(
           icon: Icons.local_laundry_service_rounded,
           label: lang == 'ar' ? 'غسيل الملابس' : lang == 'en' ? 'Laundry' : 'Machine à laver',
           value: _laundry, min: 0, max: 14, unit: lang == 'ar' ? 'مرة/أسبوع' : lang == 'en' ? 'x/week' : 'x/semaine',
           liters: _laundryL, color: const Color(0xFF7B1FA2), isDark: isDark,
-          onChanged: (v) => setState(() => _laundry = v),
+          onChanged: (v) { setState(() => _laundry = v); _save(_kLaundry, v); },
         ),
         _WaterSlider(
           icon: Icons.grass_rounded,
           label: lang == 'ar' ? 'ري الحديقة' : lang == 'en' ? 'Garden watering' : 'Arrosage jardin',
           value: _garden, min: 0, max: 60, unit: lang == 'ar' ? 'دقيقة/يوم' : lang == 'en' ? 'min/day' : 'min/jour',
           liters: _gardenL, color: const Color(0xFF388E3C), isDark: isDark,
-          onChanged: (v) => setState(() => _garden = v),
+          onChanged: (v) { setState(() => _garden = v);  _save(_kGarden,  v); },
         ),
         _WaterSlider(
           icon: Icons.wc_rounded,
           label: lang == 'ar' ? 'سحب الحمام' : lang == 'en' ? 'Toilet flushes' : 'Chasses d\'eau',
           value: _toilet, min: 1, max: 15, unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : 'x/jour',
           liters: _toiletL, color: const Color(0xFFE64A19), isDark: isDark,
-          onChanged: (v) => setState(() => _toilet = v),
+          onChanged: (v) { setState(() => _toilet = v);  _save(_kToilet,  v); },
         ),
       ]),
     );

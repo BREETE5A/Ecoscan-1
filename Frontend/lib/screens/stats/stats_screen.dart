@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -7,6 +8,22 @@ import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/scan_history_provider.dart';
+
+// ── Leaderboard Firestore (top 5) ─────────────────────────────────────────────
+final _statsLeaderProvider = StreamProvider<List<(String, int, String)>>((ref) {
+  const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+  return FirebaseFirestore.instance
+      .collection('users')
+      .orderBy('ecoPoints', descending: true)
+      .limit(5)
+      .snapshots()
+      .map((snap) => snap.docs.asMap().entries.map((e) {
+            final d = e.value.data();
+            final name = ((d['displayName'] as String?) ?? 'User').trim();
+            final pts  = (d['ecoPoints'] as num?)?.toInt() ?? 0;
+            return (name, pts, medals[e.key]);
+          }).toList());
+});
 
 // ── Circular gauge painter ────────────────────────────────────────────────────
 class _GaugePainter extends CustomPainter {
@@ -75,21 +92,47 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
   int _tabIndex = 0;
 
 
-  static const _weekData = [4.0, 7.5, 5.0, 9.0, 6.5, 12.5, 8.0];
-  static const _monthData = [28.0, 35.0, 22.0, 48.0];
-  static const _yearData = [120.0, 95.0, 145.0, 180.0, 160.0, 200.0,
-      175.0, 220.0, 195.0, 240.0, 215.0, 260.0];
-
-  static const _days = ['L', 'M', 'Me', 'J', 'V', 'S', 'D'];
+  static const _days        = ['L', 'M', 'Me', 'J', 'V', 'S', 'D'];
   static const _monthLabels = ['S1', 'S2', 'S3', 'S4'];
-  static const _yearLabels = ['J', 'F', 'M', 'A', 'M', 'J',
+  static const _yearLabels  = ['J', 'F', 'M', 'A', 'M', 'J',
       'J', 'A', 'S', 'O', 'N', 'D'];
 
-  List<double> get _data {
+  // ── Calcul graphique depuis l'historique réel ─────────────────────────────
+  List<double> _weekData(List scans) {
+    final now = DateTime.now();
+    final result = List.filled(7, 0.0);
+    for (final scan in scans) {
+      final diff = now.difference(scan.scannedAt).inDays;
+      if (diff < 7) result[6 - diff] += 0.35;
+    }
+    return result;
+  }
+
+  List<double> _monthData(List scans) {
+    final now = DateTime.now();
+    final result = List.filled(4, 0.0);
+    for (final scan in scans) {
+      final diff = now.difference(scan.scannedAt).inDays;
+      if (diff < 28) result[(diff ~/ 7).clamp(0, 3)] += 0.35;
+    }
+    return result.reversed.toList();
+  }
+
+  List<double> _yearData(List scans) {
+    final now = DateTime.now();
+    final result = List.filled(12, 0.0);
+    for (final scan in scans) {
+      final diff = now.difference(scan.scannedAt).inDays;
+      if (diff < 365) result[(diff ~/ 30).clamp(0, 11)] += 0.35;
+    }
+    return result.reversed.toList();
+  }
+
+  List<double> chartData(List scans) {
     switch (_tabIndex) {
-      case 1: return _monthData;
-      case 2: return _yearData;
-      default: return _weekData;
+      case 1: return _monthData(scans);
+      case 2: return _yearData(scans);
+      default: return _weekData(scans);
     }
   }
 
@@ -117,24 +160,38 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
-    final periods = [s.periodWeek, s.periodMonth, s.periodYear];
-    final categories = [
-      (s.catPlastic,  0.38, AppColors.plastic),
-      (s.catOrganic,  0.24, const Color(0xFF795548)),
-      (s.catPaper,    0.18, AppColors.paper),
-      (s.catGlass,    0.12, AppColors.glass),
-      (s.catMetal,    0.08, AppColors.metal),
-    ];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final history = ref.watch(scanHistoryProvider);
+    final s        = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final isDark   = Theme.of(context).brightness == Brightness.dark;
+    final history  = ref.watch(scanHistoryProvider);
     final notifier = ref.read(scanHistoryProvider.notifier);
-    final totalCo2 = notifier.totalCo2Saved;
-    final totalPts = notifier.totalPoints;
+    final totalCo2  = notifier.totalCo2Saved;
+    final totalPts  = notifier.totalPoints;
     final recyclable = notifier.recyclableCount;
     final totalScans = history.length;
-    final kgRecycled = totalScans * 0.35; // ~350g per scan average
+    final kgRecycled = totalScans * 0.35;
     final recycleRate = totalScans > 0 ? recyclable / totalScans : 0.0;
+    final periods    = [s.periodWeek, s.periodMonth, s.periodYear];
+
+    // Ratios catégories depuis l'historique réel
+    final catCounts = <String, int>{};
+    for (final scan in history) {
+      final cat = scan.category.toLowerCase();
+      final key = cat.contains('plastique') || cat == 'plastique' ? 'plastic'
+                : cat.contains('verre')                           ? 'glass'
+                : cat.contains('papier') || cat == 'paper' || cat == 'cardboard' ? 'paper'
+                : cat.contains('métal') || cat == 'metal'        ? 'metal'
+                : cat.contains('organique') || cat == 'organique' ? 'organic'
+                : 'other';
+      catCounts[key] = (catCounts[key] ?? 0) + 1;
+    }
+    final catTotal = totalScans > 0 ? totalScans : 1;
+    final categories = [
+      (s.catPlastic, (catCounts['plastic']  ?? 0) / catTotal, AppColors.plastic),
+      (s.catOrganic, (catCounts['organic']  ?? 0) / catTotal, const Color(0xFF795548)),
+      (s.catPaper,   (catCounts['paper']    ?? 0) / catTotal, AppColors.paper),
+      (s.catGlass,   (catCounts['glass']    ?? 0) / catTotal, AppColors.glass),
+      (s.catMetal,   (catCounts['metal']    ?? 0) / catTotal, AppColors.metal),
+    ];
 
     return Scaffold(
       body: SafeArea(
@@ -265,7 +322,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                       ),
                       child: BarChart(
                         BarChartData(
-                          maxY: (_data.reduce((a, b) => a > b ? a : b) * 1.3),
+                          maxY: (chartData(history).reduce((a, b) => a > b ? a : b) * 1.3),
                           barTouchData: BarTouchData(
                             touchTooltipData: BarTouchTooltipData(
                               getTooltipColor: (_) => isDark
@@ -316,18 +373,18 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                           borderData: FlBorderData(show: false),
                           gridData: const FlGridData(show: false),
                           barGroups: List.generate(
-                            _data.length,
+                            chartData(history).length,
                             (i) => BarChartGroupData(
                               x: i,
                               barRods: [
                                 BarChartRodData(
-                                  toY: _data[i],
+                                  toY: chartData(history)[i],
                                   gradient: const LinearGradient(
                                     colors: [Color(0xFF27AE60), Color(0xFF1ABC9C)],
                                     begin: Alignment.bottomCenter,
                                     end: Alignment.topCenter,
                                   ),
-                                  width: _data.length > 8 ? 14 : 22,
+                                  width: chartData(history).length > 8 ? 14 : 22,
                                   borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(8)),
                                 ),
@@ -811,7 +868,7 @@ class _BadgesSection extends StatelessWidget {
 }
 
 // ── Leaderboard section ───────────────────────────────────────────────────────
-class _LeaderboardSection extends StatelessWidget {
+class _LeaderboardSection extends ConsumerWidget {
   final bool isDark;
   final int userPoints;
   final String title;
@@ -826,16 +883,9 @@ class _LeaderboardSection extends StatelessWidget {
     required this.youText,
   });
 
-  static const _leaders = [
-    ('Fatima B.', 1240, '🥇'),
-    ('Youssef A.', 980, '🥈'),
-    ('Nadia K.', 860, '🥉'),
-    ('Omar M.', 720, '4️⃣'),
-    ('Leila R.', 610, '5️⃣'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leaders = ref.watch(_statsLeaderProvider).valueOrNull ?? [];
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -871,7 +921,7 @@ class _LeaderboardSection extends StatelessWidget {
                 ),
                 child: Text(
                   topLabel,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,
                     color: AppColors.primary,
@@ -882,57 +932,68 @@ class _LeaderboardSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          ..._leaders.asMap().entries.map((e) {
-            final i = e.key;
-            final leader = e.value;
-            final isTop3 = i < 3;
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 400 + i * 80),
-              curve: Curves.easeOut,
-              builder: (_, t, child) =>
-                  Opacity(opacity: t, child: Transform.translate(
-                    offset: Offset(20 * (1 - t), 0),
-                    child: child,
-                  )),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isTop3
-                      ? AppColors.primary.withValues(alpha: 0.07)
-                      : (isDark ? AppColors.darkInput : AppColors.inputBg),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Text(leader.$3, style: const TextStyle(fontSize: 18)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        leader.$1,
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          fontWeight: isTop3 ? FontWeight.w600 : FontWeight.normal,
-                          color: isDark ? AppColors.darkText : AppColors.textPrimary,
+          if (leaders.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(topLabel,
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AppColors.textSecondary)),
+              ),
+            )
+          else
+            ...leaders.asMap().entries.map((e) {
+              final i      = e.key;
+              final leader = e.value;
+              final isTop3 = i < 3;
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: Duration(milliseconds: 400 + i * 80),
+                curve: Curves.easeOut,
+                builder: (_, t, child) => Opacity(
+                    opacity: t,
+                    child: Transform.translate(
+                        offset: Offset(20 * (1 - t), 0), child: child)),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isTop3
+                        ? AppColors.primary.withValues(alpha: 0.07)
+                        : (isDark ? AppColors.darkInput : AppColors.inputBg),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(leader.$3, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          leader.$1,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            fontWeight: isTop3 ? FontWeight.w600 : FontWeight.normal,
+                            color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                    Text(
-                      '${leader.$2} pts',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                      Text(
+                        '${leader.$2} pts',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
           const Divider(height: 20),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

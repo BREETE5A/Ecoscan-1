@@ -1,5 +1,6 @@
 ﻿import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +11,8 @@ import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/avatar_provider.dart';
 import '../../providers/environment_providers.dart';
+import '../../providers/challenges_provider.dart';
+import '../../providers/community_stats_provider.dart';
 import '../../models/user_model.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
@@ -141,9 +144,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             flexibleSpace: FlexibleSpaceBar(
               background: ClipPath(
                 clipper: _BottomWaveClipper(),
-                child: CustomPaint(
-                  painter: _NatureHeaderPainter(),
-                  child: SafeArea(
+                child: _AnimatedNatureHeader(
+                  content: SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
                       child: Column(
@@ -544,20 +546,33 @@ class _ColoredBadge extends StatelessWidget {
   }
 }
 
-// ── Découpe vague pour le bas de la zone verte ────────────────────────────────
+// ── Vague prononcée au bas de la zone verte ───────────────────────────────────
 class _BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 22);
-    path.quadraticBezierTo(
-      size.width * 0.25, size.height + 4,
-      size.width * 0.5,  size.height - 14,
+    // Départ coin haut gauche
+    path.lineTo(0, size.height - 36);
+
+    // Première bosse (creux vers le bas)
+    path.cubicTo(
+      size.width * 0.12, size.height - 36,
+      size.width * 0.18, size.height + 10,
+      size.width * 0.35, size.height + 10,
     );
-    path.quadraticBezierTo(
-      size.width * 0.75, size.height - 32,
-      size.width,        size.height - 10,
+    // Deuxième bosse (remonte)
+    path.cubicTo(
+      size.width * 0.52, size.height + 10,
+      size.width * 0.58, size.height - 48,
+      size.width * 0.72, size.height - 48,
     );
+    // Troisième bosse (redescend légèrement)
+    path.cubicTo(
+      size.width * 0.85, size.height - 48,
+      size.width * 0.92, size.height - 18,
+      size.width,        size.height - 18,
+    );
+
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -830,16 +845,21 @@ class _ScanCTACardState extends State<_ScanCTACard>
 }
 
 // â”€â”€ DÃ©fi du jour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _DailyChallengeCard extends StatelessWidget {
+class _DailyChallengeCard extends ConsumerWidget {
   final Animation<double> anim;
   final String dailyLabel;
   final AppStrings s;
   const _DailyChallengeCard({required this.anim, required this.dailyLabel, required this.s});
 
+  static const _dailyGoal = 3;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const progress = 1 / 3;
+    final cp       = ref.watch(challengesProvider);
+    final done     = cp.dailyScans.clamp(0, _dailyGoal);
+    final progress = done / _dailyGoal;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -903,7 +923,7 @@ class _DailyChallengeCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            s.challengeProgress1of3,
+            s.challengeProgressOf(done, _dailyGoal),
             style: const TextStyle(
               fontFamily: 'Poppins', fontSize: 12, color: AppColors.textSecondary,
             ),
@@ -1059,14 +1079,17 @@ class _EcoTipBanner extends StatelessWidget {
 }
 
 // â”€â”€ Impact communautaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _CommunityCard extends StatelessWidget {
+class _CommunityCard extends ConsumerWidget {
   final Animation<double> anim;
   final AppStrings s;
   const _CommunityCard({required this.anim, required this.s});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final stats  = ref.watch(communityStatsProvider).valueOrNull
+                ?? const CommunityStats();
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1098,9 +1121,9 @@ class _CommunityCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _CommStat(label: s.totalScansComm, value: 12847, anim: anim, color: AppColors.teal),
-              _CommStat(label: s.kgRecycled,     value: 4521,  anim: anim, color: AppColors.primary),
-              _CommStat(label: s.users,           value: 384,   anim: anim, color: const Color(0xFF9B59B6)),
+              _CommStat(label: s.totalScansComm, value: stats.scans,      anim: anim, color: AppColors.teal),
+              _CommStat(label: s.kgRecycled,     value: stats.kgRecycled, anim: anim, color: AppColors.primary),
+              _CommStat(label: s.users,           value: stats.users,      anim: anim, color: const Color(0xFF9B59B6)),
             ],
           ),
           const SizedBox(height: 14),
@@ -1109,7 +1132,7 @@ class _CommunityCard extends StatelessWidget {
             child: AnimatedBuilder(
               animation: anim,
               builder: (_, _) => LinearProgressIndicator(
-                value: 0.68 * anim.value,
+                value: stats.progress * anim.value,
                 backgroundColor: Colors.grey.withValues(alpha: 0.15),
                 valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
                 minHeight: 6,
@@ -1456,128 +1479,256 @@ class _BarcodeCTACardState extends State<_BarcodeCTACard>
   }
 }
 
-// ── Illustration nature — fond du header ─────────────────────────────────────
-class _NatureHeaderPainter extends CustomPainter {
+// ── Widget animé qui gère les controllers ────────────────────────────────────
+class _AnimatedNatureHeader extends StatefulWidget {
+  final Widget content;
+  const _AnimatedNatureHeader({required this.content});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    // ── Fond dégradé vert ──────────────────────────────────────────────────
-    final bgPaint = Paint()
+  State<_AnimatedNatureHeader> createState() => _AnimatedNatureHeaderState();
+}
+
+class _AnimatedNatureHeaderState extends State<_AnimatedNatureHeader>
+    with TickerProviderStateMixin {
+  late final AnimationController _waveCtrl;
+  late final AnimationController _swayCtrl;
+  late final AnimationController _leafCtrl;
+  late final AnimationController _particleCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _waveCtrl     = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
+    _swayCtrl     = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800))..repeat(reverse: true);
+    _leafCtrl     = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat();
+    _particleCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _waveCtrl.dispose();
+    _swayCtrl.dispose();
+    _leafCtrl.dispose();
+    _particleCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Fond animé — remplit tout l'espace disponible
+        AnimatedBuilder(
+          animation: Listenable.merge([_waveCtrl, _swayCtrl, _leafCtrl, _particleCtrl]),
+          builder: (context, _) => CustomPaint(
+            painter: _NatureHeaderPainter(
+              wavePhase:     _waveCtrl.value,
+              swayPhase:     _swayCtrl.value,
+              leafPhase:     _leafCtrl.value,
+              particlePhase: _particleCtrl.value,
+            ),
+          ),
+        ),
+        // Contenu (texte + icônes) par-dessus
+        widget.content,
+      ],
+    );
+  }
+}
+
+// ── Painter animé ─────────────────────────────────────────────────────────────
+class _NatureHeaderPainter extends CustomPainter {
+  final double wavePhase;
+  final double swayPhase;
+  final double leafPhase;
+  final double particlePhase;
+
+  const _NatureHeaderPainter({
+    required this.wavePhase,
+    required this.swayPhase,
+    required this.leafPhase,
+    required this.particlePhase,
+  });
+
+  // ─── Fond dégradé ────────────────────────────────────────────────────────
+  void _drawBackground(Canvas canvas, Size size) {
+    final paint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [Color(0xFF27AE60), Color(0xFF1A6B3A)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
-    // ── Éclat lumineux en haut à gauche ───────────────────────────────────
-    final glowPaint = Paint()
+    // Éclat lumineux (soleil)
+    final glow = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFF2ECC71).withValues(alpha: 0.35),
+          const Color(0xFF2ECC71).withValues(alpha: 0.38),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.15, size.height * 0.25),
-        radius: size.width * 0.4,
+        center: Offset(size.width * 0.18, size.height * 0.22),
+        radius: size.width * 0.45,
       ));
-    canvas.drawCircle(
-      Offset(size.width * 0.15, size.height * 0.25),
-      size.width * 0.4,
-      glowPaint,
-    );
+    canvas.drawCircle(Offset(size.width * 0.18, size.height * 0.22), size.width * 0.45, glow);
+  }
 
-    // ── Arbre principal (droite) ───────────────────────────────────────────
-    final cx = size.width * 0.82;
-    final cy = size.height * 1.05;
-
-    // Tronc
-    final trunkPaint = Paint()
-      ..color = const Color(0xFF145A32)
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    final trunkPath = Path()
-      ..moveTo(cx, cy)
-      ..cubicTo(cx - 3, cy - size.height * 0.28,
-                cx + 3, cy - size.height * 0.45,
-                cx, cy - size.height * 0.58);
-    canvas.drawPath(trunkPath, trunkPaint);
-
-    // Branches
-    final branchPaint = Paint()
-      ..color = const Color(0xFF145A32)
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    for (final data in [
-      [cx, cy - size.height * 0.38, cx - 28, cy - size.height * 0.30],
-      [cx, cy - size.height * 0.30, cx + 24, cy - size.height * 0.22],
-      [cx, cy - size.height * 0.48, cx - 18, cy - size.height * 0.42],
-    ]) {
-      canvas.drawLine(
-        Offset(data[0], data[1]),
-        Offset(data[2], data[3]),
-        branchPaint,
-      );
-    }
-
-    // Canopée — plusieurs cercles qui se chevauchent
-    final canopyColors = [
-      [const Color(0xFF1ABC9C), 0.60, cx - 2, cy - size.height * 0.70, size.height * 0.20],
-      [const Color(0xFF27AE60), 0.80, cx - 22, cy - size.height * 0.60, size.height * 0.15],
-      [const Color(0xFF2ECC71), 0.65, cx + 20, cy - size.height * 0.58, size.height * 0.14],
-      [const Color(0xFF1E8449), 0.90, cx,      cy - size.height * 0.58, size.height * 0.13],
-      [const Color(0xFF52BE80), 0.55, cx - 10, cy - size.height * 0.76, size.height * 0.11],
-      [const Color(0xFF27AE60), 0.70, cx + 10, cy - size.height * 0.72, size.height * 0.10],
-    ];
-    for (final c in canopyColors) {
-      final p = Paint()
-        ..color = (c[0] as Color).withValues(alpha: c[1] as double)
+  // ─── Vagues animées (3 couches, vitesses différentes) ────────────────────
+  void _drawWaves(Canvas canvas, Size size) {
+    for (int i = 0; i < 3; i++) {
+      final phase    = (wavePhase + i * 0.28) % 1.0;
+      final alpha    = 0.10 - i * 0.025;
+      final amp      = 9.0 + i * 5.0;
+      final yBase    = size.height * (0.60 + i * 0.13);
+      final paint    = Paint()
+        ..color = Colors.white.withValues(alpha: alpha)
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(c[2] as double, c[3] as double), c[4] as double, p);
-    }
 
-    // ── Feuilles flottantes (gauche/centre) ────────────────────────────────
-    final leafPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.12)
-      ..style = PaintingStyle.fill;
-
-    for (final pos in [
-      [size.width * 0.06, size.height * 0.22, 6.0, 0.4],
-      [size.width * 0.18, size.height * 0.65, 5.0, -0.6],
-      [size.width * 0.38, size.height * 0.18, 7.0, 0.2],
-      [size.width * 0.52, size.height * 0.70, 5.0, 0.8],
-    ]) {
-      _drawLeaf(canvas, Offset(pos[0], pos[1]), pos[2], pos[3], leafPaint);
-    }
-
-    // ── Petits points lumineux ─────────────────────────────────────────────
-    final dotPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.20)
-      ..style = PaintingStyle.fill;
-    for (final p in [
-      [size.width * 0.10, size.height * 0.10, 2.0],
-      [size.width * 0.28, size.height * 0.38, 1.5],
-      [size.width * 0.46, size.height * 0.12, 2.0],
-      [size.width * 0.60, size.height * 0.55, 1.5],
-    ]) {
-      canvas.drawCircle(Offset(p[0], p[1]), p[2], dotPaint);
+      final path = Path()..moveTo(0, size.height);
+      for (double x = 0; x <= size.width + 2; x += 2) {
+        final y = yBase +
+            math.sin((x / size.width * 2 * math.pi) + phase * 2 * math.pi) * amp;
+        x == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+      }
+      path
+        ..lineTo(size.width, size.height)
+        ..lineTo(0, size.height)
+        ..close();
+      canvas.drawPath(path, paint);
     }
   }
 
-  void _drawLeaf(Canvas canvas, Offset center, double size, double angle, Paint paint) {
+  // ─── Particules d'air pur qui montent ────────────────────────────────────
+  void _drawAirParticles(Canvas canvas, Size size) {
+    const xRatios = [0.10, 0.22, 0.34, 0.44, 0.56];
+    for (int i = 0; i < xRatios.length; i++) {
+      final t      = (particlePhase + i * 0.20) % 1.0;
+      final ease   = math.sin(t * math.pi);          // fade in/out
+      if (ease < 0.05) continue;
+      final x      = size.width * xRatios[i] + math.sin(t * 4 * math.pi + i) * 6;
+      final y      = size.height * (1.0 - t * 1.1);
+      final radius = 1.5 + ease * 2.0;
+      final paint  = Paint()
+        ..color = Colors.white.withValues(alpha: ease * 0.22)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+  }
+
+  // ─── Arbre avec balancement ───────────────────────────────────────────────
+  void _drawTree(Canvas canvas, Size size) {
+    final cx = size.width * 0.80;
+    final cy = size.height * 1.08;
+    final swayAngle = (swayPhase - 0.5) * 0.06;
+
+    canvas.save();
+    canvas.translate(cx, cy);
+    canvas.rotate(swayAngle);
+    canvas.translate(-cx, -cy);
+
+    // Tronc
+    final trunkP = Paint()
+      ..color = const Color(0xFF0E4D26)
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx, cy)
+        ..cubicTo(cx - 3, cy - size.height * 0.28,
+                  cx + 3, cy - size.height * 0.46,
+                  cx, cy - size.height * 0.60),
+      trunkP,
+    );
+
+    // Branches
+    final branchP = Paint()
+      ..color = const Color(0xFF0E4D26)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    for (final b in [
+      [cx,      cy - size.height * 0.40, cx - 30, cy - size.height * 0.31],
+      [cx,      cy - size.height * 0.32, cx + 26, cy - size.height * 0.24],
+      [cx,      cy - size.height * 0.50, cx - 20, cy - size.height * 0.43],
+      [cx,      cy - size.height * 0.54, cx + 16, cy - size.height * 0.48],
+    ]) {
+      canvas.drawLine(Offset(b[0], b[1]), Offset(b[2], b[3]), branchP);
+    }
+
+    // Canopée (cercles superposés)
+    for (final c in [
+      [const Color(0xFF1ABC9C), 0.55, cx,      cy - size.height * 0.74, size.height * 0.22],
+      [const Color(0xFF27AE60), 0.75, cx - 24, cy - size.height * 0.63, size.height * 0.16],
+      [const Color(0xFF2ECC71), 0.60, cx + 22, cy - size.height * 0.61, size.height * 0.15],
+      [const Color(0xFF1E8449), 0.85, cx,      cy - size.height * 0.62, size.height * 0.14],
+      [const Color(0xFF52BE80), 0.50, cx - 12, cy - size.height * 0.80, size.height * 0.12],
+      [const Color(0xFF27AE60), 0.65, cx + 12, cy - size.height * 0.77, size.height * 0.11],
+    ]) {
+      canvas.drawCircle(
+        Offset(c[2] as double, c[3] as double),
+        c[4] as double,
+        Paint()
+          ..color = (c[0] as Color).withValues(alpha: c[1] as double)
+          ..style = PaintingStyle.fill,
+      );
+    }
+
+    canvas.restore();
+  }
+
+  // ─── Feuilles qui tombent de l'arbre ─────────────────────────────────────
+  void _drawFallingLeaves(Canvas canvas, Size size) {
+    final cx = size.width * 0.80;
+    for (int i = 0; i < 5; i++) {
+      final t = (leafPhase + i * 0.22) % 1.0;
+      final ease = math.sin(t * math.pi);
+      if (ease < 0.08) continue;
+
+      final x = cx - 15 + math.sin(t * 5 * math.pi + i * 1.3) * 28;
+      final y = size.height * (-0.05 + t * 1.1);
+      if (y < 0 || y > size.height) continue;
+
+      final angle    = t * math.pi * 4 + i * 1.5;
+      final leafSize = 3.5 + ease * 3.5;
+      final paint    = Paint()
+        ..color = const Color(0xFF52BE80).withValues(alpha: ease * 0.75)
+        ..style = PaintingStyle.fill;
+
+      _drawLeaf(canvas, Offset(x, y), leafSize, angle, paint);
+    }
+  }
+
+  // ─── Forme feuille ────────────────────────────────────────────────────────
+  void _drawLeaf(Canvas canvas, Offset center, double sz, double angle, Paint paint) {
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(angle);
-    final path = Path()
-      ..moveTo(0, -size)
-      ..cubicTo(size * 1.2, -size * 0.5, size * 1.2, size * 0.5, 0, size)
-      ..cubicTo(-size * 1.2, size * 0.5, -size * 1.2, -size * 0.5, 0, -size);
-    canvas.drawPath(path, paint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, -sz)
+        ..cubicTo( sz * 1.2, -sz * 0.5,  sz * 1.2,  sz * 0.5, 0,  sz)
+        ..cubicTo(-sz * 1.2,  sz * 0.5, -sz * 1.2, -sz * 0.5, 0, -sz),
+      paint,
+    );
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_NatureHeaderPainter old) => false;
+  void paint(Canvas canvas, Size size) {
+    _drawBackground(canvas, size);
+    _drawWaves(canvas, size);
+    _drawAirParticles(canvas, size);
+    _drawTree(canvas, size);
+    _drawFallingLeaves(canvas, size);
+  }
+
+  @override
+  bool shouldRepaint(_NatureHeaderPainter old) =>
+    old.wavePhase     != wavePhase     ||
+    old.swayPhase     != swayPhase     ||
+    old.leafPhase     != leafPhase     ||
+    old.particlePhase != particlePhase;
 }

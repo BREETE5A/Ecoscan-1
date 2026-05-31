@@ -220,6 +220,12 @@ class AppStrings {
                                          '1 of 3 completed  ·  Expires in 8h',
                                          '١ من ٣ مكتمل  ·  ينتهي في ٨ س',
                                          '1 de 3 completado  ·  Expira en 8h');
+  String challengeProgressOf(int done, int total) => _t(
+    '$done sur $total complété',
+    '$done of $total completed',
+    '$done من $total مكتمل',
+    '$done de $total completado',
+  );
   String get communityLevelText => _t('68% vers le prochain niveau communautaire',
                                       '68% towards next community level',
                                       '٦٨٪ نحو المستوى المجتمعي التالي',
