@@ -15,6 +15,17 @@ class ChatService {
     );
   }
 
+  /// Supprime les symboles markdown que Gemini génère parfois (**, *, ##, __)
+  String _cleanMarkdown(String text) {
+    return text
+        .replaceAll('**', '')
+        .replaceAll('__', '')
+        .replaceAll(RegExp(r'#{1,6} '), '')
+        .replaceAll(RegExp(r'^\* ', multiLine: true), '• ')
+        .replaceAll(RegExp(r'^\*{3,}$', multiLine: true), '')
+        .trim();
+  }
+
   Future<String> sendMessage(String message, {List<Map<String, String>> history = const []}) async {
     try {
       final response = await _dio.post(
@@ -24,7 +35,8 @@ class ChatService {
           'history': history,
         },
       );
-      return response.data['response'] as String;
+      final raw = response.data['response'] as String;
+      return _cleanMarkdown(raw);
     } on DioException catch (e) {
       switch (e.type) {
         case DioExceptionType.connectionTimeout:
@@ -44,36 +56,207 @@ class ChatService {
   String _offlineFallback(String message) {
     final q = message.toLowerCase();
 
-    if (q.contains('plastique') || q.contains('plastic')) {
-      return '♻️ **Plastique** : Rincez les bouteilles et flacons avant de les mettre dans le bac jaune ECOVAL. Les sacs plastiques oxodégradables sont interdits au Maroc (Loi 77-15). Le film plastique souple et le polystyrène ne se recyclent pas.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    // ── Navigation dans l'application ────────────────────────────────────────
+    if (_containsAny(q, ['mot de passe', 'password', 'كلمة المرور', 'contraseña', 'mdp',
+        'كلمة السر', 'passord', 'باسوورد', 'سيكريتا'])) {
+      return '🔐 Pour changer votre **mot de passe** :\nProfil → Paramètres → Changer le mot de passe.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('verre') || q.contains('glass')) {
-      return '♻️ **Verre** : Déposez bouteilles et bocaux dans la colonne verte. Ne mettez pas : miroirs, verre trempé, pyrex, ampoules. Le verre est recyclable à 100% indéfiniment.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['email', 'e-mail', 'adresse mail', 'البريد الإلكتروني', 'correo',
+        'ميل', 'إيميل', 'البريد'])) {
+      return '📧 Pour changer votre **email** :\nProfil → Paramètres → Changer l\'email.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('papier') || q.contains('carton')) {
-      return '♻️ **Papier/Carton** : Aplatissez les cartons avant de les mettre dans le bac bleu. Les tickets de caisse (BPA), le carton pizza gras et le papier hygiénique ne se recyclent pas.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['2fa', 'deux facteurs', 'two factor', 'المصادقة', 'doble factor',
+        'authentification', 'التحقق', 'تحقق'])) {
+      return '🔒 Pour activer l\'**authentification à 2 facteurs** :\nProfil → Paramètres → Authentification 2FA.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('métal') || q.contains('metal') || q.contains('alu') || q.contains('canette')) {
-      return '♻️ **Métal** : Canettes, boîtes de conserve, capsules → bac jaune ECOVAL. Recycler 1 kg d\'aluminium économise 8 kg de CO₂ et 95% de l\'énergie.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['modifier profil', 'edit profile', 'photo profil', 'تعديل الملف',
+        'editar perfil', 'changer nom', 'بدل الاسم', 'بدل صورة', 'صورة البروفيل', 'غير الاسم'])) {
+      return '👤 Pour modifier votre **profil** (nom, photo) :\nProfil → Modifier le profil.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('électron') || q.contains('deee') || q.contains('téléphone') || q.contains('ordinateur')) {
-      return '♻️ **DEEE** : Déposez vos appareils électroniques aux 500+ éco-points ECOVAL au Maroc. Décret 2-12-695 oblige les producteurs à assurer la collecte.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['badge', 'شارة', 'insignia', 'شارات', 'وسام', 'وسامات'])) {
+      return '🏅 Pour voir vos **badges** :\nProfil → Mes badges.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('organique') || q.contains('compost') || q.contains('déchet alimentaire') || q.contains('épluchure')) {
-      return '♻️ **Organique** : 65% des déchets marocains sont organiques. Utilisez un composteur ou le bac marron. Épluchures, marc de café, sachets de thé → composteur. Viande, laitages → pas dans le composteur.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['statistique', 'stat', 'إحصائيات', 'estadística', 'co2',
+        'recyclé combien', 'شحال ريسيكليت', 'إحصاء', 'نقط ديالي', 'كم كيلو'])) {
+      return '📊 Pour voir vos **statistiques de recyclage** :\nOnglet Statistiques dans la barre de navigation.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('pile') || q.contains('batterie')) {
-      return '⚠️ **Piles/Batteries** : Ne jetez jamais dans la poubelle ordinaire ! Déposez-les dans les collecteurs en pharmacie, Marjane, ou éco-points. Une pile peut contaminer 1 000 L d\'eau.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['scanner', 'scan', 'photo déchet', 'مسح', 'escanear',
+        'سكان', 'صور الزبل', 'صور القمامة', 'كيفاش نسكان', 'سكانيري'])) {
+      return '📷 Pour **scanner un déchet** (IA photo) :\nAppuyez sur le bouton caméra central de la barre de navigation.\nPour un **code-barres** alimentaire : Scanner → Code-barres.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('loi') || q.contains('réglementation') || q.contains('maroc')) {
-      return '📋 **Lois au Maroc** :\n• Loi 28-00 : gestion des déchets\n• Loi 77-15 : interdiction sacs plastiques\n• Décret 2-12-695 : collecte DEEE\n• PNDM 2030 : 100% décharges contrôlées\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    if (_containsAny(q, ['carte', 'map', 'خريطة', 'mapa', 'point de collecte',
+        'où déposer', 'près de moi', 'وين نلقى', 'فين نحط', 'قريب مني', 'خريطة ديال'])) {
+      return '🗺️ Pour trouver les **points de collecte** près de vous :\nOnglet Carte dans la barre de navigation.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (q.contains('bonjour') || q.contains('salut') || q.contains('hello')) {
-      return '👋 Bonjour ! Je suis EcoBot, votre assistant recyclage.\n\nJe fonctionne actuellement en mode hors ligne. Posez-moi vos questions sur le tri des déchets (plastique, verre, papier, métal, DEEE…).\n\n⚠️ Pour des réponses complètes via Gemini RAG, lancez le backend Python.';
+    if (_containsAny(q, ['défi', 'challenge', 'تحدي', 'reto', 'تحديات', 'شالنج'])) {
+      return '🎯 Pour voir les **défis écologiques** :\nMenu → Défis.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['récompense', 'reward', 'مكافأة', 'recompensa', 'point',
+        'مكافآت', 'جائزة', 'بوانا', 'نقط ديال'])) {
+      return '🎁 Pour voir vos **récompenses et points** :\nMenu → Récompenses.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['classement', 'leaderboard', 'ترتيب', 'clasificación',
+        'meilleur recycleur', 'ترتيب ديال', 'شكون لول', 'كلاسمون'])) {
+      return '🏆 Pour voir le **classement des recycleurs** :\nMenu → Classement.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['marketplace', 'marché', 'annonce', 'vendre', 'acheter',
+        'سوق', 'mercado', 'بيع', 'شرا', 'مارك بلايس', 'إعلان'])) {
+      return '🛍️ Pour accéder au **Marketplace** d\'objets recyclés :\nMenu → Marketplace.\nPour vos annonces : Marketplace → Mes annonces.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['quiz', 'اختبار', 'test écologique', 'كويز', 'اختبار بيئي', 'أسئلة'])) {
+      return '🧠 Pour faire le **quiz écologique** (25 questions) :\nGuide → Quiz.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['qualité de l\'air', 'air quality', 'جودة الهواء',
+        'calidad del aire', 'هواء', 'تلوث الهواء', 'جودة ديال الهواء'])) {
+      return '🌿 Pour voir la **qualité de l\'air** :\nAccueil → Qualité de l\'air.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['empreinte eau', 'water footprint', 'البصمة المائية',
+        'huella hídrica', 'ماء', 'بصمة الماء', 'استهلاك الماء'])) {
+      return '💧 Pour suivre votre **empreinte eau** :\nAccueil → Empreinte eau.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['historique', 'history', 'سجل', 'historial', 'mes scans',
+        'هيستوريك', 'ليست ديال', 'سجل ديال', 'سكانات ديالي'])) {
+      return '📋 Pour voir l\'**historique de vos scans** :\nProfil → Historique.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['paramètre', 'setting', 'إعدادات', 'ajuste', 'langue',
+        'thème', 'notification', 'باراميتر', 'إعداد', 'لوغا', 'لغة'])) {
+      return '⚙️ Pour accéder aux **paramètres** de l\'app :\nProfil → Paramètres.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
 
-    return '🤖 Je suis en **mode hors ligne**. Le serveur backend (Gemini RAG) n\'est pas accessible.\n\nJe peux répondre à des questions sur : plastique, verre, papier, métal, DEEE, piles, compost, lois marocaines.\n\nPour activer le mode complet, lancez le backend Python sur votre PC.';
+    // ── Contacts opérateurs ───────────────────────────────────────────────────
+    if (_containsAny(q, ['contact', 'téléphone', 'numéro', 'appeler', 'هاتف', 'اتصل',
+        'teléfono', 'نومرو', 'رقم', 'تيليفون', 'اتصال', 'كونتاكت'])) {
+      return '📞 **Contacts opérateurs de recyclage au Maroc** (vérifiés) :\n'
+          '• AVERDA (collecte urbaine) : 0522 92 32 60\n'
+          '• ARMA Rabat : 0537 66 32 90\n'
+          '• SMRR (papier/carton/PET) : 0522 51 09 94\n'
+          '• Eco Zalagh (DEEE) : 0661 51 47 11\n'
+          '• ECOVAL Holcim : 0522 58 20 05\n'
+          '• Zéro Zbel (ONG) : contact@zerozabel.ma\n\n'
+          '⚠️ *Mode hors ligne — vérifiez les numéros avant d\'appeler.*';
+    }
+    if (_containsAny(q, ['ecoval', 'écoval', 'إيكوفال', 'بوكس أصفر', 'كونتونور أصفر'])) {
+      return '♻️ **ECOVAL** au Maroc :\n'
+          '• Bacs jaunes ECOVAL : plastiques, métaux, emballages\n'
+          '  → Points dans Marjane, Carrefour, Cosmos Electro\n'
+          '• ECOVAL Holcim (industriel) : 0522 58 20 05\n'
+          '• Pour DEEE (téléphones, ordi) : Eco Zalagh 0661 51 47 11\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['encombrant', 'matelas', 'meuble volumineux',
+        'فراش خايب', 'كنبة', 'طابلو', 'أتاي كبير', 'حوايج كبار'])) {
+      return '🚛 **Collecte des encombrants** (matelas, meubles…) :\n'
+          '• Casablanca : AVERDA 0522 92 32 60 ou app Casa Mdinti\n'
+          '• Rabat : ARMA Environnement 0537 66 32 90\n'
+          'Sinon : déchetterie municipale la plus proche.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+
+    // ── Tri des déchets ───────────────────────────────────────────────────────
+    if (_containsAny(q, ['plastique', 'plastic', 'بلاستيك', 'pet', 'bouteille plastique',
+        'قوارير', 'بلاسطيك', 'كيسان', 'كيسة', 'كيس', 'بلاستيكة', 'قارورة'])) {
+      return '♻️ **Plastique** : Rincez les bouteilles et flacons → bac jaune ECOVAL. '
+          'Les sacs plastiques sont interdits au Maroc (Loi 77-15). '
+          'Film plastique souple et polystyrène → poubelle.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['verre', 'glass', 'زجاج', 'vidrio', 'bocal', 'bouteille verre',
+        'قاروة ديال الزجاج', 'كاس', 'زجاجة', 'قارورة زجاج'])) {
+      return '♻️ **Verre** : Bouteilles et bocaux → colonne verte. '
+          'Ne mettez pas : miroirs, verre trempé, pyrex, ampoules. '
+          'Le verre est recyclable à 100% indéfiniment.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['papier', 'carton', 'ورق', 'papel', 'journal', 'magazine',
+        'كارطون', 'ورقة', 'جرنان', 'بريد', 'كارتون'])) {
+      return '♻️ **Papier/Carton** : Au Maroc, la ferracha assure l\'essentiel du recyclage.\n'
+          'Journaux, cartons aplatis, boîtes céréales → ferracha ou bac bleu (rare).\n'
+          'Tickets de caisse (BPA), carton pizza gras, papier hygiénique → poubelle.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['métal', 'metal', 'alu', 'canette', 'معدن', 'aluminium',
+        'علبة', 'علب', 'قصدير', 'كانيطة', 'حديد', 'صفيح'])) {
+      return '♻️ **Métal** : Canettes, boîtes de conserve, capsules → bac jaune ECOVAL. '
+          '1 kg d\'alu recyclé économise 8 kg CO₂ et 95% d\'énergie.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['électron', 'deee', 'weee', 'ordinateur', 'téléphone', 'إلكتروني',
+        'تيليفون', 'كومبيوتر', 'شاشة', 'تيلي', 'حاسوب', 'لابتوب', 'تابليت',
+        'جهاز خايب', 'موبايل خايب', 'شاحور'])) {
+      return '♻️ **DEEE** : Appareils électroniques = déchets dangereux (Loi 28-00).\n'
+          '• Effacez vos données avant de déposer.\n'
+          '• Éco-points ECOVAL : Marjane, Carrefour, Cosmos Electro\n'
+          '• Ou contacter Eco Zalagh : 0661 51 47 11 (ecozalagh.com)\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['organique', 'compost', 'épluchure', 'عضوي', 'composteur',
+        'قشر', 'خضرة', 'بقايا الكلة', 'زبل عضوي', 'تفاهة', 'خضار', 'فواكه'])) {
+      return '♻️ **Organique** : 65% des déchets marocains sont organiques. '
+          'Épluchures, marc de café, pain → composteur. '
+          'Viande, poisson, laitages → poubelle ordinaire.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['pile', 'batterie', 'بطارية', 'battery',
+        'بيلة', 'بيلات', 'باطاري', 'بيل ديال', 'باتيري'])) {
+      return '⚠️ **Piles/Batteries** : Ne jetez JAMAIS dans la poubelle ! '
+          'Déposez dans les collecteurs Marjane, Carrefour, Label\'Vie ou éco-points. '
+          'Une pile = 1 000 L d\'eau contaminée.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['loi', 'réglementation', 'قانون', 'ley', 'interdit', 'amende',
+        'قانون البيئة', 'غرامة', 'ممنوع', 'حرام', 'مخالفة'])) {
+      return '📋 **Lois environnementales au Maroc** (vérifiées) :\n'
+          '• Loi 28-00 (2006) : gestion des déchets — amendes jusqu\'à 2 000 000 DH\n'
+          '• Loi 77-15 (2016) : interdiction sacs plastiques "Zéro Mika"\n'
+          '• Loi 49-17 (2022) : évaluation environnementale\n'
+          '• PNVDM 2023-2034 : 21,14 milliards DH pour réhabilitation décharges\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['textile', 'vêtement', 'habit', 'ملابس', 'ropa',
+        'حوايج', 'ليباس', 'ثياب', 'صبادر', 'جلابة', 'قفطان', 'سروال'])) {
+      return '♻️ **Textile** : Déposez vêtements et chaussures dans les bornes textiles. '
+          'Même abîmés, ils sont recyclés en chiffons industriels. '
+          'Caritas Maroc, SOS Villages d\'Enfants acceptent les dons.\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['dangereux', 'médicament', 'peinture', 'solvant', 'خطير',
+        'peligroso', 'دوا', 'دواء', 'دوا خايب', 'صبغة', 'زيت محرك', 'حقنة'])) {
+      return '⚠️ **Déchets dangereux** :\n'
+          '• Médicaments (دوا خايب) → pharmacie agréée\n'
+          '• Huile moteur (زيت المحرك) → garage agréé\n'
+          '• Peintures/solvants → déchetterie zone dangereux\n'
+          '• Seringues (حقنة) → boîte DASRI en pharmacie\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+    if (_containsAny(q, ['bonjour', 'salut', 'hello', 'مرحبا', 'السلام', 'hola', 'مرحب',
+        'آش حال', 'لاباس', 'صباح الخير', 'مساء الخير', 'سلام عليكم', 'كيداير'])) {
+      return '👋 Bonjour ! Je suis EcoBot, votre assistant EcoScan.\n\n'
+          'Je peux vous aider à :\n'
+          '• Trier vos déchets (plastique, verre, métal…)\n'
+          '• Naviguer dans l\'app (changer mdp, voir stats…)\n'
+          '• Trouver des contacts d\'opérateurs de recyclage\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+
+    // ── Déchets génériques en darija ─────────────────────────────────────────
+    if (_containsAny(q, ['زبل', 'نفاية', 'قمامة', 'فين نحط', 'واش نرمي',
+        'كيفاش نريسيكلي', 'وين نرمي', 'ريسيكلاج', 'فرز'])) {
+      return '♻️ **Tri des déchets au Maroc** :\n'
+          '• قوارير البلاستيك → bac jaune ECOVAL (Marjane, Carrefour)\n'
+          '• الزجاج → colonne verte (عمود أخضر)\n'
+          '• الورق/الكارطون → ferracha (الفراشة)\n'
+          '• العلب المعدنية → bac jaune ECOVAL\n'
+          '• الأجهزة الإلكترونية → Eco Zalagh 0661 51 47 11\n\n'
+          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+    }
+
+    return '🤖 Je suis en **mode hors ligne**. Le serveur backend (Gemini RAG) n\'est pas accessible.\n\n'
+        'Je peux répondre sur : tri des déchets, navigation dans l\'app, contacts opérateurs.\n\n'
+        'Pour activer le mode complet, lancez le backend Python sur votre PC.';
   }
+
+  bool _containsAny(String text, List<String> keywords) =>
+      keywords.any((k) => text.contains(k));
 
   Future<bool> isHealthy() async {
     try {

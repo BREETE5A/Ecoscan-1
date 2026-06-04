@@ -1,8 +1,10 @@
 import 'dart:ui' as ui;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
@@ -328,18 +330,10 @@ class _ChatBubble extends StatelessWidget {
                     textDirection: _hasArabic(msg.text)
                         ? ui.TextDirection.rtl
                         : ui.TextDirection.ltr,
-                    child: Text(
-                      msg.text,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        height: 1.55,
-                        color: isBot
-                            ? (isDark
-                                ? AppColors.darkText
-                                : AppColors.textPrimary)
-                            : Colors.white,
-                      ),
+                    child: _RichMessageText(
+                      text: msg.text,
+                      isBot: isBot,
+                      isDark: isDark,
                     ),
                   ),
                 ),
@@ -363,6 +357,124 @@ class _ChatBubble extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Rich message text (URLs + téléphones + emails + domaines cliquables) ──────
+
+class _RichMessageText extends StatelessWidget {
+  final String text;
+  final bool isBot;
+  final bool isDark;
+  const _RichMessageText({required this.text, required this.isBot, required this.isDark});
+
+  // Ordre important : email > url > tel international > marocain XX XX XX XX > domaine nu
+  static final _linkRegex = RegExp(
+    r'([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}'           // email
+    r'|https?://[^\s()\[\]<>"]+'                                      // http(s)://
+    r'|www\.[^\s()\[\]<>"]+'                                          // www.
+    r'|\+[0-9]{6,15}(?:[\s\-][0-9]{2,6}){0,4}'                      // +XX... international (sans avaler les parenthèses)
+    r'|00[0-9]{6,14}'                                                 // 00XX... (compact)
+    r'|0[5-9][0-9]{2}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}'  // FIX: 0XXX XX XX XX (10 chiffres)
+    r'|(?<![0-9@.])\b[a-zA-Z][a-zA-Z0-9\-]*\.(?:ma|com|org|net|io)\b(?:/[^\s()\[\]<>"]*)?)',  // domaine nu
+    caseSensitive: false,
+  );
+
+  // Supprime la ponctuation finale et les parenthèses/crochets résiduels
+  static final _trailingPunct = RegExp(r'[.,!?:;)\]>}"»]+$');
+  static String _clean(String s) => s.replaceAll(_trailingPunct, '').trim();
+
+  bool _isEmail(String s)  => s.contains('@') && !s.startsWith('http');
+  bool _isDomain(String s) => !s.contains('@') && !s.startsWith('http') && !s.startsWith('+') && !s.startsWith('0') && !s.startsWith('00');
+
+  Future<void> _launch(String raw) async {
+    final url = _clean(raw);
+
+    // ── Email ──────────────────────────────────────────────────────────────
+    if (_isEmail(url)) {
+      final uri = Uri.parse('mailto:$url');
+      if (await canLaunchUrl(uri)) await launchUrl(uri);
+      return;
+    }
+
+    // ── Téléphone ──────────────────────────────────────────────────────────
+    final digits = url.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
+    if (digits.startsWith('+')) {
+      final uri = Uri.parse('tel:$digits');
+      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (digits.startsWith('00')) {
+      final uri = Uri.parse('tel:+${digits.substring(2)}');
+      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (RegExp(r'^0[5-9]').hasMatch(digits)) {
+      final uri = Uri.parse('tel:+212${digits.substring(1)}');
+      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    // ── URL / Domaine ──────────────────────────────────────────────────────
+    final webUrl = url.startsWith('http') ? url : 'https://$url';
+    final uri = Uri.parse(webUrl);
+    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String _displayLabel(String raw) {
+    final s = _clean(raw);
+    if (_isEmail(s)) return '✉ $s';
+    if (_isDomain(s) && !s.startsWith('www')) return '🌐 $s';
+    return s;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = isBot
+        ? (isDark ? AppColors.darkText : AppColors.textPrimary)
+        : Colors.white;
+    final linkColor = isBot ? AppColors.primary : Colors.white70;
+
+    final baseStyle = TextStyle(
+      fontFamily: 'Poppins', fontSize: 13, height: 1.55, color: baseColor,
+    );
+    final linkStyle = baseStyle.copyWith(
+      color: linkColor,
+      decoration: TextDecoration.underline,
+      decorationColor: linkColor,
+      fontWeight: FontWeight.w600,
+    );
+
+    final spans = <InlineSpan>[];
+    int cursor = 0;
+    for (final m in _linkRegex.allMatches(text)) {
+      if (m.start > cursor) {
+        spans.add(TextSpan(text: text.substring(cursor, m.start), style: baseStyle));
+      }
+      // Texte affiché et URL lancée sans ponctuation finale
+      final raw          = m.group(0)!;
+      final display      = _displayLabel(raw);
+      final cleanedLen   = _clean(raw).length;
+      final trailingLen  = raw.length - cleanedLen;
+      spans.add(TextSpan(
+        text: display,
+        style: linkStyle,
+        recognizer: TapGestureRecognizer()..onTap = () => _launch(raw),
+      ));
+      // Restitue la ponctuation finale en texte normal
+      if (trailingLen > 0) {
+        spans.add(TextSpan(
+          text: raw.substring(raw.length - trailingLen),
+          style: baseStyle,
+        ));
+      }
+      cursor = m.end;
+    }
+    if (cursor < text.length) {
+      spans.add(TextSpan(text: text.substring(cursor), style: baseStyle));
+    }
+
+    return RichText(text: TextSpan(children: spans));
   }
 }
 
@@ -550,33 +662,37 @@ class _SuggestedQuestions extends StatelessWidget {
       case 'en':
         return [
           'Where to put plastic bottles?',
-          'Are plastic bags banned in Morocco?',
+          'How to change my password?',
+          'ECOVAL contact number?',
           'How to recycle electronics?',
-          'What is the yellow ECOVAL bin?',
+          'Where to see my recycling stats?',
           'How to compost at home?',
         ];
       case 'ar':
         return [
           'أين أضع زجاجات البلاستيك؟',
-          'هل الأكياس البلاستيكية محظورة في المغرب؟',
+          'كيف أغير كلمة المرور؟',
+          'رقم هاتف ECOVAL؟',
           'كيف أعيد تدوير الأجهزة الإلكترونية؟',
-          'ما هو الحاوية الصفراء ECOVAL؟',
+          'أين أرى إحصائياتي؟',
           'كيف أصنع سمادًا منزليًا؟',
         ];
       case 'es':
         return [
           '¿Dónde poner las botellas de plástico?',
-          '¿Están prohibidas las bolsas plásticas en Marruecos?',
+          '¿Cómo cambiar mi contraseña?',
+          '¿Número de contacto de ECOVAL?',
           '¿Cómo reciclar aparatos electrónicos?',
-          '¿Qué es el cubo amarillo ECOVAL?',
+          '¿Dónde ver mis estadísticas?',
           '¿Cómo hacer compost en casa?',
         ];
       default:
         return [
           'Où mettre les bouteilles plastiques ?',
-          'Les sacs plastiques sont-ils interdits au Maroc ?',
+          'Comment changer mon mot de passe ?',
+          'Numéro de contact ECOVAL ?',
           'Comment recycler les appareils électroniques ?',
-          'Qu\'est-ce que le bac jaune ECOVAL ?',
+          'Où voir mes statistiques de recyclage ?',
           'Comment composter à la maison ?',
         ];
     }
