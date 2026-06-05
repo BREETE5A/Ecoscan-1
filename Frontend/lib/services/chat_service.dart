@@ -125,31 +125,86 @@ class ChatService {
 
     // ── Contacts opérateurs ───────────────────────────────────────────────────
     if (_containsAny(q, ['contact', 'téléphone', 'numéro', 'appeler', 'هاتف', 'اتصل',
-        'teléfono', 'نومرو', 'رقم', 'تيليفون', 'اتصال', 'كونتاكت'])) {
-      return '📞 **Contacts opérateurs de recyclage au Maroc** (vérifiés) :\n'
-          '• AVERDA (collecte urbaine) : 0522 92 32 60\n'
-          '• ARMA Rabat : 0537 66 32 90\n'
-          '• SMRR (papier/carton/PET) : 0522 51 09 94\n'
-          '• Eco Zalagh (DEEE) : 0661 51 47 11\n'
-          '• ECOVAL Holcim : 0522 58 20 05\n'
-          '• Zéro Zbel (ONG) : contact@zerozabel.ma\n\n'
-          '⚠️ *Mode hors ligne — vérifiez les numéros avant d\'appeler.*';
+        'teléfono', 'نومرو', 'رقم', 'تيليفون', 'اتصال', 'كونتاكت', 'tous les contacts',
+        'liste contacts', 'operateur', 'opérateur', 'مشغل', 'operador'])) {
+      return '📞 **Opérateurs de recyclage au Maroc** (données vérifiées) :\n\n'
+          '♻️ **Collecte & recyclage :**\n'
+          '• AVERDA (collecte urbaine) : 0522 92 32 60 — averda.com\n'
+          '• ARMA Rabat : 0537 66 32 90 — contact@arma.ma — arma.ma\n'
+          '• SMRR (papier/carton/PET) : 0522 51 09 94 — adm@smrr.ma — smrr.ma\n'
+          '• ECOVALOR (plastique/métal/papier) : 0522 35 66 00\n'
+          '• TECMED Tanger : 0539 95 85 89\n\n'
+          '📱 **DEEE (appareils électroniques) :**\n'
+          '• Eco Zalagh : 0661 51 47 11 — Contact@ecozalagh.com — ecozalagh.com\n'
+          '• ECOVAL Holcim (industriel uniquement) : 0522 58 20 05\n\n'
+          '🌱 **ONG & associations :**\n'
+          '• Zéro Zbel : contact@zerozabel.ma — zerozabel.ma\n'
+          '• Caritas Maroc : 0522 29 11 22\n'
+          '• Secours Catholique (Rabat) : 0537 73 44 55\n\n'
+          '🏛️ **Institutions :**\n'
+          '• ONEE (pollution eau/sol) : 0537 75 96 00 — info@onee.ma — onee.ma\n'
+          '• MTEDD (ministère) : 0537 57 04 68 — www.mtedd.gov.ma\n'
+          '• AMEE (économie circulaire) : 0537 28 73 53 — contact@amee.ma — amee.ma\n\n'
+          '🚨 **Urgences :**\n'
+          '• SAMU : 15 | Protection Civile : 150 | Police : 19 | Gendarmerie : 177\n'
+          '• ONDE (enfants) : 2511 — 2511.ma\n'
+          '• Femmes victimes de violence : 08000 8888\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
     }
-    if (_containsAny(q, ['ecoval', 'écoval', 'إيكوفال', 'بوكس أصفر', 'كونتونور أصفر'])) {
+    if (_containsAny(q, ['ecoval', 'écoval', 'إيكوفال', 'بوكس أصفر', 'كونتونور أصفر',
+        'bac jaune', 'حاوية صفراء'])) {
       return '♻️ **ECOVAL** au Maroc :\n'
-          '• Bacs jaunes ECOVAL : plastiques, métaux, emballages\n'
+          '• Bacs jaunes ECOVAL : plastiques (PET, PEHD), métaux, emballages rigides\n'
           '  → Points dans Marjane, Carrefour, Cosmos Electro\n'
-          '• ECOVAL Holcim (industriel) : 0522 58 20 05\n'
-          '• Pour DEEE (téléphones, ordi) : Eco Zalagh 0661 51 47 11\n\n'
-          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+          '• ECOVAL Holcim (industriel uniquement) : 0522 58 20 05\n'
+          '• Pour DEEE (téléphones, ordi, TV) → Eco Zalagh : 0661 51 47 11 — Contact@ecozalagh.com\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['encombrant', 'matelas', 'meuble volumineux',
         'فراش خايب', 'كنبة', 'طابلو', 'أتاي كبير', 'حوايج كبار'])) {
-      return '🚛 **Collecte des encombrants** (matelas, meubles…) :\n'
-          '• Casablanca : AVERDA 0522 92 32 60 ou app Casa Mdinti\n'
-          '• Rabat : ARMA Environnement 0537 66 32 90\n'
-          'Sinon : déchetterie municipale la plus proche.\n\n'
-          '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🚛 **Collecte des encombrants** (matelas, meubles volumineux…) :\n'
+          '• Casablanca : AVERDA 0522 92 32 60 ou app "Casa Mdinti"\n'
+          '• Rabat : ARMA Environnement 0537 66 32 90 — contact@arma.ma\n'
+          '• Autres villes : contacter votre commune ou opérateur local\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
+    }
+    if (_containsAny(q, ['arma', 'ARMA', 'ارما', 'collecte rabat', 'ramassage rabat'])) {
+      return '♻️ **ARMA Environnement** — Rabat :\n'
+          '• Téléphone : 0537 66 32 90\n'
+          '• Email : contact@arma.ma\n'
+          '• Site : arma.ma\n'
+          '• Adresse : Av. Mehdi Ben Barka, Lot Soumia N°5, Souissi, Rabat\n'
+          '• Rôle : Collecte OM Rabat depuis 2015. Encombrants → les contacter directement.\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
+    }
+    if (_containsAny(q, ['smrr', 'SMRR', 'papier recyclage', 'carton recyclage', 'pet recyclage'])) {
+      return '♻️ **SMRR** — Société Marocaine de Récupération et de Recyclage :\n'
+          '• Téléphone : 0522 51 09 94\n'
+          '• Email : adm@smrr.ma\n'
+          '• Site : smrr.ma\n'
+          '• Adresse : Zone Ind. Tit Mellil, Casablanca\n'
+          '• Rôle : Leader recyclage papier/carton/PET — Casablanca, Tanger, Agadir, Marrakech.\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
+    }
+    if (_containsAny(q, ['eco zalagh', 'ecozalagh', 'إيكو زلاغ', 'deee', 'weee',
+        'téléphone usagé', 'ordi usagé', 'لابتوب خايب', 'تيليفون خايب'])) {
+      return '📱 **Eco Zalagh** — DEEE (appareils électroniques) :\n'
+          '• Téléphone : 0661 51 47 11\n'
+          '• Email : Contact@ecozalagh.com\n'
+          '• Site : ecozalagh.com\n'
+          '• Adresse : Sidi Hajaj Oulad Mrah, Casablanca\n'
+          '• Couvre : Casablanca, Rabat, Tanger, Fès, Meknès, Marrakech\n'
+          '• Rôle : Collecte smartphones, PC, TV, électroménager, batteries Li-ion.\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
+    }
+    if (_containsAny(q, ['onee', 'ONEE', 'pollution eau', 'rejet illégal', 'تلوث الماء',
+        'contamination eau', 'déversement', 'signaler pollution'])) {
+      return '🌊 **ONEE** — Pollution eau/sol :\n'
+          '• Téléphone : 0537 75 96 00 (gratuit 24h/24)\n'
+          '• Email : info@onee.ma\n'
+          '• Site : onee.ma\n'
+          '• Rôle : Signalement tout rejet illégal, pollution eau ou sol — National.\n\n'
+          '⚠️ *Mode hors ligne — backend non disponible.*';
     }
 
     // ── Tri des déchets ───────────────────────────────────────────────────────
