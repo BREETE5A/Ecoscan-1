@@ -368,27 +368,42 @@ class _RichMessageText extends StatelessWidget {
   final bool isDark;
   const _RichMessageText({required this.text, required this.isBot, required this.isDark});
 
-  // Ordre important : email > url > tel international > marocain XX XX XX XX > domaine nu
+  // Numéros d'urgence courts marocains (officiels vérifiés)
+  static final _emergencyRegex = RegExp(
+    r'\b(15|19|112|141|150|177|190|2511|08000\s?8888)\b',
+  );
+
+  // Ordre : numéros urgence courts > email > url > tel international > marocain 10 chiffres > domaine
   static final _linkRegex = RegExp(
-    r'([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}'           // email
-    r'|https?://[^\s()\[\]<>"]+'                                      // http(s)://
-    r'|www\.[^\s()\[\]<>"]+'                                          // www.
-    r'|\+[0-9]{6,15}(?:[\s\-][0-9]{2,6}){0,4}'                      // +XX... international (sans avaler les parenthèses)
-    r'|00[0-9]{6,14}'                                                 // 00XX... (compact)
-    r'|0[5-9][0-9]{2}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}'  // FIX: 0XXX XX XX XX (10 chiffres)
-    r'|(?<![0-9@.])\b[a-zA-Z][a-zA-Z0-9\-]*\.(?:ma|com|org|net|io)\b(?:/[^\s()\[\]<>"]*)?)',  // domaine nu
+    r'(\b(?:15|19|112|141|150|177|190|2511|08000\s?8888)\b'           // urgences courtes
+    r'|[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}'            // email
+    r'|https?://[^\s()\[\]<>"]+'                                       // http(s)://
+    r'|www\.[^\s()\[\]<>"]+'                                           // www.
+    r'|\+[0-9]{6,15}(?:[\s\-][0-9]{2,6}){0,4}'                       // +XX... international
+    r'|00[0-9]{6,14}'                                                  // 00XX...
+    r'|0[5-9][0-9]{2}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}' // 0XXX XX XX XX (10 chiffres)
+    r'|(?<![0-9@.])\b[a-zA-Z][a-zA-Z0-9\-]*\.(?:ma|com|org|net|io)\b(?:/[^\s()\[\]<>"]*)?)', // domaine nu
     caseSensitive: false,
   );
 
-  // Supprime la ponctuation finale et les parenthèses/crochets résiduels
+  // Supprime la ponctuation finale résiduelle
   static final _trailingPunct = RegExp(r'[.,!?:;)\]>}"»]+$');
   static String _clean(String s) => s.replaceAll(_trailingPunct, '').trim();
 
-  bool _isEmail(String s)  => s.contains('@') && !s.startsWith('http');
-  bool _isDomain(String s) => !s.contains('@') && !s.startsWith('http') && !s.startsWith('+') && !s.startsWith('0') && !s.startsWith('00');
+  bool _isEmail(String s)    => s.contains('@') && !s.startsWith('http');
+  bool _isEmergency(String s) => _emergencyRegex.hasMatch(s.trim());
+  bool _isDomain(String s)   => !s.contains('@') && !s.startsWith('http') && !s.startsWith('+') && !RegExp(r'^\d').hasMatch(s);
 
   Future<void> _launch(String raw) async {
     final url = _clean(raw);
+
+    // ── Numéro d'urgence court (15, 150, 19, 177…) ────────────────────────
+    if (_isEmergency(url)) {
+      final digits = url.replaceAll(RegExp(r'\s'), '');
+      final uri = Uri.parse('tel:$digits');
+      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
 
     // ── Email ──────────────────────────────────────────────────────────────
     if (_isEmail(url)) {
@@ -397,7 +412,7 @@ class _RichMessageText extends StatelessWidget {
       return;
     }
 
-    // ── Téléphone ──────────────────────────────────────────────────────────
+    // ── Téléphone long ─────────────────────────────────────────────────────
     final digits = url.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
     if (digits.startsWith('+')) {
       final uri = Uri.parse('tel:$digits');
@@ -424,6 +439,7 @@ class _RichMessageText extends StatelessWidget {
   String _displayLabel(String raw) {
     final s = _clean(raw);
     if (_isEmail(s)) return '✉ $s';
+    if (_isEmergency(s)) return '📞 $s';
     if (_isDomain(s) && !s.startsWith('www')) return '🌐 $s';
     return s;
   }
