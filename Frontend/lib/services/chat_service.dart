@@ -74,37 +74,37 @@ class ChatService {
       return '👤 Pour modifier votre **profil** (nom, photo) :\nProfil → Modifier le profil.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['badge', 'شارة', 'insignia', 'شارات', 'وسام', 'وسامات'])) {
-      return '🏅 Pour voir vos **badges** :\nProfil → Mes badges.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🏅 Pour voir vos **badges** :\nAccueil → Badges.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['statistique', 'stat', 'إحصائيات', 'estadística', 'co2',
         'recyclé combien', 'شحال ريسيكليت', 'إحصاء', 'نقط ديالي', 'كم كيلو'])) {
-      return '📊 Pour voir vos **statistiques de recyclage** :\nOnglet Statistiques dans la barre de navigation.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '📊 Pour voir vos **statistiques de recyclage** :\nAccueil → Statistiques.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['scanner', 'scan', 'photo déchet', 'مسح', 'escanear',
         'سكان', 'صور الزبل', 'صور القمامة', 'كيفاش نسكان', 'سكانيري'])) {
-      return '📷 Pour **scanner un déchet** (IA photo) :\nAppuyez sur le bouton caméra central de la barre de navigation.\nPour un **code-barres** alimentaire : Scanner → Code-barres.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '📷 Pour **scanner un déchet** (IA photo) :\nAppuyez sur le bouton caméra central de la barre de navigation.\nPour un **code-barres** alimentaire : Accueil → Code-barres.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['carte', 'map', 'خريطة', 'mapa', 'point de collecte',
         'où déposer', 'près de moi', 'وين نلقى', 'فين نحط', 'قريب مني', 'خريطة ديال'])) {
       return '🗺️ Pour trouver les **points de collecte** près de vous :\nOnglet Carte dans la barre de navigation.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['défi', 'challenge', 'تحدي', 'reto', 'تحديات', 'شالنج'])) {
-      return '🎯 Pour voir les **défis écologiques** :\nMenu → Défis.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🎯 Pour voir les **défis écologiques** :\nAccueil → Défis.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['récompense', 'reward', 'مكافأة', 'recompensa', 'point',
         'مكافآت', 'جائزة', 'بوانا', 'نقط ديال'])) {
-      return '🎁 Pour voir vos **récompenses et points** :\nMenu → Récompenses.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🎁 Pour voir vos **récompenses et points** :\nAccueil → Récompenses.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['classement', 'leaderboard', 'ترتيب', 'clasificación',
         'meilleur recycleur', 'ترتيب ديال', 'شكون لول', 'كلاسمون'])) {
-      return '🏆 Pour voir le **classement des recycleurs** :\nMenu → Classement.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🏆 Pour voir le **classement des recycleurs** :\nAccueil → Classement.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['marketplace', 'marché', 'annonce', 'vendre', 'acheter',
         'سوق', 'mercado', 'بيع', 'شرا', 'مارك بلايس', 'إعلان'])) {
-      return '🛍️ Pour accéder au **Marketplace** d\'objets recyclés :\nMenu → Marketplace.\nPour vos annonces : Marketplace → Mes annonces.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🛍️ Pour accéder au **Marketplace** d\'objets recyclés :\nOnglet Marketplace dans la barre de navigation.\nPour vos annonces : Marketplace → Mes annonces.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['quiz', 'اختبار', 'test écologique', 'كويز', 'اختبار بيئي', 'أسئلة'])) {
-      return '🧠 Pour faire le **quiz écologique** (25 questions) :\nGuide → Quiz.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '🧠 Pour faire le **quiz recyclage** (25 questions) :\nAccueil → Quiz recyclage.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['qualité de l\'air', 'air quality', 'جودة الهواء',
         'calidad del aire', 'هواء', 'تلوث الهواء', 'جودة ديال الهواء'])) {
@@ -116,7 +116,7 @@ class ChatService {
     }
     if (_containsAny(q, ['historique', 'history', 'سجل', 'historial', 'mes scans',
         'هيستوريك', 'ليست ديال', 'سجل ديال', 'سكانات ديالي'])) {
-      return '📋 Pour voir l\'**historique de vos scans** :\nProfil → Historique.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
+      return '📋 Pour voir l\'**historique de vos scans** :\nAccueil → Historique.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['paramètre', 'setting', 'إعدادات', 'ajuste', 'langue',
         'thème', 'notification', 'باراميتر', 'إعداد', 'لوغا', 'لغة'])) {
