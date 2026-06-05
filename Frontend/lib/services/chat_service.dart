@@ -111,7 +111,7 @@ class ChatService {
       return '🌿 Pour voir la **qualité de l\'air** :\nAccueil → Qualité de l\'air.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['empreinte eau', 'water footprint', 'البصمة المائية',
-        'huella hídrica', 'ماء', 'بصمة الماء', 'استهلاك الماء'])) {
+        'huella hídrica', 'بصمة الماء', 'استهلاك الماء', 'empreinte hydrique'])) {
       return '💧 Pour suivre votre **empreinte eau** :\nAccueil → Empreinte eau.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['historique', 'history', 'سجل', 'historial', 'mes scans',
@@ -198,12 +198,19 @@ class ChatService {
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['onee', 'ONEE', 'pollution eau', 'rejet illégal', 'تلوث الماء',
-        'contamination eau', 'déversement', 'signaler pollution'])) {
-      return '🌊 **ONEE** — Pollution eau/sol :\n'
+        'contamination eau', 'déversement', 'signaler pollution',
+        'mklf b lma', 'mklf lma', 'li mklf', 'responsable eau', 'responsible water',
+        'lma', 'lmaa', 'lma3', 'coupure eau', 'qat3 lma', 'distribution eau',
+        'water company', 'water supply', 'شركة الماء', 'مكتب الماء', 'الماء الصالح'])) {
+      return '💧 **ONEE** — Office National Électricité & Eau Potable :\n'
           '• Téléphone : 0537 75 96 00 (gratuit 24h/24)\n'
-          '• Email : info@onee.ma\n'
-          '• Site : onee.ma\n'
-          '• Rôle : Signalement tout rejet illégal, pollution eau ou sol — National.\n\n'
+          '• Email : info@onee.ma — onee.ma\n'
+          '• Rôle : Responsable national de l\'eau potable et signalement pollution.\n\n'
+          '🏙️ **Régies locales (facturation/coupures) :**\n'
+          '• Casablanca : LYDEC\n'
+          '• Rabat-Salé : REDAL\n'
+          '• Tanger-Tétouan : AMENDIS\n'
+          '• Autres villes : contacter votre commune ou ONEE directement.\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
 
