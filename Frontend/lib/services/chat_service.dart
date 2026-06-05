@@ -149,6 +149,7 @@ class ChatService {
           '• SAMU : 15 | Protection Civile : 150 | Police : 19 | Gendarmerie : 177\n'
           '• ONDE (enfants) : 2511 — 2511.ma\n'
           '• Femmes victimes de violence : 08000 8888\n\n'
+          '📲 **Liste complète dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['ecoval', 'écoval', 'إيكوفال', 'بوكس أصفر', 'كونتونور أصفر',
@@ -158,6 +159,7 @@ class ChatService {
           '  → Points dans Marjane, Carrefour, Cosmos Electro\n'
           '• ECOVAL Holcim (industriel uniquement) : 0522 58 20 05\n'
           '• Pour DEEE (téléphones, ordi, TV) → Eco Zalagh : 0661 51 47 11 — Contact@ecozalagh.com\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['encombrant', 'matelas', 'meuble volumineux',
@@ -166,6 +168,7 @@ class ChatService {
           '• Casablanca : AVERDA 0522 92 32 60 ou app "Casa Mdinti"\n'
           '• Rabat : ARMA Environnement 0537 66 32 90 — contact@arma.ma\n'
           '• Autres villes : contacter votre commune ou opérateur local\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['arma', 'ARMA', 'ارما', 'collecte rabat', 'ramassage rabat'])) {
@@ -175,6 +178,7 @@ class ChatService {
           '• Site : arma.ma\n'
           '• Adresse : Av. Mehdi Ben Barka, Lot Soumia N°5, Souissi, Rabat\n'
           '• Rôle : Collecte OM Rabat depuis 2015. Encombrants → les contacter directement.\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['smrr', 'SMRR', 'papier recyclage', 'carton recyclage', 'pet recyclage'])) {
@@ -184,6 +188,7 @@ class ChatService {
           '• Site : smrr.ma\n'
           '• Adresse : Zone Ind. Tit Mellil, Casablanca\n'
           '• Rôle : Leader recyclage papier/carton/PET — Casablanca, Tanger, Agadir, Marrakech.\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['eco zalagh', 'ecozalagh', 'إيكو زلاغ', 'deee', 'weee',
@@ -195,6 +200,7 @@ class ChatService {
           '• Adresse : Sidi Hajaj Oulad Mrah, Casablanca\n'
           '• Couvre : Casablanca, Rabat, Tanger, Fès, Meknès, Marrakech\n'
           '• Rôle : Collecte smartphones, PC, TV, électroménager, batteries Li-ion.\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
     if (_containsAny(q, ['onee', 'ONEE', 'pollution eau', 'rejet illégal', 'تلوث الماء',
@@ -211,6 +217,7 @@ class ChatService {
           '• Rabat-Salé : REDAL\n'
           '• Tanger-Tétouan : AMENDIS\n'
           '• Autres villes : contacter votre commune ou ONEE directement.\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
 
@@ -249,6 +256,7 @@ class ChatService {
           '• Effacez vos données avant de déposer.\n'
           '• Éco-points ECOVAL : Marjane, Carrefour, Cosmos Electro\n'
           '• Ou contacter Eco Zalagh : 0661 51 47 11 (ecozalagh.com)\n\n'
+          '📲 **Dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
     if (_containsAny(q, ['organique', 'compost', 'épluchure', 'عضوي', 'composteur',
