@@ -6,6 +6,53 @@ import '../models/user_model.dart';
 import '../models/scan_result_model.dart';
 import '../services/storage_service.dart';
 
+// Stream Firestore en temps réel des stats utilisateur (co2, points, scans)
+final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) {
+    return Stream.value(ref.read(userProvider));
+  }
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .snapshots()
+      .map((doc) {
+    if (!doc.exists) return ref.read(userProvider);
+    final data = doc.data()!;
+    final fsPoints = (data['ecoPoints'] as num?)?.toInt() ?? 0;
+    final fsScans = (data['scansCount'] as num?)?.toInt() ?? 0;
+    final fsCo2 = (data['co2Saved'] as num?)?.toDouble() ?? 0.0;
+    final fsStreak = (data['streak'] as num?)?.toInt() ?? 0;
+    final rawName = ((data['displayName'] as String?) ?? '').trim();
+    final fsName = rawName.isNotEmpty ? rawName : 'Utilisateur';
+    final rawCity = ((data['city'] as String?) ?? '').trim();
+    final fsCity = rawCity.isNotEmpty ? rawCity : 'Maroc';
+    int badges = 0;
+    if (fsScans >= 1) badges++;
+    if (fsScans >= 5) badges++;
+    if (fsScans >= 10) badges++;
+    if (fsScans >= 50) badges++;
+    if (fsPoints >= 100) badges++;
+    if (fsPoints >= 500) badges++;
+    return UserModel(
+      id: uid,
+      name: fsName,
+      city: fsCity,
+      points: fsPoints,
+      scans: fsScans,
+      badges: badges,
+      rank: 0,
+      level: (fsPoints ~/ 200) + 1,
+      xp: fsPoints % 200,
+      xpMax: 200,
+      co2Saved: fsCo2,
+      weeklyGoalKg: 10.0,
+      weeklyProgress: (fsCo2 / 10000).clamp(0.0, 1.0),
+      streak: fsStreak,
+    );
+  });
+});
+
 final userProvider = StateNotifierProvider<UserNotifier, UserModel>((ref) {
   final notifier = UserNotifier();
   final fbUser = FirebaseAuth.instance.currentUser;

@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../models/scan_entry.dart';
+import '../../models/user_model.dart';
 import '../../providers/scan_history_provider.dart';
 import '../../providers/user_provider.dart';
 
@@ -161,16 +163,21 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final s        = AppStrings.of(ref.watch(localeProvider).languageCode);
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final history  = ref.watch(scanHistoryProvider);
-    final notifier = ref.read(scanHistoryProvider.notifier);
-    final totalCo2  = notifier.totalCo2Saved;
-    final totalPts  = notifier.totalPoints;
-    final recyclable = notifier.recyclableCount;
-    final totalScans = history.length;
-    final kgRecycled = totalScans * 0.35;
-    final recycleRate = totalScans > 0 ? recyclable / totalScans : 0.0;
+    final s      = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Données dynamiques depuis Firestore (stream temps réel)
+    final UserModel user        = ref.watch(userStatsStreamProvider).valueOrNull
+                                ?? ref.watch(userProvider);
+    final List<ScanEntry> history = ref.watch(scanHistoryStreamProvider).valueOrNull
+                                  ?? ref.watch(scanHistoryProvider);
+
+    final double totalCo2  = user.co2Saved;   // grammes depuis Firestore
+    final int    totalPts  = user.points;      // depuis Firestore
+    final int    totalScans = user.scans;      // depuis Firestore
+    final double kgRecycled = totalScans * 0.35;
+    final int    recyclable  = history.where((e) => e.recyclable).length;
+    final double recycleRate = history.isNotEmpty ? recyclable / history.length : 0.0;
     final periods    = [s.periodWeek, s.periodMonth, s.periodYear];
 
 
@@ -303,7 +310,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                       ),
                       child: BarChart(
                         BarChartData(
-                          maxY: (chartData(history).reduce((a, b) => a > b ? a : b) * 1.3),
+                          maxY: math.max(1.0, chartData(history).reduce((a, b) => a > b ? a : b) * 1.3),
                           barTouchData: BarTouchData(
                             touchTooltipData: BarTouchTooltipData(
                               getTooltipColor: (_) => isDark

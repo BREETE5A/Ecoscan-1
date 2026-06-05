@@ -55,4 +55,32 @@ class ScanEntry {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'category': category,
+    'recyclable': recyclable,
+    'dangerous': dangerous,
+    'points': points,
+    'co2Saved': co2Saved,
+    'recyclability': recyclability,
+    'binColor': binColor,
+    'scannedAt': scannedAt.toIso8601String(),
+    'mode': mode,
+  };
+
+  factory ScanEntry.fromJson(Map<String, dynamic> json) => ScanEntry(
+    id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+    name: json['name'] as String? ?? 'Inconnu',
+    category: json['category'] as String? ?? 'unknown',
+    recyclable: json['recyclable'] as bool? ?? false,
+    dangerous: json['dangerous'] as bool? ?? false,
+    points: (json['points'] as num?)?.toInt() ?? 0,
+    co2Saved: (json['co2Saved'] as num?)?.toDouble() ?? 0.0,
+    recyclability: (json['recyclability'] as num?)?.toDouble() ?? 0.0,
+    binColor: json['binColor'] as String? ?? 'Noir',
+    scannedAt: DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
+    mode: json['mode'] as String? ?? 'local',
+  );
+
 }

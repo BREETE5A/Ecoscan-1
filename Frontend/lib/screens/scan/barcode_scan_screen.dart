@@ -723,7 +723,8 @@ _MaterialType _typeFromMaterialTag(String tag) {
   // ':tin' uniquement en tag exact (évite de matcher 'satin', 'atin', etc.)
   if (t == 'en:tin' || t.endsWith(':tin')) { return _MaterialType.metal; }
   if (t.contains('cardboard') || t.contains('paper') || t.contains('wood') ||
-      t.contains('kraft') || t.contains('cellulose')) {
+      t.contains('kraft') || t.contains('cellulose') ||
+      t == 'en:tetra-pak' || t.contains('multilayer')) {
     return _MaterialType.cardboard;
   }
   if (t.contains('plastic') || t.contains(':pet') || t.contains(':hdpe') ||
@@ -735,22 +736,37 @@ _MaterialType _typeFromMaterialTag(String tag) {
   return _MaterialType.unknown;
 }
 
-// Score de significativité : plus élevé = matière plus caractéristique du contenant principal
-// verre > métal > carton > plastique (en termes de rareté comme emballage secondaire)
+// Score de base par type de matière
 int _materialScore(_MaterialType type) {
   switch (type) {
     case _MaterialType.glass:     return 4;
     case _MaterialType.metal:     return 3;
     case _MaterialType.cardboard: return 2;
-    case _MaterialType.plastic:   return 1;
+    case _MaterialType.plastic:   return 2; // égal au carton
     case _MaterialType.unknown:   return 0;
   }
+}
+
+// Priorité effective d'un tag : les plastiques nommés (PET, HDPE, PP…) battent le carton générique
+int _tagPriority(String tag, _MaterialType type) {
+  if (type == _MaterialType.plastic) {
+    final t = tag.toLowerCase();
+    if (t.contains(':pet') || t.contains(':hdpe') || t.contains(':pp') ||
+        t.contains(':pvc')  || t.contains(':ldpe') || t.contains(':ps-') ||
+        t.contains(':abs')  || t.contains(':eva')  ||
+        t.contains('polyprop') || t.contains('polyethylene') || t.contains('polysty')) {
+      return 5; // plastique nommé > verre(4) > métal(3) > carton(2) > plastique générique(1)
+    }
+    return 1; // plastique générique
+  }
+  return _materialScore(type);
 }
 
 // Extrait la meilleure matière depuis une liste de tags
 _MaterialInfo? _bestMaterialFromTags(List<String> tags, bool? recycling) {
   _MaterialType? best;
   String bestLabel = '';
+  int bestScore = -1;
 
   for (final tag in tags) {
     final t = tag.toLowerCase();
@@ -777,9 +793,13 @@ _MaterialInfo? _bestMaterialFromTags(List<String> tags, bool? recycling) {
       if (ft != _MaterialType.unknown) { type = ft; label = _labelForTag(tag, _materialLabels); }
     }
 
-    if (type != null && (best == null || _materialScore(type) > _materialScore(best))) {
-      best = type;
-      bestLabel = label;
+    if (type != null) {
+      final score = _tagPriority(tag, type);
+      if (best == null || score > bestScore) {
+        best = type;
+        bestLabel = label;
+        bestScore = score;
+      }
     }
   }
   if (best == null) return null;
@@ -795,32 +815,45 @@ _MaterialInfo _detectMaterial(FoodProduct p) {
     if (t.contains('recyclable') || t.contains('recycled'))         { recycling = true; }
   }
 
-  // Priorité 1 : composants structurés — score sur TOUS les composants
-  // (évite de retourner un emballage secondaire ex: boîte carton avant une bouteille plastique)
+  // Priorité 1 : composants structurés
   if (p.packagingComponents.isNotEmpty) {
     _MaterialType? bestType;
     String bestLabel = '';
     bool? bestRecyclable;
-    double? bestWeight;
+    double bestWeight = -1;
+    int bestTagScore = -1;
+
+    // Formes d'accessoires à ignorer pour identifier le contenant principal
+    const accessoryShapes = {
+      'en:label', 'en:sleeve', 'en:straw', 'en:seal',
+      'en:foil-seal', 'en:cap', 'en:screw-cap', 'en:bottle-cap',
+      'en:cork', 'en:stopper', 'en:spoon',
+    };
+
+    final bool hasWeights = p.packagingComponents.any((c) => (c.weight ?? 0) > 0);
 
     for (final c in p.packagingComponents) {
       if (c.material.isEmpty) continue;
+      if (accessoryShapes.contains(c.shape.toLowerCase())) continue;
       final type = _typeFromMaterialTag(c.material);
       if (type == _MaterialType.unknown) continue;
 
-      // Préférence 1 : composant le plus lourd (poids = plus grand = contenant principal)
-      final w = c.weight;
-      if (w != null && (bestWeight == null || w > bestWeight)) {
-        bestWeight = w;
-        bestType   = type;
-        bestLabel  = _labelForTag(c.material, _materialLabels);
-        bestRecyclable = c.isRecyclable;
-      } else if (w == null && bestWeight == null) {
-        // Pas de poids : score matière (verre > métal > carton > plastique)
-        if (bestType == null || _materialScore(type) > _materialScore(bestType)) {
-          bestType   = type;
-          bestLabel  = _labelForTag(c.material, _materialLabels);
+      final tagScore = _tagPriority(c.material, type);
+      if (hasWeights) {
+        final w = c.weight ?? 0;
+        if (bestType == null || w > bestWeight || (w == bestWeight && tagScore > bestTagScore)) {
+          bestType      = type;
+          bestLabel     = _labelForTag(c.material, _materialLabels);
           bestRecyclable = c.isRecyclable;
+          bestWeight    = w;
+          bestTagScore  = tagScore;
+        }
+      } else {
+        if (bestType == null || tagScore > bestTagScore) {
+          bestType      = type;
+          bestLabel     = _labelForTag(c.material, _materialLabels);
+          bestRecyclable = c.isRecyclable;
+          bestTagScore  = tagScore;
         }
       }
     }
@@ -859,14 +892,23 @@ _MaterialInfo _detectMaterial(FoodProduct p) {
   if (cat.contains('vins')  || cat.contains('wines')  ||
       cat.contains('spiritueux') || cat.contains('spirits') ||
       cat.contains('huiles') || cat.contains('oils') ||
-      cats.any((c) => c.contains('wine') || c.contains('spirit') || c.contains('oil'))) { return _MaterialInfo(_MaterialType.glass, 'Verre', true); }
+      cat.contains('confiture') || cat.contains('jam') ||
+      cat.contains('moutarde') || cat.contains('mustard') ||
+      cat.contains('sauce') || cat.contains('condiment') ||
+      cat.contains('cornichon') || cat.contains('pickle') ||
+      cat.contains('vinaigre') || cat.contains('vinegar') ||
+      cat.contains('bocal') || cat.contains('aliment bébé') || cat.contains('baby food') ||
+      cats.any((c) => c.contains('wine') || c.contains('spirit') || c.contains('oil') ||
+                      c.contains('jam') || c.contains('spread') || c.contains('pickle') ||
+                      c.contains('condiment') || c.contains('mustard') || c.contains('vinegar') ||
+                      c.contains('baby-food') || c.contains('sauce'))) { return _MaterialInfo(_MaterialType.glass, 'Verre', true); }
   if (cat.contains('eaux minérales') || cat.contains('mineral waters') ||
       cat.contains('boissons gazeuses') || cat.contains('sodas') ||
       cats.any((c) => c.contains('mineral-water') || c.contains('soda') || c.contains('cola'))) { return _MaterialInfo(_MaterialType.plastic, 'Plastique', true); }
-  if (cat.contains('laits') || cat.contains('milks') ||
-      cat.contains('jus de fruits') || cat.contains('fruit juices') ||
-      cat.contains('céréales') || cat.contains('cereals') ||
-      cats.any((c) => c.contains('milk') || c.contains('fruit-juice') || c.contains('cereal'))) { return _MaterialInfo(_MaterialType.cardboard, 'Brique carton', true); }
+  // Céréales → boîte carton (fiable)
+  if (cat.contains('céréales') || cat.contains('cereals') ||
+      cats.any((c) => c.contains('cereal'))) { return _MaterialInfo(_MaterialType.cardboard, 'Boîte carton', true); }
+  // Laits/jus → peuvent être brique carton OU bouteille plastique → ne pas inférer
   if (cat.contains('yaourts') || cat.contains('yogurts') ||
       cat.contains('fromages frais') ||
       cats.any((c) => c.contains('yogurt') || c.contains('fresh-cheese')))  { return _MaterialInfo(_MaterialType.plastic,   'Plastique',    true); }
@@ -876,9 +918,27 @@ _MaterialInfo _detectMaterial(FoodProduct p) {
 
 // ── Détection type (forme) ────────────────────────────────────────────────────
 String _detectShape(FoodProduct p) {
-  // Priorité 1 : composants structurés (shape directe)
-  for (final c in p.packagingComponents) {
-    if (c.shape.isNotEmpty) { return _labelForTag(c.shape, _shapeLabels); }
+  // Priorité 1 : composants structurés — forme du contenant avec la matière principale
+  if (p.packagingComponents.isNotEmpty) {
+    _MaterialType? bestType;
+    String bestShape = '';
+
+    for (final c in p.packagingComponents) {
+      if (c.material.isNotEmpty) {
+        final type = _typeFromMaterialTag(c.material);
+        if (type != _MaterialType.unknown) {
+          if (bestType == null || _materialScore(type) > _materialScore(bestType)) {
+            bestType  = type;
+            bestShape = c.shape.isNotEmpty ? _labelForTag(c.shape, _shapeLabels) : '';
+          } else if (type == bestType && bestShape.isEmpty && c.shape.isNotEmpty) {
+            bestShape = _labelForTag(c.shape, _shapeLabels);
+          }
+        }
+      } else if (c.shape.isNotEmpty && bestType == null) {
+        bestShape = _labelForTag(c.shape, _shapeLabels);
+      }
+    }
+    if (bestShape.isNotEmpty) return bestShape;
   }
 
   // Priorité 2 : packaging_shapes_tags (champ dédié formes — plus fiable)
@@ -920,6 +980,17 @@ String _detectShape(FoodProduct p) {
       cat.contains('spirits') || cat.contains('huiles') ||
       cats.any((c) => c.contains('wine') || c.contains('spirit') || c.contains('oil'))) {
     return 'Bouteille en verre';
+  }
+  if (cat.contains('confiture') || cat.contains('jam') ||
+      cat.contains('moutarde') || cat.contains('mustard') ||
+      cat.contains('sauce') || cat.contains('condiment') ||
+      cat.contains('cornichon') || cat.contains('pickle') ||
+      cat.contains('vinaigre') || cat.contains('vinegar') ||
+      cat.contains('bocal') || cat.contains('aliment bébé') || cat.contains('baby food') ||
+      cats.any((c) => c.contains('jam') || c.contains('spread') || c.contains('pickle') ||
+                      c.contains('condiment') || c.contains('mustard') || c.contains('vinegar') ||
+                      c.contains('baby-food') || c.contains('sauce'))) {
+    return 'Bocal en verre';
   }
   if (cat.contains('eaux minérales') || cat.contains('mineral waters') ||
       cat.contains('boissons gazeuses') || cat.contains('sodas') ||
