@@ -107,6 +107,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
     _initCamera();
     _loadModel();
+    // Pré-chauffe le backend Render.com (fire & forget)
+    ScanApiService.isAvailable();
   }
 
   Future<void> _loadModel() async {
@@ -200,10 +202,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
   Future<void> _triggerScan() async {
     if (_scanning) return;
 
-    if (!_modelLoaded) {
-      _showError(AppStrings.of(ref.read(localeProvider).languageCode).modelNotLoaded);
-      return;
-    }
+    final s = AppStrings.of(ref.read(localeProvider).languageCode);
 
     setState(() {
       _scanning = true;
@@ -217,40 +216,62 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
         final xFile = await _cameraCtrl!.takePicture();
         imageToClassify = File(xFile.path);
       } catch (e) {
-        _showError(AppStrings.of(ref.read(localeProvider).languageCode).captureError(e.toString()));
+        _showError(s.captureError(e.toString()));
         return;
       }
     }
 
     if (imageToClassify == null) {
-      _showError(AppStrings.of(ref.read(localeProvider).languageCode).noImageAvailable);
+      _showError(s.noImageAvailable);
       return;
     }
 
     ScanEntry entry;
+    String debugInfo = '';
     try {
-      // Essaie d'abord l'API online (YOLOv8)
+      // ── Étape 1 : API online YOLOv8 (priorité) ────────────────────────────
       final onlineResult = await ScanApiService.classify(imageToClassify);
-      if (onlineResult != null) {
-        debugPrint('Online YOLOv8: ${onlineResult.topLabel} (${(onlineResult.topConfidence * 100).toStringAsFixed(1)}%)');
-        entry = ScanEntry.fromClassification(onlineResult.topLabel, onlineResult.topConfidence);
+
+      if (onlineResult != null && onlineResult.topLabel != 'unknown') {
+        debugInfo = '[ONLINE] raw="${onlineResult.topLabel}" conf=${(onlineResult.topConfidence*100).toStringAsFixed(1)}%';
+        debugPrint('✅ $debugInfo');
+        final base = ScanEntry.fromClassification(onlineResult.topLabel, onlineResult.topConfidence);
         entry = ScanEntry(
-          id: entry.id, name: entry.name, category: entry.category,
-          recyclable: entry.recyclable, dangerous: entry.dangerous,
-          points: entry.points, co2Saved: entry.co2Saved,
-          recyclability: entry.recyclability, binColor: entry.binColor,
-          scannedAt: entry.scannedAt, mode: 'cloud',
+          id: base.id, name: base.name, category: base.category,
+          recyclable: base.recyclable, dangerous: base.dangerous,
+          points: base.points, co2Saved: base.co2Saved,
+          recyclability: base.recyclability, binColor: base.binColor,
+          scannedAt: base.scannedAt, mode: 'cloud',
         );
-      } else {
-        // Fallback TFLite local
+
+      } else if (_modelLoaded) {
+        // ── Étape 2 : fallback TFLite local ─────────────────────────────────
         final result = await _classifier.classify(imageToClassify);
-        debugPrint('TFLite local: ${result.label} (${(result.confidence * 100).toStringAsFixed(1)}%)');
+        final scores = result.allScores.map((e) => '${e.label}=${e.score.toStringAsFixed(2)}').join(' | ');
+        debugInfo = '[LOCAL] label=${result.label} conf=${(result.confidence*100).toStringAsFixed(1)}%\nScores: $scores';
+        debugPrint('🔄 $debugInfo');
         entry = ScanEntry.fromClassification(result.label, result.confidence);
+
+      } else {
+        _showError(s.modelNotLoaded);
+        return;
       }
     } catch (e) {
       debugPrint('Classify error: $e');
-      _showError(AppStrings.of(ref.read(localeProvider).languageCode).analysisError(e.toString()));
+      _showError(s.analysisError(e.toString()));
       return;
+    }
+
+    // ── Debug overlay visible ────────────────────────────────────────────────
+    if (mounted && debugInfo.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(debugInfo,
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 11)),
+          backgroundColor: Colors.black87,
+          duration: const Duration(seconds: 8),
+        ),
+      );
     }
 
     final nextState =

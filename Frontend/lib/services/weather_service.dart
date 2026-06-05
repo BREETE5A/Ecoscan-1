@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WeatherData {
   final String city;
@@ -9,7 +10,7 @@ class WeatherData {
   final int humidity;
   final double windSpeed;
   final int uvIndex;
-  final String condition; // clear, clouds, rain, etc.
+  final String condition;
 
   const WeatherData({
     required this.city,
@@ -23,9 +24,15 @@ class WeatherData {
   });
 }
 
+// SharedPreferences keys
+const _kWeatherCity = 'weather_city';
+const _kWeatherTs   = 'weather_city_ts';
+// Refresh GPS-based city at most once per hour
+const _kCityRefreshMs = 3600000;
+
 class WeatherService {
   static const _apiKey = '40bbb318e5d3379c017f100b4a79b9b9';
-  static const _base = 'https://api.openweathermap.org/data/2.5';
+  static const _base   = 'https://api.openweathermap.org/data/2.5';
 
   static final _dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
@@ -34,19 +41,49 @@ class WeatherService {
 
   static Future<WeatherData?> fetchByLocation() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return fetchByCity('Casablanca');
+      final prefs  = await SharedPreferences.getInstance();
+      String? city = prefs.getString(_kWeatherCity);
+      // lastTs et cityStale conservés pour usage futur (sync conditionnel)
+    // ignore: unused_local_variable
+    final cityStale = DateTime.now().millisecondsSinceEpoch - (prefs.getInt(_kWeatherTs) ?? 0) > _kCityRefreshMs;
 
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-        if (perm == LocationPermission.denied) return fetchByCity('Casablanca');
+      // ── GPS : mise à jour de la ville ─────────────────────────────────────
+      // Demande la permission uniquement au premier lancement (pas de cache).
+      // Ensuite, utilise la permission existante silencieusement.
+      try {
+        LocationPermission perm = await Geolocator.checkPermission();
+
+        if (perm == LocationPermission.denied && city == null) {
+          // Demande permission uniquement au tout premier lancement
+          perm = await Geolocator.requestPermission();
+        }
+
+        final canUseGps = perm == LocationPermission.whileInUse ||
+                          perm == LocationPermission.always;
+
+        if (canUseGps) {
+          // Si GPS dispo : toujours essayer (pas de gate 1h) pour avoir la position réelle
+          final serviceOn = await Geolocator.isLocationServiceEnabled();
+          if (serviceOn) {
+            final pos = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.low,
+                timeLimit: Duration(seconds: 8),
+              ),
+            );
+            final data = await _fetchCoords(pos.latitude, pos.longitude);
+            if (data != null) {
+              await prefs.setString(_kWeatherCity, data.city);
+              return data;
+            }
+          }
+        }
+      } catch (_) {
+        // GPS échoue → utilise la ville en cache
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
-      );
-      return _fetch('lat=${pos.latitude}&lon=${pos.longitude}');
+      // Utilise la ville cachée ou Casablanca par défaut
+      return fetchByCity(city ?? 'Casablanca');
     } catch (_) {
       return fetchByCity('Casablanca');
     }
@@ -55,6 +92,9 @@ class WeatherService {
   static Future<WeatherData?> fetchByCity(String city) =>
       _fetch('q=$city,MA');
 
+  static Future<WeatherData?> _fetchCoords(double lat, double lng) =>
+      _fetch('lat=$lat&lon=$lng');
+
   static Future<WeatherData?> _fetch(String query) async {
     try {
       final r = await _dio.get(
@@ -62,14 +102,14 @@ class WeatherService {
       );
       final d = r.data;
       return WeatherData(
-        city: d['name'] as String? ?? 'Maroc',
-        temp: (d['main']['temp'] as num).toDouble(),
+        city:        d['name'] as String? ?? 'Maroc',
+        temp:        (d['main']['temp'] as num).toDouble(),
         description: d['weather'][0]['description'] as String? ?? '',
-        icon: d['weather'][0]['icon'] as String? ?? '01d',
-        humidity: (d['main']['humidity'] as num).toInt(),
-        windSpeed: (d['wind']['speed'] as num).toDouble(),
-        uvIndex: 0,
-        condition: d['weather'][0]['main'] as String? ?? 'Clear',
+        icon:        d['weather'][0]['icon'] as String? ?? '01d',
+        humidity:    (d['main']['humidity'] as num).toInt(),
+        windSpeed:   (d['wind']['speed'] as num).toDouble(),
+        uvIndex:     0,
+        condition:   d['weather'][0]['main'] as String? ?? 'Clear',
       );
     } catch (_) {
       return null;

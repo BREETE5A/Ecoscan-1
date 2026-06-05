@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
@@ -20,7 +21,7 @@ class ClassifierService {
 
   Future<void> load() async {
     final byteData = await rootBundle.load(
-      'assets/models/ecoscan_model_efficientNet.tflite',
+      'assets/models/ecoscan_model_final.tflite',
     );
     _interpreter = Interpreter.fromBuffer(
       byteData.buffer.asUint8List(
@@ -53,6 +54,7 @@ class ClassifierService {
     List<double> scores;
 
     if (_inputIsUint8) {
+      // Modèle quantifié uint8 : pixels bruts [0, 255]
       final inputBuffer = Uint8List(_inputSize * _inputSize * 3);
       int idx = 0;
       for (int y = 0; y < _inputSize; y++) {
@@ -68,16 +70,16 @@ class ClassifierService {
       interpreter.run(input, output);
       scores = output[0];
     } else {
-      // EfficientNetB0 a une couche Rescaling(1/255) interne
-      // → passer les pixels bruts [0, 255], le modèle normalise lui-même
+      // ecoscan_model_final.tflite contient 2 couches Rescaling internes
+      // → envoyer pixels normalisés [0.0, 1.0] pour éviter double-normalisation
       final inputBuffer = Float32List(_inputSize * _inputSize * 3);
       int idx = 0;
       for (int y = 0; y < _inputSize; y++) {
         for (int x = 0; x < _inputSize; x++) {
           final pixel = resized.getPixel(x, y);
-          inputBuffer[idx++] = pixel.r.toDouble();
-          inputBuffer[idx++] = pixel.g.toDouble();
-          inputBuffer[idx++] = pixel.b.toDouble();
+          inputBuffer[idx++] = pixel.r.toDouble() / 255.0;
+          inputBuffer[idx++] = pixel.g.toDouble() / 255.0;
+          inputBuffer[idx++] = pixel.b.toDouble() / 255.0;
         }
       }
       final input = inputBuffer.reshape([1, _inputSize, _inputSize, 3]);
@@ -86,8 +88,11 @@ class ClassifierService {
       scores = output[0];
     }
 
-    // Modèle avec softmax → output déjà des probabilités
-    final probabilities = scores;
+    // Applique softmax si les scores ne sont pas déjà des probabilités
+    final rawSum = scores.reduce((a, b) => a + b);
+    final probabilities = (rawSum > 0.95 && rawSum < 1.05)
+        ? scores
+        : _softmax(scores);
     debugPrint('TFLite probs: $probabilities  sum=${scores.reduce((a,b)=>a+b)}');
 
     int maxIdx = 0;
@@ -112,5 +117,12 @@ class ClassifierService {
   void close() {
     _interpreter?.close();
     _interpreter = null;
+  }
+
+  static List<double> _softmax(List<double> logits) {
+    final maxVal = logits.reduce(max);
+    final exps = logits.map((v) => exp(v - maxVal)).toList();
+    final sum = exps.reduce((a, b) => a + b);
+    return exps.map((v) => v / sum).toList();
   }
 }

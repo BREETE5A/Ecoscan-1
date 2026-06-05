@@ -1,3 +1,4 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,8 +87,9 @@ class RewardsScreen extends ConsumerStatefulWidget {
 }
 
 class _RewardsScreenState extends ConsumerState<RewardsScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tab;
+  late ConfettiController _confetti;
 
   static const _categories = ['all', 'nature', 'coupons', 'donations', 'digital'];
 
@@ -412,6 +414,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: _categories.length, vsync: this);
+    _confetti = ConfettiController(duration: const Duration(seconds: 2));
     _tab.addListener(() {
       if (!_tab.indexIsChanging) {
         setState(() => _activeCategory = _categories[_tab.index]);
@@ -422,6 +425,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
   @override
   void dispose() {
     _tab.dispose();
+    _confetti.dispose();
     super.dispose();
   }
 
@@ -444,7 +448,35 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
           final ok = await ref.read(rewardsProvider.notifier).redeem(reward.id, reward.cost);
           if (ok && ctx.mounted) {
             Navigator.pop(ctx);
+            _confetti.play();
             NotificationService.showNewRewardUnlocked(reward.title);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(
+                  backgroundColor: reward.color,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  margin: const EdgeInsets.all(16),
+                  duration: const Duration(seconds: 3),
+                  content: Row(children: [
+                    Text(reward.icon, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(reward.title,
+                            style: const TextStyle(fontFamily: 'Poppins',
+                                fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                        Text('−${reward.cost} pts · Récompense obtenue ! 🎉',
+                            style: const TextStyle(fontFamily: 'Poppins',
+                                color: Colors.white70, fontSize: 12)),
+                      ],
+                    )),
+                  ]),
+                ),
+              );
+            }
           }
         },
       ),
@@ -460,17 +492,37 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     final redeemed = ref.watch(rewardsProvider);
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(s, isDark, lang),
-            _buildBalanceCard(s, isDark, balance),
-            _buildTabBar(s, isDark),
-            Expanded(
-              child: _buildContent(isDark, lang, s, balance, redeemed),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(s, isDark, lang),
+                _buildBalanceCard(s, isDark, balance),
+                _buildTabBar(s, isDark),
+                Expanded(
+                  child: _buildContent(isDark, lang, s, balance, redeemed),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Confetti centré en haut
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confetti,
+              blastDirectionality: BlastDirectionality.explosive,
+              numberOfParticles: 30,
+              gravity: 0.3,
+              emissionFrequency: 0.05,
+              colors: const [
+                Color(0xFF27AE60), Color(0xFF1ABC9C),
+                Color(0xFFFFD700), Color(0xFFFF6B35),
+                Color(0xFF9B59B6), Colors.white,
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

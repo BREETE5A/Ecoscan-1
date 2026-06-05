@@ -42,11 +42,76 @@ class AppStrings {
   String get share       => _t('Partager', 'Share', 'مشاركة', 'Compartir');
 
   // ── Navigation ───────────────────────────────────────────────────────────
-  String get navHome       => _t('Accueil',   'Home',      'الرئيسية',  'Inicio');
-  String get navMap        => _t('Carte',     'Map',       'الخريطة',   'Mapa');
-  String get navScan       => _t('Scanner',   'Scan',      'مسح',       'Escanear');
-  String get navChat       => _t('Assistant', 'Assistant', 'المساعد',   'Asistente');
-  String get navProfile    => _t('Profil',    'Profile',   'الملف',     'Perfil');
+  String get navHome        => _t('Accueil',     'Home',        'الرئيسية',    'Inicio');
+  String get navMap         => _t('Carte',       'Map',         'الخريطة',     'Mapa');
+  String get navScan        => _t('Scanner',     'Scan',        'مسح',         'Escanear');
+  String get navChat        => _t('Assistant',   'Assistant',   'المساعد',     'Asistente');
+  String get navProfile     => _t('Profil',      'Profile',     'الملف',       'Perfil');
+  String get navMarketplace => _t('Marché',      'Market',      'السوق',       'Mercado');
+
+  // ── Marketplace ──────────────────────────────────────────────────────────
+  String get marketplaceTitle    => _t('Éco-Marché', 'Eco-Market', 'السوق البيئي', 'Eco-Mercado');
+  String get marketplaceSub      => _t('Donnez, vendez ou échangez vos objets recyclables',
+                                       'Give, sell or exchange your recyclable items',
+                                       'تبرع أو بيع أو بادل مواد قابلة لإعادة التدوير',
+                                       'Dona, vende o intercambia tus artículos reciclables');
+  String get addListing          => _t('Publier une annonce', 'Post an ad', 'نشر إعلان', 'Publicar anuncio');
+  String get listingTypeDon      => _t('Don',    'Free',     'تبرع',   'Donación');
+  String get listingTypeVente    => _t('Vente',  'Sale',     'بيع',    'Venta');
+  String get listingTypeEchange  => _t('Échange','Swap',     'مبادلة', 'Intercambio');
+  String get listingTitle        => _t('Titre',  'Title',    'العنوان','Título');
+  String get listingDesc         => _t('Description', 'Description', 'الوصف', 'Descripción');
+  String get listingPrice        => _t('Prix (DH)', 'Price (MAD)', 'السعر (درهم)', 'Precio (MAD)');
+  String get listingCity         => _t('Ville',  'City',     'المدينة','Ciudad');
+  String get listingPhone        => _t('Téléphone', 'Phone', 'الهاتف', 'Teléfono');
+  String get listingWhatsapp     => _t('WhatsApp', 'WhatsApp', 'واتساب', 'WhatsApp');
+  String get listingCategory     => _t('Catégorie', 'Category', 'الفئة', 'Categoría');
+  String get callSeller          => _t('Appeler', 'Call', 'اتصال', 'Llamar');
+  String get whatsappSeller      => _t('WhatsApp', 'WhatsApp', 'واتساب', 'WhatsApp');
+  String get deleteAd            => _t('Supprimer', 'Delete', 'حذف', 'Eliminar');
+  String get myAds               => _t('Mes annonces', 'My ads', 'إعلاناتي', 'Mis anuncios');
+  String get publishAd           => _t('Publier', 'Publish', 'نشر', 'Publicar');
+  String get freeLabel           => _t('Gratuit', 'Free', 'مجاني', 'Gratis');
+  String get swapLabel           => _t('Échange', 'Swap', 'مبادلة', 'Intercambio');
+  String get contactSeller       => _t('Contacter le vendeur', 'Contact seller', 'اتصل بالبائع', 'Contactar vendedor');
+  String get noListings          => _t('Aucune annonce pour le moment.\nSoyez le premier à publier !',
+                                       'No ads yet.\nBe the first to post!',
+                                       'لا إعلانات حتى الآن.\nكن أول من ينشر!',
+                                       'Sin anuncios aún.\n¡Sé el primero!');
+  String get addPhoto            => _t('Ajouter une photo', 'Add a photo', 'إضافة صورة', 'Agregar foto');
+  String get confirmDelete       => _t('Supprimer cette annonce ?', 'Delete this ad?', 'حذف هذا الإعلان؟', '¿Eliminar este anuncio?');
+  // Recherche & badges
+  String get searchHint          => _t('Rechercher titre, catégorie, ville…', 'Search title, category, city…', 'ابحث بالعنوان أو الفئة أو المدينة…', 'Buscar título, categoría, ciudad…');
+  String get trustedLabel        => _t('Fiable', 'Trusted', 'موثوق', 'Fiable');
+  String get trustedSellerLabel  => _t('✓ Vendeur fiable', '✓ Trusted seller', '✓ بائع موثوق', '✓ Vendedor fiable');
+  // Photos
+  String get cameraLabel         => _t('Caméra', 'Camera', 'الكاميرا', 'Cámara');
+  String get galleryMultiple     => _t('Galerie (plusieurs)', 'Gallery (multiple)', 'المعرض (متعدد)', 'Galería (múltiple)');
+  // EcoPoints
+  String get ecoPointsDon       => _t('+15 EcoPoints pour ce don ! 🌿', '+15 EcoPoints for this donation! 🌿', '+15 نقطة EcoPoints لهذه التبرع! 🌿', '+15 EcoPoints por esta donación! 🌿');
+  String ecoPointsAd(int pts)   => _t('+$pts EcoPoints pour cette annonce 🌿', '+$pts EcoPoints for this ad 🌿', '+$pts نقطة EcoPoints لهذا الإعلان 🌿', '+$pts EcoPoints por este anuncio 🌿');
+  String listingPublished(int pts) => _t('Annonce publiée ! +$pts pts EcoPoints 🌿', 'Ad published! +$pts EcoPoints 🌿', 'تم نشر الإعلان! +$pts نقطة EcoPoints 🌿', '¡Anuncio publicado! +$pts EcoPoints 🌿');
+  // Avis
+  String get leaveReview         => _t('Laisser un avis', 'Leave a review', 'اترك تقييماً', 'Dejar una reseña');
+  String reviewsCount(int n)     => _t('Avis ($n)', 'Reviews ($n)', 'التقييمات ($n)', 'Reseñas ($n)');
+  String reviewCountSuffix(int n)=> _t(' ($n avis)', ' ($n reviews)', ' ($n تقييم)', ' ($n reseñas)');
+  String get commentHint         => _t('Votre commentaire (optionnel)', 'Your comment (optional)', 'تعليقك (اختياري)', 'Tu comentario (opcional)');
+  String get publishReview       => _t('Publier l\'avis', 'Publish review', 'نشر التقييم', 'Publicar reseña');
+  String get reviewPublished     => _t('Avis publié ! ⭐', 'Review published! ⭐', 'تم نشر التقييم! ⭐', '¡Reseña publicada! ⭐');
+  // WhatsApp
+  String whatsappInterest(String title) => _t('Bonjour, je suis intéressé(e) par : $title', 'Hello, I\'m interested in: $title', 'مرحباً، أنا مهتم بـ: $title', 'Hola, estoy interesado/a en: $title');
+  // Tri & filtres
+  String get sortRecent         => _t('Récent',    'Recent',   'الأحدث',  'Reciente');
+  String get sortPriceAsc       => _t('Prix ↑',    'Price ↑',  'السعر ↑', 'Precio ↑');
+  String get sortDistance       => _t('Distance',  'Distance', 'المسافة', 'Distancia');
+  String get filterByCity       => _t('Filtrer par ville', 'Filter by city', 'تصفية حسب المدينة', 'Filtrar por ciudad');
+  String get searchCityHint     => _t('Rechercher une ville…', 'Search a city…', 'ابحث عن مدينة…', 'Buscar una ciudad…');
+  String get showAll            => _t('Tout afficher', 'Show all', 'عرض الكل', 'Mostrar todo');
+  // Formulaire annonce
+  String get countryCodeLabel   => _t('Indicatif pays', 'Country code', 'مفتاح البلد', 'Código de país');
+  String get cityRequiredErr    => _t('Ville requise', 'City required', 'المدينة مطلوبة', 'Ciudad requerida');
+  String get phoneRequiredErr   => _t('Téléphone requis', 'Phone required', 'الهاتف مطلوب', 'Teléfono requerido');
+  String get phone9DigitsErr    => _t('Entrez exactement 9 chiffres', 'Enter exactly 9 digits', 'أدخل 9 أرقام بالضبط', 'Introduce exactamente 9 dígitos');
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   String get welcomeBack   => _t('Bon retour !', 'Welcome back!', 'مرحباً بعودتك!', '¡Bienvenido de nuevo!');
@@ -226,6 +291,12 @@ class AppStrings {
     '$done من $total مكتمل',
     '$done de $total completado',
   );
+  String communityLevelPct(int pct) => _t(
+    '$pct% vers le prochain niveau communautaire',
+    '$pct% towards next community level',
+    '$pct% نحو المستوى المجتمعي التالي',
+    '$pct% hacia el próximo nivel comunitario',
+  );
   String get communityLevelText => _t('68% vers le prochain niveau communautaire',
                                       '68% towards next community level',
                                       '٦٨٪ نحو المستوى المجتمعي التالي',
@@ -397,8 +468,11 @@ class AppStrings {
     }
   }
 
-  String get barcodeCategories    => _t('Catégories',            'Categories',            'الفئات',                  'Categorías');
-  String get barcodeScanAgainBtn  => _t('Nouveau scan',          'New scan',              'مسح جديد',                'Nuevo escaneo');
+  String get barcodeCategories       => _t('Catégories',            'Categories',            'الفئات',                  'Categorías');
+  String get barcodeScanAgainBtn     => _t('Nouveau scan',          'New scan',              'مسح جديد',                'Nuevo escaneo');
+  String get packagingTypeLabel      => _t("Type d'emballage",      'Packaging type',        'نوع التغليف',             'Tipo de envase');
+  String get packagingMaterialLabel  => _t('Matière',               'Material',              'المادة',                  'Material');
+  String get packagingNotSpecified   => _t('Non renseigné',         'Not specified',         'غير محدد',                'No especificado');
 
   // Instructions par matériau (4 langues)
   List<String> barcodeGlassSteps() { switch(_locale) {
@@ -622,6 +696,14 @@ class AppStrings {
   String get menuLeaderboard  => _t('Classement', 'Leaderboard', 'لوحة الترتيب', 'Clasificación');
   String get menuNotifications=> _t('Notifications', 'Notifications', 'الإشعارات', 'Notificaciones');
   String get menuSettings     => _t('Paramètres', 'Settings', 'الإعدادات', 'Configuración');
+  String get menuRewards      => _t('Récompenses', 'Rewards', 'المكافآت', 'Recompensas');
+  String get menuHistory      => _t('Historique', 'History', 'السجل', 'Historial');
+  String get menuChallenges   => _t('Défis', 'Challenges', 'التحديات', 'Desafíos');
+  // Sections profil
+  String get profileSectionAccount     => _t('Mon compte', 'My account', 'حسابي', 'Mi cuenta');
+  String get profileSectionEducation   => _t('Éducation', 'Education', 'التعليم', 'Educación');
+  String get profileSectionEnvironment => _t('Environnement', 'Environment', 'البيئة', 'Medio ambiente');
+  String get profileSectionActivity    => _t('Activité & Récompenses', 'Activity & Rewards', 'النشاط والمكافآت', 'Actividad y Recompensas');
   String xpProgressText(int current, int total) =>
       _t('$current / $total XP pour le prochain niveau',
          '$current / $total XP to next level',
@@ -669,9 +751,14 @@ class AppStrings {
   String get digital         => _t('Digital', 'Digital', 'رقمي', 'Digital');
 
   // ── Map ───────────────────────────────────────────────────────────────────
-  String get searchCollection => _t('Rechercher un point de collecte...', 'Search a collection point...', 'البحث عن نقطة جمع...', 'Buscar punto de recogida...');
-  String get directions       => _t('Itinéraire', 'Directions', 'الاتجاهات', 'Cómo llegar');
-  String get nearbyPoints     => _t('Points de collecte proches', 'Nearby collection points', 'نقاط الجمع القريبة', 'Puntos de recogida cercanos');
+  String get searchCollection  => _t('Rechercher un point de collecte...', 'Search a collection point...', 'البحث عن نقطة جمع...', 'Buscar punto de recogida...');
+  String get directions        => _t('Itinéraire', 'Directions', 'الاتجاهات', 'Cómo llegar');
+  String get nearbyPoints      => _t('Points de collecte proches', 'Nearby collection points', 'نقاط الجمع القريبة', 'Puntos de recogida cercanos');
+  String get locatingText      => _t('Localisation en cours...', 'Locating...', 'جارٍ تحديد الموقع...', 'Localizando...');
+  String get legendGeneral     => _t('Général', 'General', 'عام', 'General');
+  String get legendElectro     => _t('Électro.', 'Electro.', 'إلكترو.', 'Electro.');
+  String pointsInRadius(int n) => _t('$n points dans un rayon de 5 km', '$n points within 5 km', '$n نقطة في نطاق 5 كم', '$n puntos en radio de 5 km');
+  String pointsAvailable(int n) => _t('$n points disponibles', '$n points available', '$n نقطة متاحة', '$n puntos disponibles');
 
   // ── Scan ──────────────────────────────────────────────────────────────────
   String get centerWaste      => _t('Centrez le déchet dans le cadre', 'Center the waste in the frame', 'ضع النفايات في منتصف الإطار', 'Centra el residuo en el marco');
@@ -783,6 +870,7 @@ class AppStrings {
   String get catTrash        => _t('Ordures',   'Trash',       'نفايات',      'Basura');
   String get catDangerous    => _t('Dangereux', 'Dangerous',   'خطرة',        'Peligrosos');
   String get catTextile      => _t('Textile',   'Textile',     'نسيج',        'Textil');
+  String get catOil          => _t('Huiles',    'Used oil',    'زيوت',        'Aceites');
   String get catAll          => _t('Tous',      'All',         'الكل',        'Todo');
 
   // ── Guide extra ───────────────────────────────────────────────────────────────

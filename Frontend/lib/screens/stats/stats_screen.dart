@@ -8,6 +8,7 @@ import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/scan_history_provider.dart';
+import '../../providers/user_provider.dart';
 
 // ── Leaderboard Firestore (top 5) ─────────────────────────────────────────────
 final _statsLeaderProvider = StreamProvider<List<(String, int, String)>>((ref) {
@@ -172,26 +173,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
     final recycleRate = totalScans > 0 ? recyclable / totalScans : 0.0;
     final periods    = [s.periodWeek, s.periodMonth, s.periodYear];
 
-    // Ratios catégories depuis l'historique réel
-    final catCounts = <String, int>{};
-    for (final scan in history) {
-      final cat = scan.category.toLowerCase();
-      final key = cat.contains('plastique') || cat == 'plastique' ? 'plastic'
-                : cat.contains('verre')                           ? 'glass'
-                : cat.contains('papier') || cat == 'paper' || cat == 'cardboard' ? 'paper'
-                : cat.contains('métal') || cat == 'metal'        ? 'metal'
-                : cat.contains('organique') || cat == 'organique' ? 'organic'
-                : 'other';
-      catCounts[key] = (catCounts[key] ?? 0) + 1;
-    }
-    final catTotal = totalScans > 0 ? totalScans : 1;
-    final categories = [
-      (s.catPlastic, (catCounts['plastic']  ?? 0) / catTotal, AppColors.plastic),
-      (s.catOrganic, (catCounts['organic']  ?? 0) / catTotal, const Color(0xFF795548)),
-      (s.catPaper,   (catCounts['paper']    ?? 0) / catTotal, AppColors.paper),
-      (s.catGlass,   (catCounts['glass']    ?? 0) / catTotal, AppColors.glass),
-      (s.catMetal,   (catCounts['metal']    ?? 0) / catTotal, AppColors.metal),
-    ];
 
     return Scaffold(
       body: SafeArea(
@@ -437,73 +418,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    // Badges
-                    _BadgesSection(
-                      totalScans: totalScans,
-                      totalPts: totalPts,
-                      kgRecycled: kgRecycled,
-                      isDark: isDark,
-                      title: s.badgesUnlocked,
-                      obtainedLabel: (a, b) => s.badgeObtained(a, b),
-                      s: s,
-                    ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
-                    const SizedBox(height: 20),
-
                     // Leaderboard
                     _LeaderboardSection(
                       isDark: isDark,
-                      userPoints: totalPts,
+                      userPoints: ref.watch(userProvider).points,
                       title: s.weeklyLeaderboard,
                       topLabel: s.top5,
                       youText: s.youLabel,
                     ).animate().fadeIn(duration: 500.ms, delay: 450.ms),
-                    const SizedBox(height: 20),
-
-                    // Category breakdown
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCard : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: isDark ? 0.2 : 0.06),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            s.byCategory,
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? AppColors.darkText
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          ...List.generate(
-                            categories.length,
-                            (i) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _CatBar(
-                                label: categories[i].$1,
-                                value: categories[i].$2,
-                                color: categories[i].$3,
-                                delay: 300 + i * 80,
-                                isDark: isDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
                     const SizedBox(height: 90),
                   ],
                 ),
@@ -578,67 +500,6 @@ class _SummaryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CatBar extends StatelessWidget {
-  final String label;
-  final double value;
-  final Color color;
-  final int delay;
-  final bool isDark;
-  const _CatBar({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.delay,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                color: isDark ? AppColors.darkText : AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              '${(value * 100).round()}%',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: value),
-            duration: Duration(milliseconds: delay + 400),
-            curve: Curves.easeOut,
-            builder: (_, v, _) => LinearProgressIndicator(
-              value: v,
-              backgroundColor:
-                  isDark ? AppColors.darkInput : AppColors.inputBg,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 8,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -735,130 +596,6 @@ class _CircularGauge extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isDark ? AppColors.darkText : AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Badges section ────────────────────────────────────────────────────────────
-class _BadgesSection extends StatelessWidget {
-  final int totalScans;
-  final int totalPts;
-  final double kgRecycled;
-  final bool isDark;
-  final String title;
-  final String Function(int, int) obtainedLabel;
-
-  final AppStrings s;
-
-  const _BadgesSection({
-    required this.totalScans,
-    required this.totalPts,
-    required this.kgRecycled,
-    required this.isDark,
-    required this.title,
-    required this.obtainedLabel,
-    required this.s,
-  });
-
-  List<(String, String, int, String)> _badges() => [
-    (s.badgeFirstScan,  '🌱', 1,   'scans'),
-    (s.badge10Scans,    '♻️', 10,  'scans'),
-    (s.badgeEcoWarrior, '🏆', 50,  'scans'),
-    (s.badge100pts,     '⭐', 100, 'pts'),
-    (s.badge500pts,     '💎', 500, 'pts'),
-    (s.badge1kgSorted,  '⚖️', 1,  'kg'),
-    (s.badge10kgSorted, '🌍', 10, 'kg'),
-  ];
-
-  bool _unlocked(int threshold, String type) {
-    return switch (type) {
-      'scans' => totalScans >= threshold,
-      'pts'   => totalPts >= threshold,
-      'kg'    => kgRecycled >= threshold,
-      _       => false,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkText : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _badges().map((b) {
-              final unlocked = _unlocked(b.$3, b.$4);
-              return Tooltip(
-                message: b.$1,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: unlocked
-                        ? AppColors.primary.withValues(alpha: 0.12)
-                        : (isDark ? AppColors.darkInput : AppColors.inputBg),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: unlocked
-                          ? AppColors.primary.withValues(alpha: 0.4)
-                          : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        b.$2,
-                        style: TextStyle(
-                          fontSize: 22,
-                          color: unlocked ? null : const Color(0x55000000),
-                        ),
-                      ),
-                      if (!unlocked)
-                        const Icon(Icons.lock_rounded,
-                            size: 10, color: AppColors.textSecondary),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            obtainedLabel(_badges().where((b) => _unlocked(b.$3, b.$4)).length, _badges().length),
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              color: AppColors.textSecondary,
             ),
           ),
         ],

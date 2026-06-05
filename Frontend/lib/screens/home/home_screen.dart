@@ -1141,7 +1141,7 @@ class _CommunityCard extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            s.communityLevelText,
+            s.communityLevelPct((stats.progress * 100).round()),
             style: TextStyle(
               fontFamily: 'Poppins', fontSize: 11,
               color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,

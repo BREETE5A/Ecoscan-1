@@ -405,45 +405,81 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                         const SizedBox(height: 24),
 
-                        // ── Liens légaux ─────────────────────────────────
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.push(context,
-                                MaterialPageRoute(
-                                    builder: (_) => const PrivacyPolicyScreen())),
-                              child: Text(
-                                l10n.privacyPolicy,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF2D6A4F),
-                                  fontSize: 12,
-                                  decoration: TextDecoration.underline,
-                                ),
+                        // ── Phrase consentement ───────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 11.5,
+                                color: Colors.grey,
+                                height: 1.5,
                               ),
-                            ),
-                            const Text(
-                              ' • ',
-                              style: TextStyle(
-                                  color: Colors.grey, fontSize: 12),
-                            ),
-                            GestureDetector(
-                              onTap: () => Navigator.push(context,
-                                MaterialPageRoute(
-                                    builder: (_) => const TermsScreen())),
-                              child: Text(
-                                l10n.termsOfUse,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF2D6A4F),
-                                  fontSize: 12,
-                                  decoration: TextDecoration.underline,
+                              children: [
+                                TextSpan(text: l10n.localeName == 'ar'
+                                    ? 'بالتسجيل، تقر بأنك قرأت ووافقت على '
+                                    : l10n.localeName == 'es'
+                                        ? 'Al registrarte, confirmas que has leído y aceptas los '
+                                        : l10n.localeName == 'en'
+                                            ? 'By signing up, you confirm you have read and agree to '
+                                            : 'En vous inscrivant, vous confirmez avoir lu et accepté les '),
+                                WidgetSpan(
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.push(context,
+                                        MaterialPageRoute(builder: (_) => const TermsScreen())),
+                                    child: Text(
+                                      l10n.localeName == 'ar' ? 'شروط الخدمة'
+                                          : l10n.localeName == 'es' ? 'Términos de servicio'
+                                          : l10n.localeName == 'en' ? 'Terms of Service'
+                                          : 'Conditions d\'utilisation',
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 11.5,
+                                        color: Color(0xFF2D6A4F),
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Color(0xFF2D6A4F),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                TextSpan(text: l10n.localeName == 'ar'
+                                    ? ' و'
+                                    : l10n.localeName == 'es'
+                                        ? ' y la '
+                                        : ' and '),
+                                WidgetSpan(
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.push(context,
+                                        MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                                    child: Text(
+                                      l10n.localeName == 'ar' ? 'سياسة الخصوصية'
+                                          : l10n.localeName == 'es' ? 'Política de privacidad'
+                                          : l10n.localeName == 'en' ? 'Privacy Policy'
+                                          : 'Politique de confidentialité',
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 11.5,
+                                        color: Color(0xFF2D6A4F),
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Color(0xFF2D6A4F),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                TextSpan(text: l10n.localeName == 'ar'
+                                    ? ' لـ EcoScan.'
+                                    : l10n.localeName == 'es'
+                                        ? ' de EcoScan.'
+                                        : ' of EcoScan.'),
+                              ],
                             ),
-                          ],
-                        ).animate().fadeIn(duration: 400.ms, delay: 900.ms),
+                          ),
+                        ).animate().fadeIn(duration: 400.ms, delay: 860.ms),
+
 
                         const SizedBox(height: 16),
 

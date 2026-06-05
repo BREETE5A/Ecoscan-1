@@ -62,11 +62,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
 
   int _selectedIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
-    if (loc.startsWith('/home')) return 0;
-    if (loc.startsWith('/map')) return 1;
-    if (loc.startsWith('/scan')) return 2;
-    if (loc.startsWith('/guide')) return 3;
-    if (loc.startsWith('/profile')) return 4;
+    if (loc.startsWith('/home'))        return 0;
+    if (loc.startsWith('/map'))         return 1;
+    if (loc.startsWith('/scan'))        return 2;
+    if (loc.startsWith('/marketplace')) return 3;
+    if (loc.startsWith('/profile'))     return 4;
     return 0;
   }
 
@@ -141,11 +141,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                     ),
                     const SizedBox(width: 64),
                     _NavItem(
-                      icon: Icons.menu_book_outlined,
-                      activeIcon: Icons.menu_book_rounded,
-                      label: s.navGuide,
+                      icon: Icons.storefront_outlined,
+                      activeIcon: Icons.storefront_rounded,
+                      label: s.navMarketplace,
                       selected: idx == 3,
-                      onTap: () => context.go('/guide'),
+                      onTap: () => context.go('/marketplace'),
                     ),
                     _NavItem(
                       icon: Icons.person_outline_rounded,

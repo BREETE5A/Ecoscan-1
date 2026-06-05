@@ -34,6 +34,9 @@ import '../screens/environment/water_footprint_screen.dart';
 import '../screens/environment/weather_screen.dart';
 import '../screens/environment/quiz_screen.dart';
 import '../screens/scan/barcode_scan_screen.dart';
+import '../screens/marketplace/marketplace_screen.dart';
+import '../screens/marketplace/listing_detail_screen.dart';
+import '../screens/marketplace/my_ads_screen.dart';
 import '../widgets/main_scaffold.dart';
 
 CustomTransitionPage<void> _fadeSlide(BuildContext context, GoRouterState state, Widget child) {
@@ -200,6 +203,19 @@ final appRouter = GoRouter(
         GoRoute(
           path: '/barcode',
           pageBuilder: (c, s) => _fadeSlide(c, s, const BarcodeScanScreen()),
+        ),
+        GoRoute(
+          path: '/marketplace',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const MarketplaceScreen()),
+        ),
+        GoRoute(
+          path: '/marketplace/my',
+          pageBuilder: (c, s) => _fadeSlide(c, s, const MyAdsScreen()),
+        ),
+        GoRoute(
+          path: '/marketplace/:id',
+          pageBuilder: (c, s) => _fadeSlide(c, s,
+              ListingDetailScreen(listingId: s.pathParameters['id']!)),
         ),
       ],
     ),

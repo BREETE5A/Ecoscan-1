@@ -49,19 +49,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     super.dispose();
   }
 
-  List<(IconData, String, String, Color)> _buildMenuItems(AppStrings s) => [
-    (Icons.edit_rounded,              s.menuEditProfile,    '/profile/edit',    AppColors.primary),
-    (Icons.bar_chart_rounded,         s.menuStats,          '/stats',           AppColors.teal),
-    (Icons.emoji_events_rounded,      s.menuBadges,         '/badges',          const Color(0xFFF39C12)),
-    (Icons.menu_book_rounded,         s.menuGuide,          '/guide',           const Color(0xFF3498DB)),
-    (Icons.leaderboard_rounded,       s.menuLeaderboard,    '/leaderboard',     const Color(0xFF9B59B6)),
-    (Icons.notifications_outlined,    s.menuNotifications,  '/notifications',   AppColors.primary),
-    (Icons.settings_outlined,         s.menuSettings,       '/settings',        AppColors.textSecondary),
-    (Icons.wb_sunny_rounded,          s.menuWeather,        '/weather',         const Color(0xFFFFA726)),
-    (Icons.air_rounded,               s.menuAirQuality,     '/air-quality',     const Color(0xFF26C6DA)),
-    (Icons.water_drop_rounded,        s.menuWaterFoot,      '/water-footprint', const Color(0xFF0288D1)),
-    (Icons.quiz_rounded,              s.menuQuiz,           '/quiz',            const Color(0xFF7E57C2)),
-    (Icons.barcode_reader,            s.menuBarcodeScanner, '/barcode',         const Color(0xFF26A69A)),
+  List<_ProfileSection> _buildSections(AppStrings s) => [
+    _ProfileSection(s.profileSectionAccount, [
+      (Icons.edit_rounded,        s.menuEditProfile,    '/profile/edit',    AppColors.primary),
+      (Icons.settings_outlined,   s.menuSettings,       '/settings',        const Color(0xFF607D8B)),
+    ]),
+    _ProfileSection(s.profileSectionEducation, [
+      (Icons.menu_book_rounded,   s.menuGuide,          '/guide',           const Color(0xFF3498DB)),
+      (Icons.quiz_rounded,        s.menuQuiz,           '/quiz',            const Color(0xFF9C27B0)),
+    ]),
+    _ProfileSection(s.profileSectionEnvironment, [
+      (Icons.wb_sunny_rounded,    s.menuWeather,        '/weather',         const Color(0xFFFFA726)),
+      (Icons.air_rounded,         s.menuAirQuality,     '/air-quality',     const Color(0xFF26C6DA)),
+      (Icons.water_drop_rounded,  s.menuWaterFoot,      '/water-footprint', const Color(0xFF0288D1)),
+    ]),
+    _ProfileSection(s.profileSectionActivity, [
+      (Icons.bar_chart_rounded,   s.menuStats,          '/stats',           AppColors.teal),
+      (Icons.leaderboard_rounded, s.menuLeaderboard,    '/leaderboard',     const Color(0xFFE67E22)),
+      (Icons.military_tech_rounded, s.menuBadges,       '/badges',          const Color(0xFFFFD700)),
+      (Icons.card_giftcard_rounded, s.menuRewards,      '/rewards',         const Color(0xFFE91E63)),
+      (Icons.history_rounded,     s.menuHistory,        '/history',         const Color(0xFF26A69A)),
+      (Icons.flag_rounded,        s.menuChallenges,     '/challenges',      const Color(0xFF4CAF50)),
+    ]),
   ];
 
   @override
@@ -70,7 +79,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final user = ref.watch(userProvider);
     final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final avatarPath = ref.watch(avatarPathProvider);
-    final menuItems = _buildMenuItems(s);
+    final sections = _buildSections(s);
 
     return Scaffold(
       body: CustomScrollView(
@@ -174,33 +183,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     .animate()
                     .fadeIn(duration: 400.ms, delay: 300.ms),
                 const SizedBox(height: 20),
-                // ── Menu ──────────────────────────────────────────────────
-                Text(
-                  s.menu,
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkText : AppColors.textPrimary,
-                  ),
-                ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
-                const SizedBox(height: 12),
-                ...List.generate(
-                  menuItems.length,
-                  (i) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _MenuItem(
-                      icon: menuItems[i].$1,
-                      label: menuItems[i].$2,
-                      route: menuItems[i].$3,
-                      color: menuItems[i].$4,
-                      isDark: isDark,
-                    )
-                        .animate(delay: (400 + i * 60).ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideX(begin: 0.08),
-                  ),
-                ),
+                // ── Sections menu ──────────────────────────────────────
+                ...() {
+                  final widgets = <Widget>[];
+                  int itemIndex = 0;
+                  for (final section in sections) {
+                    widgets.add(
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 10),
+                        child: Text(section.title,
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                        ).animate(delay: (350 + itemIndex * 30).ms).fadeIn(duration: 300.ms),
+                      ),
+                    );
+                    for (final item in section.items) {
+                      final idx = itemIndex++;
+                      widgets.add(
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _MenuItem(
+                            icon: item.$1, label: item.$2,
+                            route: item.$3, color: item.$4, isDark: isDark,
+                          ).animate(delay: (400 + idx * 50).ms)
+                              .fadeIn(duration: 300.ms).slideX(begin: 0.08),
+                        ),
+                      );
+                    }
+                  }
+                  return widgets;
+                }(),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: () async {
@@ -444,6 +457,13 @@ class _BadgeRow extends StatelessWidget {
       ],
     );
   }
+}
+
+// ── Modèle de section de menu ─────────────────────────────────────────────────
+class _ProfileSection {
+  final String title;
+  final List<(IconData, String, String, Color)> items;
+  const _ProfileSection(this.title, this.items);
 }
 
 class _MenuItem extends StatefulWidget {

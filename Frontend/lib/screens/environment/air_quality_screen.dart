@@ -101,19 +101,46 @@ class AirQualityScreen extends ConsumerWidget {
             color: isDark ? AppColors.darkText : AppColors.textPrimary,
           )),
           if (selName != null)
-            Text(selName, style: const TextStyle(
-              fontFamily: 'Poppins', fontSize: 12, color: AppColors.textSecondary,
-            ))
+            GestureDetector(
+              // Tap sur la ville sélectionnée → revenir au GPS
+              onTap: () => ref.read(_selectedCityKeyProvider.notifier).state = null,
+              child: Row(children: [
+                Text(selName, style: const TextStyle(fontFamily: 'Poppins',
+                    fontSize: 12, color: AppColors.textSecondary)),
+                const SizedBox(width: 4),
+                const Icon(Icons.close_rounded, size: 12, color: AppColors.textSecondary),
+              ]),
+            )
           else
             Row(children: [
               const Icon(Icons.gps_fixed_rounded, size: 12, color: AppColors.primary),
               const SizedBox(width: 4),
-              Text(lang == 'ar' ? 'تحديد GPS' : lang == 'en' ? 'GPS detection'
-                  : lang == 'es' ? 'Detección GPS' : 'Détection GPS',
+              Text(lang == 'ar' ? 'GPS تلقائي' : lang == 'en' ? 'Auto GPS'
+                  : lang == 'es' ? 'GPS auto' : 'GPS auto',
                   style: const TextStyle(fontFamily: 'Poppins', fontSize: 11,
                       color: AppColors.primary)),
             ]),
         ])),
+        // Bouton GPS (reset si ville manuelle)
+        if (selName != null)
+          GestureDetector(
+            onTap: () => ref.read(_selectedCityKeyProvider.notifier).state = null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.gps_fixed_rounded, color: AppColors.primary, size: 14),
+                const SizedBox(width: 4),
+                Text('GPS', style: const TextStyle(fontFamily: 'Poppins',
+                    fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
+              ]),
+            ),
+          ),
         // Bouton sélecteur de ville
         GestureDetector(
           onTap: () => _showCityPicker(context, isDark, lang, cityLabel, ref),
@@ -319,7 +346,35 @@ class AirQualityScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       child: Column(children: [
 
-        // Bannière info si résultat non-GPS
+        // Bannière : aucune station dans la ville détectée → redirection
+        if (data.isRedirected)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.5)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.place_rounded, color: Color(0xFF1E88E5), size: 18),
+              const SizedBox(width: 10),
+              Expanded(child: Text(
+                lang == 'ar'
+                  ? 'لا توجد محطة في ${data.detectedCity} — يُعرض بيانات ${data.city} (الأقرب)'
+                  : lang == 'en'
+                  ? 'No station in ${data.detectedCity} — showing ${data.city} (nearest)'
+                  : lang == 'es'
+                  ? 'Sin estación en ${data.detectedCity} — mostrando ${data.city} (más cercana)'
+                  : 'Aucune station à ${data.detectedCity} — données de ${data.city} (la plus proche)',
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 12,
+                    color: Color(0xFF1565C0)),
+              )),
+            ]),
+          ).animate().fadeIn(duration: 300.ms),
+
+        // Bannière info si GPS désactivé
         if (gpsError != null)
           Container(
             width: double.infinity,
@@ -393,12 +448,39 @@ class AirQualityScreen extends ConsumerWidget {
   }
 }
 
-// ── Polluants ─────────────────────────────────────────────────────────────────
+// ── Polluants (toutes les substances OWM avec couleurs AQI dynamiques) ───────
 class _PollutantsCard extends StatelessWidget {
   final AirQualityData data;
   final bool isDark;
   final String lang;
   const _PollutantsCard({required this.data, required this.isDark, required this.lang});
+
+  // Valeur max par substance pour la barre de progression
+  static const _maxVal = {
+    'PM2.5': 75.0,
+    'PM10':  150.0,
+    'NO₂':   200.0,
+    'O₃':    180.0,
+    'CO':    10000.0,
+    'SO₂':   350.0,
+    'NH₃':   200.0,
+  };
+
+  // Couleur selon la valeur relative à son seuil
+  Color _barColor(String name, double v) {
+    final max = _maxVal[name] ?? 200.0;
+    final ratio = v / max;
+    if (ratio < 0.2)  return const Color(0xFF00C853); // Bon
+    if (ratio < 0.4)  return const Color(0xFFFFAB00); // Modéré
+    if (ratio < 0.6)  return const Color(0xFFFF6D00); // Mauvais sensibles
+    if (ratio < 0.8)  return const Color(0xFFD50000); // Mauvais
+    return const Color(0xFF6200EA);                    // Très mauvais
+  }
+
+  String _displayValue(String name, double v) {
+    if (name == 'CO') return '${(v / 1000).toStringAsFixed(1)} mg/m³';
+    return '${v.toStringAsFixed(1)} µg/m³';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -406,6 +488,9 @@ class _PollutantsCard extends StatelessWidget {
                 : lang == 'en' ? 'Pollutants'
                 : lang == 'es' ? 'Contaminantes'
                 : 'Polluants';
+
+    final entries = data.pollutants.entries.where((e) => e.value > 0).toList();
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -420,35 +505,37 @@ class _PollutantsCard extends StatelessWidget {
             fontWeight: FontWeight.w700,
             color: isDark ? AppColors.darkText : AppColors.textPrimary)),
         const SizedBox(height: 14),
-        ...data.pollutants.entries.map((e) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(children: [
-            SizedBox(width: 50, child: Text(e.key, style: const TextStyle(
-                fontFamily: 'Poppins', fontSize: 12, color: AppColors.textSecondary))),
-            Expanded(child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (e.value / 200).clamp(0.0, 1.0),
-                backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
-                valueColor: AlwaysStoppedAnimation<Color>(_pollutantColor(e.value)),
-                minHeight: 8,
+        ...entries.map((e) {
+          final max = _maxVal[e.key] ?? 200.0;
+          final ratio = (e.value / max).clamp(0.0, 1.0);
+          final barColor = _barColor(e.key, e.value);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(e.key, style: TextStyle(fontFamily: 'Poppins',
+                    fontSize: 13, fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkText : AppColors.textPrimary)),
+                Text(_displayValue(e.key, e.value),
+                    style: TextStyle(fontFamily: 'Poppins',
+                        fontSize: 12, fontWeight: FontWeight.w600,
+                        color: barColor)),
+              ]),
+              const SizedBox(height: 5),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: ratio,
+                  backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
+                  valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                  minHeight: 8,
+                ),
               ),
-            )),
-            const SizedBox(width: 12),
-            Text('${e.value.round()}', style: TextStyle(fontFamily: 'Poppins',
-                fontSize: 12, fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.darkText : AppColors.textPrimary)),
-          ]),
-        )),
+            ]),
+          );
+        }),
       ]),
     ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1);
-  }
-
-  Color _pollutantColor(double v) {
-    if (v <= 50)  return const Color(0xFF00E400);
-    if (v <= 100) return const Color(0xFFFFFF00);
-    if (v <= 150) return const Color(0xFFFF7E00);
-    return const Color(0xFFFF0000);
   }
 }
 

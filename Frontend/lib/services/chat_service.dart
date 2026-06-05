@@ -191,7 +191,7 @@ class ChatService {
     }
     if (_containsAny(q, ['organique', 'compost', 'épluchure', 'عضوي', 'composteur',
         'قشر', 'خضرة', 'بقايا الكلة', 'زبل عضوي', 'تفاهة', 'خضار', 'فواكه'])) {
-      return '♻️ **Organique** : 65% des déchets marocains sont organiques. '
+      return '♻️ **Organique** : Plus de 60% des déchets marocains sont organiques. '
           'Épluchures, marc de café, pain → composteur. '
           'Viande, poisson, laitages → poubelle ordinaire.\n\n'
           '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
