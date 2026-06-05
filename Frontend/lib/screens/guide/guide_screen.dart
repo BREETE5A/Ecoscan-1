@@ -1992,6 +1992,7 @@ class _OperatorCard extends StatelessWidget {
                     )),
                 const SizedBox(height: 4),
                 Text(op.descFor(lang),
+                    textDirection: TextDirection.ltr,
                     style: TextStyle(
                       fontFamily: 'Poppins', fontSize: 12, height: 1.45,
                       color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
@@ -3625,6 +3626,7 @@ class _OperateursDetailPage extends ConsumerWidget {
                                   mode: LaunchMode.externalApplication,
                                 ),
                                 child: Text(op.phone,
+                                    textDirection: TextDirection.ltr,
                                     style: const TextStyle(fontFamily: 'Poppins', fontSize: 11,
                                         fontWeight: FontWeight.w600, color: regionColor,
                                         decoration: TextDecoration.underline,
@@ -3848,6 +3850,7 @@ class _ContactsDetailPage extends ConsumerWidget {
                           Icon(Icons.phone_rounded, size: 12, color: c.color),
                           const SizedBox(width: 4),
                           Text(c.phone,
+                              textDirection: TextDirection.ltr,
                               style: TextStyle(
                                 fontFamily: 'Poppins', fontSize: 12,
                                 color: c.color, fontWeight: FontWeight.w600,
