@@ -101,37 +101,37 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
       'J', 'A', 'S', 'O', 'N', 'D'];
 
   // ── Calcul graphique depuis l'historique réel ─────────────────────────────
-  List<double> _weekData(List scans) {
+  List<double> _weekData(List<ScanEntry> scans) {
     final now = DateTime.now();
     final result = List.filled(7, 0.0);
     for (final scan in scans) {
       final diff = now.difference(scan.scannedAt).inDays;
-      if (diff < 7) result[6 - diff] += 0.35;
+      if (diff < 7) result[6 - diff] += scan.co2Saved / 1000;
     }
     return result;
   }
 
-  List<double> _monthData(List scans) {
+  List<double> _monthData(List<ScanEntry> scans) {
     final now = DateTime.now();
     final result = List.filled(4, 0.0);
     for (final scan in scans) {
       final diff = now.difference(scan.scannedAt).inDays;
-      if (diff < 28) result[(diff ~/ 7).clamp(0, 3)] += 0.35;
+      if (diff < 28) result[(diff ~/ 7).clamp(0, 3)] += scan.co2Saved / 1000;
     }
     return result.reversed.toList();
   }
 
-  List<double> _yearData(List scans) {
+  List<double> _yearData(List<ScanEntry> scans) {
     final now = DateTime.now();
     final result = List.filled(12, 0.0);
     for (final scan in scans) {
       final diff = now.difference(scan.scannedAt).inDays;
-      if (diff < 365) result[(diff ~/ 30).clamp(0, 11)] += 0.35;
+      if (diff < 365) result[(diff ~/ 30).clamp(0, 11)] += scan.co2Saved / 1000;
     }
     return result.reversed.toList();
   }
 
-  List<double> chartData(List scans) {
+  List<double> chartData(List<ScanEntry> scans) {
     switch (_tabIndex) {
       case 1: return _monthData(scans);
       case 2: return _yearData(scans);

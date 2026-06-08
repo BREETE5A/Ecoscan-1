@@ -474,6 +474,425 @@ class AppStrings {
   String get packagingMaterialLabel  => _t('Matière',               'Material',              'المادة',                  'Material');
   String get packagingNotSpecified   => _t('Non renseigné',         'Not specified',         'غير محدد',                'No especificado');
 
+  // Traduction des labels de matières et de formes d'emballage
+  String translatePackagingLabel(String label) {
+    if (_locale == 'fr') return label;
+    const en = <String, String>{
+      // Métaux
+      'Acier': 'Steel', 'Acier étamé': 'Tin-plated steel', 'Fer-blanc': 'Tinplate',
+      'Aluminium': 'Aluminium', 'Aluminium recyclé': 'Recycled aluminium',
+      'Aluminium léger': 'Light aluminium', "Feuille d'aluminium": 'Aluminium foil',
+      'Métal': 'Metal', 'Métaux recyclables': 'Recyclable metals',
+      // Verre
+      'Verre': 'Glass', 'Verre recyclé': 'Recycled glass',
+      'Verre transparent': 'Clear glass', 'Verre incolore': 'Uncoloured glass',
+      'Verre coloré': 'Coloured glass', 'Verre vert': 'Green glass',
+      'Verre foncé': 'Dark glass', 'Verre clair': 'Light glass',
+      // Plastiques génériques
+      'Plastique': 'Plastic', 'Plastique rigide': 'Hard plastic',
+      'Plastique souple': 'Soft plastic', 'Plastiques mélangés': 'Mixed plastics',
+      'Plastique recyclable': 'Recyclable plastic', 'Plastique recyclé': 'Recycled plastic',
+      'Plastique biosourcé': 'Bio-based plastic', 'Plastique biodégradable': 'Biodegradable plastic',
+      'Bioplastique': 'Bioplastic',
+      // PET
+      'PET (Plastique n°1)': 'PET (Plastic #1)', 'PET (Plastique)': 'PET (Plastic)',
+      'PET transparent': 'Transparent PET', 'PET coloré': 'Coloured PET',
+      'rPET (PET recyclé)': 'rPET (Recycled PET)', 'rPET transparent': 'Transparent rPET',
+      'PETG (Plastique)': 'PETG (Plastic)', 'PET métallisé': 'Metallized PET',
+      'PET biosourcé': 'Bio-based PET',
+      // HDPE / LDPE / PE
+      'HDPE (Plastique n°2)': 'HDPE (Plastic #2)', 'HDPE (Plastique)': 'HDPE (Plastic)',
+      'MDPE (Plastique)': 'MDPE (Plastic)', 'LDPE (Plastique n°4)': 'LDPE (Plastic #4)',
+      'LDPE (Plastique)': 'LDPE (Plastic)', 'LLDPE (Plastique)': 'LLDPE (Plastic)',
+      'PE (Polyéthylène n°7)': 'PE (Polyethylene #7)',
+      // PP
+      'Polypropylène (PP n°5)': 'Polypropylene (PP #5)', 'Polypropylène (PP)': 'Polypropylene (PP)',
+      'OPP (Polypropylène orienté)': 'OPP (Oriented PP)', 'CPP (Polypropylène cast)': 'CPP (Cast PP)',
+      // PVC / PVDC
+      'PVC (Plastique n°3)': 'PVC (Plastic #3)', 'PVC (Plastique)': 'PVC (Plastic)',
+      'PVDC (Plastique n°7)': 'PVDC (Plastic #7)',
+      // PS / EPS
+      'Polystyrène (PS n°6)': 'Polystyrene (PS #6)', 'Polystyrène (PS)': 'Polystyrene (PS)',
+      'Polystyrène expansé (EPS)': 'Expanded Polystyrene (EPS)',
+      // Autres plastiques
+      'Autre plastique (n°7)': 'Other plastic (#7)', 'ABS (Plastique)': 'ABS (Plastic)',
+      'EVOH (barrière)': 'EVOH (barrier)', 'Nylon (Polyamide)': 'Nylon (Polyamide)',
+      'PA (Polyamide)': 'PA (Polyamide)', 'Polyamide': 'Polyamide',
+      'Polycarbonate (PC)': 'Polycarbonate (PC)', 'Polycarbonate': 'Polycarbonate',
+      'PMMA (Acrylique)': 'PMMA (Acrylic)', 'Polyuréthane': 'Polyurethane',
+      'PLA (Bioplastique)': 'PLA (Bioplastic)',
+      // Papier / Carton
+      'Carton': 'Cardboard', 'Carton recyclé': 'Recycled cardboard',
+      'Carton plat': 'Flat cardboard', 'Carton ciré': 'Waxed cardboard',
+      'Carton armé': 'Reinforced cardboard', 'Carton végétal': 'Grass cardboard',
+      'Carton souple': 'Paperboard', 'Papier': 'Paper', 'Papier kraft': 'Kraft paper',
+      'Papier recyclé': 'Recycled paper', 'Papier FSC': 'FSC paper',
+      'Autre papier': 'Other paper', 'Papier ou carton': 'Paper or cardboard',
+      'Cellulose': 'Cellulose', 'Cire': 'Wax', 'Carton / Papier': 'Cardboard / Paper',
+      // Briques composites
+      'Matériau composite': 'Composite material', 'Multicouche': 'Multilayer',
+      'Brique Tetra Pak': 'Tetra Pak carton', 'Brique Tetra Brik': 'Tetra Brik carton',
+      'Brique Tetra Fino': 'Tetra Fino carton', 'Brique Elopak': 'Elopak carton',
+      'Brique Pure-Pak': 'Pure-Pak carton', 'Brique SIG': 'SIG carton',
+      'Brique SIG Combibloc': 'SIG Combibloc carton', 'Brique D-Pak': 'D-Pak carton',
+      // Composites mixtes
+      'Plastique-aluminium': 'Plastic-aluminium', 'Verre-aluminium': 'Glass-aluminium',
+      'Verre-plastique': 'Glass-plastic', 'Papier-plastique': 'Paper-plastic',
+      'Papier-aluminium': 'Paper-aluminium', 'Matériau recyclé': 'Recycled material',
+      // Naturels
+      'Bois': 'Wood', 'Liège': 'Cork', 'Coton': 'Cotton', 'Lin': 'Linen',
+      'Jute': 'Jute', 'Textile': 'Textile', 'Silicone': 'Silicone', 'Céramique': 'Ceramic',
+      // Formes — conserves / boîtes métalliques
+      'Boîte conserve': 'Food can', 'Canette': 'Drink can', 'Bombe aérosol': 'Aerosol can',
+      'Boîte métallique': 'Metal box',
+      // Bouteilles
+      'Bouteille': 'Bottle', 'Bouteille en verre': 'Glass bottle',
+      'Bouteille en plastique': 'Plastic bottle', 'Bouteille aluminium': 'Aluminium bottle',
+      'Bouteille métallique': 'Metal bottle', 'Flacon souple': 'Squeeze bottle',
+      'Flacon spray': 'Spray bottle', 'Flacon pompe': 'Pump bottle',
+      'Bouteille / Flacon': 'Bottle / Vial', 'Flasque': 'Hip flask',
+      'Flacon': 'Vial', 'Ampoule': 'Ampoule',
+      // Bocaux / pots
+      'Bocal / Pot en verre': 'Glass jar / pot', 'Bocal en verre': 'Glass jar',
+      'Carafe / Cruche': 'Carafe / Jug', 'Cruche / Bidon': 'Jug / Canister',
+      'Bidon': 'Canister', 'Seau': 'Bucket', 'Petit seau': 'Small bucket',
+      // Briques
+      'Brique carton': 'Carton brick', 'Brique carton (Tetra Pak)': 'Tetra Pak carton',
+      'Petite brique': 'Small brick', 'Brique lait': 'Milk carton',
+      // Boîtes carton
+      'Boîte carton': 'Cardboard box', 'Boîte pliante': 'Folding box',
+      'Barquette coque': 'Clamshell', "Boîte à œufs": 'Egg carton',
+      'Boîte à pizza': 'Pizza box', 'Boîte à comprimés': 'Pill box',
+      'Étui': 'Case', 'Paquet': 'Packet',
+      // Sachets / poches
+      'Sachet': 'Bag', 'Sachet plastique': 'Plastic bag', 'Sac papier': 'Paper bag',
+      'Sachet individuel': 'Individual bag', 'Sac de transport': 'Carrying bag',
+      'Filet': 'Net bag', 'Pochette': 'Pouch', 'Pochette doypack': 'Stand-up pouch',
+      'Sachet de thé': 'Tea bag', 'Enveloppe': 'Envelope', 'Bag-in-Box': 'Bag-in-Box',
+      // Barquettes / assiettes
+      'Barquette': 'Tray', 'Barquette plastique': 'Plastic tray',
+      'Barquette carton': 'Cardboard tray', 'Barquette mousse': 'Foam tray',
+      'Barquette aluminium': 'Aluminium tray', 'Saladier': 'Salad bowl',
+      'Bol': 'Bowl', 'Gobelet': 'Tumbler', 'Assiette': 'Plate',
+      // Tubes
+      'Tube': 'Tube', 'Tube souple': 'Squeezable tube',
+      'Stick': 'Stick', 'Stick cosmétique': 'Cosmetic stick',
+      // Films / emballages souples
+      'Emballage souple': 'Flexible packaging', 'Film plastique': 'Plastic film',
+      'Film rétractable': 'Shrink wrap', 'Film à bulles': 'Bubble wrap',
+      'Blister': 'Blister pack', 'Sous vide plastique': 'Skin pack',
+      'Papier ciré': 'Wax paper', 'Rouleau': 'Roll', 'Feuille': 'Sheet',
+      'Bandelette': 'Strip', 'Suremballage': 'Overpack',
+      // Pots / cups
+      'Pot / Cup': 'Pot / Cup', 'Pot de yaourt': 'Yogurt pot', 'Pot': 'Pot',
+      'Pot plastique': 'Plastic pot', 'Pot en verre': 'Glass pot',
+      'Terrine': 'Terrine pot', 'Pot individuel': 'Individual pot',
+      // Capsules
+      'Capsule': 'Capsule', 'Capsule café': 'Coffee capsule',
+      'Capsule Nespresso': 'Nespresso capsule', 'Capsule Senseo': 'Senseo capsule',
+      'Capsule Tassimo': 'Tassimo capsule', 'Capsule Dolce Gusto': 'Dolce Gusto capsule',
+      'Capsule thé': 'Tea capsule', 'Dosette café': 'Coffee pad',
+      // Bouchons / couvercles
+      'Couvercle': 'Lid', 'Couvercle / Bouchon': 'Lid / Cap', 'Bouchon': 'Cap',
+      'Capsule bouteille': 'Bottle cap', 'Bouchon vissant': 'Screw cap',
+      'Bouchon attaché': 'Tethered cap', 'Bouchon flip-top': 'Flip-top cap',
+      'Bouchon moulin': 'Grinder cap', 'Bouchon verseur': 'Pouring cap',
+      'Bouchon spécial': 'Special cap', 'Bouchon liège': 'Cork',
+      'Bouchon de vin': 'Wine cork', 'Bouchon de champagne': 'Champagne cork',
+      'Capsule couronne': 'Crown cork', 'Opercule': 'Seal',
+      'Opercule aluminium': 'Foil seal', 'Sceau de col': 'Neck seal',
+      // Accessoires
+      'Paille': 'Straw', 'Cuillère': 'Spoon', 'Petite cuillère': 'Teaspoon',
+      'Grande cuillère': 'Tablespoon', 'Fourchette': 'Fork', 'Couteau': 'Knife',
+      'Étiquette': 'Label', 'Manchon': 'Sleeve', 'Applicateur': 'Applicator',
+      'Réducteur': 'Reducer', 'Bec verseur': 'Spout', 'Valve': 'Valve',
+      'Poignée': 'Handle', 'Insert': 'Inlay', 'Support': 'Backing',
+      'Cartouche': 'Cartridge', 'Seringue': 'Syringe', 'Dose individuelle': 'Individual dose',
+      // Grands contenants
+      'Fût / Tonneau': 'Barrel', 'Fût': 'Drum', 'Caisse': 'Crate',
+      'Palette': 'Pallet', 'Panier': 'Basket', 'Emballage groupé': 'Grouped packaging',
+      'Non renseigné': 'Not specified',
+    };
+    const ar = <String, String>{
+      // Métaux
+      'Acier': 'فولاذ', 'Acier étamé': 'فولاذ مطلي بالقصدير', 'Fer-blanc': 'صفيح',
+      'Aluminium': 'ألومينيوم', 'Aluminium recyclé': 'ألومينيوم معاد تدويره',
+      'Aluminium léger': 'ألومينيوم خفيف', "Feuille d'aluminium": 'رقائق ألومينيوم',
+      'Métal': 'معدن', 'Métaux recyclables': 'معادن قابلة للتدوير',
+      // Verre
+      'Verre': 'زجاج', 'Verre recyclé': 'زجاج معاد تدويره',
+      'Verre transparent': 'زجاج شفاف', 'Verre incolore': 'زجاج عديم اللون',
+      'Verre coloré': 'زجاج ملوّن', 'Verre vert': 'زجاج أخضر',
+      'Verre foncé': 'زجاج داكن', 'Verre clair': 'زجاج فاتح',
+      // Plastiques génériques
+      'Plastique': 'بلاستيك', 'Plastique rigide': 'بلاستيك صلب',
+      'Plastique souple': 'بلاستيك مرن', 'Plastiques mélangés': 'بلاستيك مختلط',
+      'Plastique recyclable': 'بلاستيك قابل للتدوير', 'Plastique recyclé': 'بلاستيك معاد تدويره',
+      'Plastique biosourcé': 'بلاستيك حيوي المصدر', 'Plastique biodégradable': 'بلاستيك قابل للتحلل',
+      'Bioplastique': 'بيوبلاستيك',
+      // PET
+      'PET (Plastique n°1)': 'PET (بلاستيك رقم 1)', 'PET (Plastique)': 'PET (بلاستيك)',
+      'PET transparent': 'PET شفاف', 'PET coloré': 'PET ملوّن',
+      'rPET (PET recyclé)': 'rPET (PET معاد تدويره)', 'rPET transparent': 'rPET شفاف',
+      'PETG (Plastique)': 'PETG (بلاستيك)', 'PET métallisé': 'PET معدني',
+      'PET biosourcé': 'PET حيوي المصدر',
+      // HDPE / LDPE / PE
+      'HDPE (Plastique n°2)': 'HDPE (بلاستيك رقم 2)', 'HDPE (Plastique)': 'HDPE (بلاستيك)',
+      'MDPE (Plastique)': 'MDPE (بلاستيك)', 'LDPE (Plastique n°4)': 'LDPE (بلاستيك رقم 4)',
+      'LDPE (Plastique)': 'LDPE (بلاستيك)', 'LLDPE (Plastique)': 'LLDPE (بلاستيك)',
+      'PE (Polyéthylène n°7)': 'PE (بولي إيثيلين رقم 7)',
+      // PP
+      'Polypropylène (PP n°5)': 'بولي بروبيلين (PP رقم 5)', 'Polypropylène (PP)': 'بولي بروبيلين (PP)',
+      'OPP (Polypropylène orienté)': 'OPP (بولي بروبيلين موجّه)', 'CPP (Polypropylène cast)': 'CPP (بولي بروبيلين مصبوب)',
+      // PVC / PVDC
+      'PVC (Plastique n°3)': 'PVC (بلاستيك رقم 3)', 'PVC (Plastique)': 'PVC (بلاستيك)',
+      'PVDC (Plastique n°7)': 'PVDC (بلاستيك رقم 7)',
+      // PS / EPS
+      'Polystyrène (PS n°6)': 'بولي ستيرين (PS رقم 6)', 'Polystyrène (PS)': 'بولي ستيرين (PS)',
+      'Polystyrène expansé (EPS)': 'بولي ستيرين منبسط (EPS)',
+      // Autres plastiques
+      'Autre plastique (n°7)': 'بلاستيك آخر (رقم 7)', 'ABS (Plastique)': 'ABS (بلاستيك)',
+      'EVOH (barrière)': 'EVOH (حاجز)', 'Nylon (Polyamide)': 'نايلون (بولي أميد)',
+      'PA (Polyamide)': 'PA (بولي أميد)', 'Polyamide': 'بولي أميد',
+      'Polycarbonate (PC)': 'بولي كربونات (PC)', 'Polycarbonate': 'بولي كربونات',
+      'PMMA (Acrylique)': 'PMMA (أكريليك)', 'Polyuréthane': 'بولي يوريثان',
+      'PLA (Bioplastique)': 'PLA (بيوبلاستيك)',
+      // Papier / Carton
+      'Carton': 'كرتون', 'Carton recyclé': 'كرتون معاد تدويره',
+      'Carton plat': 'كرتون مسطح', 'Carton ciré': 'كرتون مشمّع',
+      'Carton armé': 'كرتون مقوّى', 'Carton végétal': 'كرتون نباتي',
+      'Carton souple': 'كرتون مرن', 'Papier': 'ورق', 'Papier kraft': 'ورق كرافت',
+      'Papier recyclé': 'ورق معاد تدويره', 'Papier FSC': 'ورق FSC',
+      'Autre papier': 'ورق آخر', 'Papier ou carton': 'ورق أو كرتون',
+      'Cellulose': 'سيليلوز', 'Cire': 'شمع', 'Carton / Papier': 'كرتون / ورق',
+      // Briques composites
+      'Matériau composite': 'مادة مركّبة', 'Multicouche': 'متعدد الطبقات',
+      'Brique Tetra Pak': 'علبة تيترا باك', 'Brique Tetra Brik': 'علبة تيترا بريك',
+      'Brique Tetra Fino': 'علبة تيترا فينو', 'Brique Elopak': 'علبة إيلوباك',
+      'Brique Pure-Pak': 'علبة بيور باك', 'Brique SIG': 'علبة SIG',
+      'Brique SIG Combibloc': 'علبة SIG كومبيبلوك', 'Brique D-Pak': 'علبة D-Pak',
+      // Composites mixtes
+      'Plastique-aluminium': 'بلاستيك-ألومينيوم', 'Verre-aluminium': 'زجاج-ألومينيوم',
+      'Verre-plastique': 'زجاج-بلاستيك', 'Papier-plastique': 'ورق-بلاستيك',
+      'Papier-aluminium': 'ورق-ألومينيوم', 'Matériau recyclé': 'مادة معاد تدويرها',
+      // Naturels
+      'Bois': 'خشب', 'Liège': 'فلين', 'Coton': 'قطن', 'Lin': 'كتان',
+      'Jute': 'جوت', 'Textile': 'نسيج', 'Silicone': 'سيليكون', 'Céramique': 'خزف',
+      // Formes — conserves / boîtes métalliques
+      'Boîte conserve': 'علبة معلبة', 'Canette': 'علبة مشروب', 'Bombe aérosol': 'رذاذ (بخّاخ)',
+      'Boîte métallique': 'علبة معدنية',
+      // Bouteilles
+      'Bouteille': 'زجاجة', 'Bouteille en verre': 'زجاجة زجاجية',
+      'Bouteille en plastique': 'زجاجة بلاستيكية', 'Bouteille aluminium': 'زجاجة ألومينيوم',
+      'Bouteille métallique': 'زجاجة معدنية', 'Flacon souple': 'قارورة مرنة',
+      'Flacon spray': 'قارورة رذاذ', 'Flacon pompe': 'قارورة مضخة',
+      'Bouteille / Flacon': 'زجاجة / قارورة', 'Flasque': 'قارورة جيب',
+      'Flacon': 'قارورة', 'Ampoule': 'أمبولة',
+      // Bocaux / pots
+      'Bocal / Pot en verre': 'وعاء زجاجي', 'Bocal en verre': 'وعاء زجاجي',
+      'Carafe / Cruche': 'إبريق', 'Cruche / Bidon': 'إبريق / بيدون',
+      'Bidon': 'بيدون', 'Seau': 'دلو', 'Petit seau': 'دلو صغير',
+      // Briques
+      'Brique carton': 'علبة كرتون', 'Brique carton (Tetra Pak)': 'علبة تيترا باك',
+      'Petite brique': 'علبة كرتون صغيرة', 'Brique lait': 'علبة حليب',
+      // Boîtes carton
+      'Boîte carton': 'علبة كرتون', 'Boîte pliante': 'علبة طيّة',
+      'Barquette coque': 'علبة صدفية', 'Boîte à œufs': 'علبة بيض',
+      'Boîte à pizza': 'علبة بيتزا', 'Boîte à comprimés': 'علبة أقراص',
+      'Étui': 'حافظة', 'Paquet': 'حزمة',
+      // Sachets / poches
+      'Sachet': 'كيس', 'Sachet plastique': 'كيس بلاستيكي', 'Sac papier': 'كيس ورقي',
+      'Sachet individuel': 'كيس فردي', 'Sac de transport': 'حقيبة حمل',
+      'Filet': 'شبكة', 'Pochette': 'حقيبة صغيرة', 'Pochette doypack': 'كيس قائم',
+      'Sachet de thé': 'كيس شاي', 'Enveloppe': 'ظرف', 'Bag-in-Box': 'كيس داخل علبة',
+      // Barquettes / assiettes
+      'Barquette': 'صينية', 'Barquette plastique': 'صينية بلاستيكية',
+      'Barquette carton': 'صينية كرتون', 'Barquette mousse': 'صينية رغوة',
+      'Barquette aluminium': 'صينية ألومينيوم', 'Saladier': 'وعاء سلطة',
+      'Bol': 'وعاء', 'Gobelet': 'كوب', 'Assiette': 'طبق',
+      // Tubes
+      'Tube': 'أنبوب', 'Tube souple': 'أنبوب مرن',
+      'Stick': 'عصا', 'Stick cosmétique': 'عصا تجميلية',
+      // Films / emballages souples
+      'Emballage souple': 'تغليف مرن', 'Film plastique': 'غشاء بلاستيكي',
+      'Film rétractable': 'غشاء انكماشي', 'Film à bulles': 'ورق فقاعي',
+      'Blister': 'بليستر', 'Sous vide plastique': 'تعبئة مفرغة',
+      'Papier ciré': 'ورق شمعي', 'Rouleau': 'لفة', 'Feuille': 'صفيحة',
+      'Bandelette': 'شريط', 'Suremballage': 'غلاف خارجي',
+      // Pots / cups
+      'Pot / Cup': 'وعاء / كوب', 'Pot de yaourt': 'وعاء الزبادي', 'Pot': 'وعاء',
+      'Pot plastique': 'وعاء بلاستيكي', 'Pot en verre': 'وعاء زجاجي',
+      'Terrine': 'إناء ترين', 'Pot individuel': 'وعاء فردي',
+      // Capsules
+      'Capsule': 'كبسولة', 'Capsule café': 'كبسولة قهوة',
+      'Capsule Nespresso': 'كبسولة نسبريسو', 'Capsule Senseo': 'كبسولة سينسيو',
+      'Capsule Tassimo': 'كبسولة تاسيمو', 'Capsule Dolce Gusto': 'كبسولة دولتشي غوستو',
+      'Capsule thé': 'كبسولة شاي', 'Dosette café': 'قرص قهوة',
+      // Bouchons / couvercles
+      'Couvercle': 'غطاء', 'Couvercle / Bouchon': 'غطاء / سدادة', 'Bouchon': 'سدادة',
+      'Capsule bouteille': 'غطاء زجاجة', 'Bouchon vissant': 'سدادة لولبية',
+      'Bouchon attaché': 'سدادة ربط', 'Bouchon flip-top': 'سدادة قلّابة',
+      'Bouchon moulin': 'سدادة طاحونة', 'Bouchon verseur': 'سدادة سكب',
+      'Bouchon spécial': 'سدادة خاصة', 'Bouchon liège': 'سدادة فلين',
+      'Bouchon de vin': 'سدادة نبيذ', 'Bouchon de champagne': 'سدادة شمبانيا',
+      'Capsule couronne': 'غطاء تاجي', 'Opercule': 'إغلاق',
+      'Opercule aluminium': 'إغلاق رقاقة ألومينيوم', 'Sceau de col': 'ختم العنق',
+      // Accessoires
+      'Paille': 'قشة', 'Cuillère': 'ملعقة', 'Petite cuillère': 'ملعقة صغيرة',
+      'Grande cuillère': 'ملعقة كبيرة', 'Fourchette': 'شوكة', 'Couteau': 'سكين',
+      'Étiquette': 'ملصق', 'Manchon': 'غلاف', 'Applicateur': 'تطبيق',
+      'Réducteur': 'مخفّض', 'Bec verseur': 'فوّهة', 'Valve': 'صمام',
+      'Poignée': 'مقبض', 'Insert': 'إدراج', 'Support': 'دعامة',
+      'Cartouche': 'خرطوشة', 'Seringue': 'حقنة', 'Dose individuelle': 'جرعة فردية',
+      // Grands contenants
+      'Fût / Tonneau': 'برميل', 'Fût': 'برميل', 'Caisse': 'صندوق',
+      'Palette': 'منصّة', 'Panier': 'سلة', 'Emballage groupé': 'تعبئة جماعية',
+      'Non renseigné': 'غير محدد',
+    };
+    const es = <String, String>{
+      // Métaux
+      'Acier': 'Acero', 'Acier étamé': 'Acero estañado', 'Fer-blanc': 'Hojalata',
+      'Aluminium': 'Aluminio', 'Aluminium recyclé': 'Aluminio reciclado',
+      'Aluminium léger': 'Aluminio ligero', "Feuille d'aluminium": 'Papel de aluminio',
+      'Métal': 'Metal', 'Métaux recyclables': 'Metales reciclables',
+      // Verre
+      'Verre': 'Vidrio', 'Verre recyclé': 'Vidrio reciclado',
+      'Verre transparent': 'Vidrio transparente', 'Verre incolore': 'Vidrio incoloro',
+      'Verre coloré': 'Vidrio de color', 'Verre vert': 'Vidrio verde',
+      'Verre foncé': 'Vidrio oscuro', 'Verre clair': 'Vidrio claro',
+      // Plastiques génériques
+      'Plastique': 'Plástico', 'Plastique rigide': 'Plástico rígido',
+      'Plastique souple': 'Plástico blando', 'Plastiques mélangés': 'Plásticos mezclados',
+      'Plastique recyclable': 'Plástico reciclable', 'Plastique recyclé': 'Plástico reciclado',
+      'Plastique biosourcé': 'Plástico de base biológica', 'Plastique biodégradable': 'Plástico biodegradable',
+      'Bioplastique': 'Bioplástico',
+      // PET
+      'PET (Plastique n°1)': 'PET (Plástico n°1)', 'PET (Plastique)': 'PET (Plástico)',
+      'PET transparent': 'PET transparente', 'PET coloré': 'PET de color',
+      'rPET (PET recyclé)': 'rPET (PET reciclado)', 'rPET transparent': 'rPET transparente',
+      'PETG (Plastique)': 'PETG (Plástico)', 'PET métallisé': 'PET metalizado',
+      'PET biosourcé': 'PET biosourced',
+      // HDPE / LDPE / PE
+      'HDPE (Plastique n°2)': 'HDPE (Plástico n°2)', 'HDPE (Plastique)': 'HDPE (Plástico)',
+      'MDPE (Plastique)': 'MDPE (Plástico)', 'LDPE (Plastique n°4)': 'LDPE (Plástico n°4)',
+      'LDPE (Plastique)': 'LDPE (Plástico)', 'LLDPE (Plastique)': 'LLDPE (Plástico)',
+      'PE (Polyéthylène n°7)': 'PE (Polietileno n°7)',
+      // PP
+      'Polypropylène (PP n°5)': 'Polipropileno (PP n°5)', 'Polypropylène (PP)': 'Polipropileno (PP)',
+      'OPP (Polypropylène orienté)': 'OPP (PP orientado)', 'CPP (Polypropylène cast)': 'CPP (PP cast)',
+      // PVC / PVDC
+      'PVC (Plastique n°3)': 'PVC (Plástico n°3)', 'PVC (Plastique)': 'PVC (Plástico)',
+      'PVDC (Plastique n°7)': 'PVDC (Plástico n°7)',
+      // PS / EPS
+      'Polystyrène (PS n°6)': 'Poliestireno (PS n°6)', 'Polystyrène (PS)': 'Poliestireno (PS)',
+      'Polystyrène expansé (EPS)': 'Poliestireno expandido (EPS)',
+      // Autres plastiques
+      'Autre plastique (n°7)': 'Otro plástico (n°7)', 'ABS (Plastique)': 'ABS (Plástico)',
+      'EVOH (barrière)': 'EVOH (barrera)', 'Nylon (Polyamide)': 'Nylon (Poliamida)',
+      'PA (Polyamide)': 'PA (Poliamida)', 'Polyamide': 'Poliamida',
+      'Polycarbonate (PC)': 'Policarbonato (PC)', 'Polycarbonate': 'Policarbonato',
+      'PMMA (Acrylique)': 'PMMA (Acrílico)', 'Polyuréthane': 'Poliuretano',
+      'PLA (Bioplastique)': 'PLA (Bioplástico)',
+      // Papier / Carton
+      'Carton': 'Cartón', 'Carton recyclé': 'Cartón reciclado',
+      'Carton plat': 'Cartón plano', 'Carton ciré': 'Cartón encerado',
+      'Carton armé': 'Cartón reforzado', 'Carton végétal': 'Cartón vegetal',
+      'Carton souple': 'Cartón flexible', 'Papier': 'Papel', 'Papier kraft': 'Papel kraft',
+      'Papier recyclé': 'Papel reciclado', 'Papier FSC': 'Papel FSC',
+      'Autre papier': 'Otro papel', 'Papier ou carton': 'Papel o cartón',
+      'Cellulose': 'Celulosa', 'Cire': 'Cera', 'Carton / Papier': 'Cartón / Papel',
+      // Briques composites
+      'Matériau composite': 'Material compuesto', 'Multicouche': 'Multicapa',
+      'Brique Tetra Pak': 'Brik Tetra Pak', 'Brique Tetra Brik': 'Brik Tetra Brik',
+      'Brique Tetra Fino': 'Brik Tetra Fino', 'Brique Elopak': 'Brik Elopak',
+      'Brique Pure-Pak': 'Brik Pure-Pak', 'Brique SIG': 'Brik SIG',
+      'Brique SIG Combibloc': 'Brik SIG Combibloc', 'Brique D-Pak': 'Brik D-Pak',
+      // Composites mixtes
+      'Plastique-aluminium': 'Plástico-aluminio', 'Verre-aluminium': 'Vidrio-aluminio',
+      'Verre-plastique': 'Vidrio-plástico', 'Papier-plastique': 'Papel-plástico',
+      'Papier-aluminium': 'Papel-aluminio', 'Matériau recyclé': 'Material reciclado',
+      // Naturels
+      'Bois': 'Madera', 'Liège': 'Corcho', 'Coton': 'Algodón', 'Lin': 'Lino',
+      'Jute': 'Yute', 'Textile': 'Textil', 'Silicone': 'Silicona', 'Céramique': 'Cerámica',
+      // Formes — conserves / boîtes métalliques
+      'Boîte conserve': 'Lata de conserva', 'Canette': 'Lata de bebida',
+      'Bombe aérosol': 'Bote de aerosol', 'Boîte métallique': 'Caja metálica',
+      // Bouteilles
+      'Bouteille': 'Botella', 'Bouteille en verre': 'Botella de vidrio',
+      'Bouteille en plastique': 'Botella de plástico', 'Bouteille aluminium': 'Botella de aluminio',
+      'Bouteille métallique': 'Botella metálica', 'Flacon souple': 'Frasco flexible',
+      'Flacon spray': 'Frasco spray', 'Flacon pompe': 'Frasco con bomba',
+      'Bouteille / Flacon': 'Botella / Frasco', 'Flasque': 'Petaca',
+      'Flacon': 'Frasco', 'Ampoule': 'Ampolla',
+      // Bocaux / pots
+      'Bocal / Pot en verre': 'Tarro de vidrio', 'Bocal en verre': 'Tarro de vidrio',
+      'Carafe / Cruche': 'Garrafa / Jarra', 'Cruche / Bidon': 'Cántaro / Bidón',
+      'Bidon': 'Bidón', 'Seau': 'Cubo', 'Petit seau': 'Cubo pequeño',
+      // Briques
+      'Brique carton': 'Brik de cartón', 'Brique carton (Tetra Pak)': 'Brik Tetra Pak',
+      'Petite brique': 'Brik pequeño', 'Brique lait': 'Brik de leche',
+      // Boîtes carton
+      'Boîte carton': 'Caja de cartón', 'Boîte pliante': 'Caja plegable',
+      'Barquette coque': 'Bandeja almeja', 'Boîte à œufs': 'Huevera',
+      'Boîte à pizza': 'Caja de pizza', 'Boîte à comprimés': 'Pastillero',
+      'Étui': 'Estuche', 'Paquet': 'Paquete',
+      // Sachets / poches
+      'Sachet': 'Bolsa', 'Sachet plastique': 'Bolsa de plástico', 'Sac papier': 'Bolsa de papel',
+      'Sachet individuel': 'Bolsita individual', 'Sac de transport': 'Bolsa de transporte',
+      'Filet': 'Bolsa de red', 'Pochette': 'Bolsita', 'Pochette doypack': 'Bolsa doypack',
+      'Sachet de thé': 'Bolsita de té', 'Enveloppe': 'Sobre', 'Bag-in-Box': 'Bag-in-Box',
+      // Barquettes / assiettes
+      'Barquette': 'Bandeja', 'Barquette plastique': 'Bandeja de plástico',
+      'Barquette carton': 'Bandeja de cartón', 'Barquette mousse': 'Bandeja de espuma',
+      'Barquette aluminium': 'Bandeja de aluminio', 'Saladier': 'Ensaladera',
+      'Bol': 'Bol', 'Gobelet': 'Vaso', 'Assiette': 'Plato',
+      // Tubes
+      'Tube': 'Tubo', 'Tube souple': 'Tubo flexible',
+      'Stick': 'Barra', 'Stick cosmétique': 'Barra cosmética',
+      // Films / emballages souples
+      'Emballage souple': 'Envase flexible', 'Film plastique': 'Película de plástico',
+      'Film rétractable': 'Film retráctil', 'Film à bulles': 'Film de burbujas',
+      'Blister': 'Blíster', 'Sous vide plastique': 'Envasado al vacío',
+      'Papier ciré': 'Papel encerado', 'Rouleau': 'Rollo', 'Feuille': 'Hoja',
+      'Bandelette': 'Tira', 'Suremballage': 'Sobreempaque',
+      // Pots / cups
+      'Pot / Cup': 'Vasito', 'Pot de yaourt': 'Vasito de yogur', 'Pot': 'Tarro',
+      'Pot plastique': 'Tarro de plástico', 'Pot en verre': 'Tarro de vidrio',
+      'Terrine': 'Terrina', 'Pot individuel': 'Vasito individual',
+      // Capsules
+      'Capsule': 'Cápsula', 'Capsule café': 'Cápsula de café',
+      'Capsule Nespresso': 'Cápsula Nespresso', 'Capsule Senseo': 'Cápsula Senseo',
+      'Capsule Tassimo': 'Cápsula Tassimo', 'Capsule Dolce Gusto': 'Cápsula Dolce Gusto',
+      'Capsule thé': 'Cápsula de té', 'Dosette café': 'Pastilla de café',
+      // Bouchons / couvercles
+      'Couvercle': 'Tapa', 'Couvercle / Bouchon': 'Tapa / Tapón', 'Bouchon': 'Tapón',
+      'Capsule bouteille': 'Tapón de botella', 'Bouchon vissant': 'Tapón de rosca',
+      'Bouchon attaché': 'Tapón vinculado', 'Bouchon flip-top': 'Tapón flip-top',
+      'Bouchon moulin': 'Tapón molinillo', 'Bouchon verseur': 'Tapón vertedor',
+      'Bouchon spécial': 'Tapón especial', 'Bouchon liège': 'Corcho',
+      'Bouchon de vin': 'Corcho de vino', 'Bouchon de champagne': 'Corcho de champán',
+      'Capsule couronne': 'Corona', 'Opercule': 'Sello',
+      'Opercule aluminium': 'Sello de papel de aluminio', 'Sceau de col': 'Sello de cuello',
+      // Accessoires
+      'Paille': 'Pajita', 'Cuillère': 'Cuchara', 'Petite cuillère': 'Cucharita',
+      'Grande cuillère': 'Cuchara grande', 'Fourchette': 'Tenedor', 'Couteau': 'Cuchillo',
+      'Étiquette': 'Etiqueta', 'Manchon': 'Manga', 'Applicateur': 'Aplicador',
+      'Réducteur': 'Reductor', 'Bec verseur': 'Vertedor', 'Valve': 'Válvula',
+      'Poignée': 'Asa', 'Insert': 'Inserto', 'Support': 'Soporte',
+      'Cartouche': 'Cartucho', 'Seringue': 'Jeringa', 'Dose individuelle': 'Dosis individual',
+      // Grands contenants
+      'Fût / Tonneau': 'Barril', 'Fût': 'Tambor', 'Caisse': 'Caja',
+      'Palette': 'Palé', 'Panier': 'Cesta', 'Emballage groupé': 'Embalaje agrupado',
+      'Non renseigné': 'No especificado',
+    };
+    switch (_locale) {
+      case 'en': return en[label] ?? label;
+      case 'ar': return ar[label] ?? label;
+      case 'es': return es[label] ?? label;
+      default:   return label;
+    }
+  }
+
   // Instructions par matériau (4 langues)
   List<String> barcodeGlassSteps() { switch(_locale) {
     case 'en': return ['Empty the bottle completely', 'Remove the plastic cap (recycle separately)', 'Do not break the glass', 'Deposit in the green glass column'];
@@ -872,6 +1291,7 @@ class AppStrings {
   String get catTextile      => _t('Textile',   'Textile',     'نسيج',        'Textil');
   String get catOil          => _t('Huiles',    'Used oil',    'زيوت',        'Aceites');
   String get catAll          => _t('Tous',      'All',         'الكل',        'Todo');
+  String get catUnknown      => _t('Inconnu',   'Unknown',     'غير معروف',   'Desconocido');
 
   // ── Guide extra ───────────────────────────────────────────────────────────────
   String get navGuide        => _t('Guide',     'Guide',       'الدليل',      'Guía');

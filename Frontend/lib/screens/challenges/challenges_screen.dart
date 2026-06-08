@@ -50,11 +50,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'أعد تدوير ما لا يقل عن 500 جرام من البلاستيك اليوم',
       descEs: 'Recicla al menos 500g de plástico hoy',
       points: 30,
-      progress: 1.0,
-      current: 1,
+      progress: 0.0,
+      current: 0,
       total: 1,
       color: AppColors.plastic,
-      icon2: Icons.check_circle_rounded,
+      icon2: Icons.circle_outlined,
     ),
     _ChallengeData(
       icon: Icons.share_rounded,
@@ -186,8 +186,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'اكتشف 3 حقائق "هل تعلم؟" في التطبيق',
       descEs: 'Descubre 3 datos "¿Sabías que?" en la aplicación',
       points: 10,
-      progress: 0.33,
-      current: 1,
+      progress: 0.0,
+      current: 0,
       total: 3,
       color: Color(0xFF1ABC9C),
       icon2: Icons.circle_outlined,
@@ -257,8 +257,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'ضع 3 أجهزة إلكترونية في الحاويات الصحيحة',
       descEs: 'Deposita 3 dispositivos electrónicos en los contenedores correctos',
       points: 150,
-      progress: 0.33,
-      current: 1,
+      progress: 0.0,
+      current: 0,
       total: 3,
       color: AppColors.electronics,
       icon2: Icons.devices_rounded,
@@ -274,8 +274,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'ادعُ 2 من الأصدقاء للانضمام إلى EcoScan',
       descEs: 'Invita a 2 amigos a unirse a EcoScan',
       points: 100,
-      progress: 0.5,
-      current: 1,
+      progress: 0.0,
+      current: 0,
       total: 2,
       color: Color(0xFF9B59B6),
       icon2: Icons.person_add_rounded,
@@ -308,8 +308,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'توجه إلى مركزَي إعادة تدوير مختلفَين هذا الأسبوع',
       descEs: 'Ve a 2 centros de reciclaje diferentes esta semana',
       points: 180,
-      progress: 0.5,
-      current: 1,
+      progress: 0.0,
+      current: 0,
       total: 2,
       color: Color(0xFF3498DB),
       icon2: Icons.circle_outlined,
@@ -342,8 +342,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'شارك 5 نصائح الفرز مع أصدقائك أو على وسائل التواصل الاجتماعي',
       descEs: 'Comparte 5 consejos de clasificación con amigos o en redes sociales',
       points: 120,
-      progress: 0.4,
-      current: 2,
+      progress: 0.0,
+      current: 0,
       total: 5,
       color: AppColors.teal,
       icon2: Icons.circle_outlined,
@@ -376,8 +376,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'اقرأ جميع فئات دليل فرز النفايات',
       descEs: 'Lee todas las categorías de la guía de clasificación de residuos',
       points: 200,
-      progress: 0.22,
-      current: 2,
+      progress: 0.0,
+      current: 0,
       total: 9,
       color: Color(0xFF1565C0),
       icon2: Icons.circle_outlined,
@@ -393,8 +393,8 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       descAr: 'شارك EcoScan مع 3 أصدقاء وساعدهم على البدء في الفرز',
       descEs: 'Comparte EcoScan con 3 amigos y ayúdalos a empezar a clasificar',
       points: 200,
-      progress: 0.33,
-      current: 1,
+      progress: 0.0,
+      current: 0,
       total: 3,
       color: Color(0xFFE91E63),
       icon2: Icons.circle_outlined,
@@ -476,6 +476,20 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       patch(_weekly[3], cp.weeklyScans, 20),          // Scanner 20 déchets
       ..._weekly.skip(4),
     ];
+
+    // Défis complétés déplacés en fin de liste
+    dynamicDaily.sort((a, b) {
+      final ac = a.progress >= 1.0;
+      final bc = b.progress >= 1.0;
+      if (ac == bc) return 0;
+      return ac ? 1 : -1;
+    });
+    dynamicWeekly.sort((a, b) {
+      final ac = a.progress >= 1.0;
+      final bc = b.progress >= 1.0;
+      if (ac == bc) return 0;
+      return ac ? 1 : -1;
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -681,6 +695,7 @@ class _ChallengeList extends StatelessWidget {
       itemBuilder: (_, i) => Padding(
         padding: const EdgeInsets.only(bottom: 14),
         child: _ChallengeCard(
+          key: ValueKey(challenges[i].title),
           data: challenges[i],
           isDark: isDark,
           lang: lang,
@@ -698,6 +713,7 @@ class _ChallengeCard extends StatelessWidget {
   final int delay;
 
   const _ChallengeCard({
+    super.key,
     required this.data,
     required this.isDark,
     required this.lang,

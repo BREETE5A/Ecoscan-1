@@ -4,14 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../l10n/app_strings.dart';
+import '../../models/scan_entry.dart';
+import '../../models/scan_result_model.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/scan_history_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../services/food_product_service.dart';
 import '../../theme/app_theme.dart';
 
 // ── Provider ────────────────────────────────────────────────────────────────
 final _productProvider =
-    FutureProvider.family<FoodProduct?, String>((ref, code) =>
-        FoodProductService.fetch(code));
+    FutureProvider.family<FoodProduct?, (String, String)>((ref, params) =>
+        FoodProductService.fetch(params.$1, locale: params.$2));
 
 // ── Screen ──────────────────────────────────────────────────────────────────
 class BarcodeScanScreen extends ConsumerStatefulWidget {
@@ -28,6 +32,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
   );
 
   String? _scannedCode;
+  String? _savedForCode;
   bool _scanning = true;
 
   void _onDetect(BarcodeCapture capture) {
@@ -51,8 +56,69 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
     );
     setState(() {
       _scannedCode = null;
+      _savedForCode = null;
       _scanning = true;
     });
+  }
+
+  void _saveBarcodeScan(FoodProduct product, String code) {
+    if (_savedForCode == code) return;
+    _savedForCode = code;
+
+    final info = _detectMaterial(product);
+
+    String category;
+    String binColor;
+    int points;
+    double co2Grams;
+    double recyclability;
+    bool recyclable;
+
+    switch (info.type) {
+      case _MaterialType.glass:
+        category = 'verre'; binColor = 'Vert'; points = 25;
+        co2Grams = 55.0; recyclability = 1.0; recyclable = true;
+      case _MaterialType.metal:
+        category = 'metal'; binColor = 'Jaune'; points = 20;
+        co2Grams = 80.0; recyclability = 0.97; recyclable = true;
+      case _MaterialType.cardboard:
+        category = 'cardboard'; binColor = 'Bleu'; points = 10;
+        co2Grams = 30.0; recyclability = 0.88; recyclable = true;
+      case _MaterialType.plastic:
+        category = 'plastique'; binColor = 'Jaune'; points = 15;
+        co2Grams = 45.0; recyclability = 0.92; recyclable = true;
+      case _MaterialType.unknown:
+        category = 'unknown'; binColor = 'Noir'; points = 5;
+        co2Grams = 0.0; recyclability = 0.0; recyclable = false;
+    }
+
+    if (info.recyclable != null) recyclable = info.recyclable!;
+
+    final entry = ScanEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: product.name.isNotEmpty ? product.name : code,
+      category: category,
+      recyclable: recyclable,
+      dangerous: false,
+      points: points,
+      co2Saved: co2Grams,
+      recyclability: recyclability,
+      binColor: binColor,
+      scannedAt: DateTime.now(),
+      mode: 'barcode',
+    );
+
+    final result = ScanResultModel(
+      rawClass: category,
+      category: category,
+      binColor: binColor,
+      confidence: 1.0,
+      co2SavedPerKg: co2Grams / 100,
+      scannedAt: DateTime.now(),
+    );
+
+    ref.read(scanHistoryProvider.notifier).addScan(entry);
+    ref.read(userProvider.notifier).recordScan(result).catchError((_) {});
   }
 
   @override
@@ -182,14 +248,20 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
 
   // ── Product result ────────────────────────────────────────────────────────
   Widget _buildResult(bool isDark, AppStrings s, String code) {
-    final async = ref.watch(_productProvider(code));
+    final locale = ref.read(localeProvider).languageCode;
+    final async  = ref.watch(_productProvider((code, locale)));
 
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error:   (e, t) => _notFound(isDark, s),
-      data:    (product) => product == null
-          ? _notFound(isDark, s)
-          : _productCard(product, isDark, s),
+      data:    (product) {
+        if (product != null && _savedForCode != code) {
+          Future.microtask(() { if (mounted) _saveBarcodeScan(product, code); });
+        }
+        return product == null
+            ? _notFound(isDark, s)
+            : _productCard(product, isDark, s);
+      },
     );
   }
 
@@ -552,124 +624,228 @@ class _MaterialInfo {
 // Table : tag API → label lisible (taxonomie complète OpenFoodFacts)
 const _shapeLabels = <String, String>{
   // Boîtes / conserves
-  'en:can':                          'Boîte conserve',
-  'en:tin':                          'Boîte conserve',
-  'en:tin-can':                      'Boîte conserve',
-  'en:food-can':                     'Boîte conserve',
-  'en:drink-can':                    'Canette',
-  'en:aerosol-can':                  'Bombe aérosol',
-  'en:metal-can':                    'Boîte métallique',
+  'en:can':                                      'Boîte conserve',
+  'en:tin':                                      'Boîte conserve',
+  'en:tin-can':                                  'Boîte conserve',
+  'en:food-can':                                 'Boîte conserve',
+  'en:drink-can':                                'Canette',
+  'en:aerosol-can':                              'Bombe aérosol',
+  'en:metal-can':                                'Boîte métallique',
   // Bouteilles
-  'en:bottle':                       'Bouteille',
-  'en:glass-bottle':                 'Bouteille en verre',
-  'en:plastic-bottle':               'Bouteille en plastique',
-  'en:aluminium-bottle':             'Bouteille aluminium',
-  'en:metal-bottle':                 'Bouteille métallique',
-  'en:squeeze-bottle':               'Flacon souple',
-  'en:spray-bottle':                 'Flacon spray',
-  'en:pump-bottle':                  'Flacon pompe',
+  'en:bottle':                                   'Bouteille',
+  'en:glass-bottle':                             'Bouteille en verre',
+  'en:plastic-bottle':                           'Bouteille en plastique',
+  'en:aluminium-bottle':                         'Bouteille aluminium',
+  'en:metal-bottle':                             'Bouteille métallique',
+  'en:squeeze-bottle':                           'Flacon souple',
+  'en:spray-bottle':                             'Flacon spray',
+  'en:pump-bottle':                              'Flacon pompe',
+  'en:bottle-or-vial':                           'Bouteille / Flacon',
+  'en:hip-flask':                                'Flasque',
+  // Flacons / ampoules
+  'en:vial':                                     'Flacon',
+  'en:ampoule':                                  'Ampoule',
   // Bocaux / pots
-  'en:jar':                          'Bocal / Pot en verre',
-  'en:glass-jar':                    'Bocal en verre',
-  'en:jug':                          'Carafe / Cruche',
+  'en:jar':                                      'Bocal / Pot en verre',
+  'en:glass-jar':                                'Bocal en verre',
+  'en:jug':                                      'Carafe / Cruche',
+  'en:jug-or-canister':                          'Cruche / Bidon',
+  'en:canister':                                 'Bidon',
+  'en:bucket':                                   'Seau',
+  'en:small-bucket':                             'Petit seau',
   // Briques / cartons
-  'en:carton':                       'Brique carton',
-  'en:tetra-pak':                    'Brique carton (Tetra Pak)',
-  'en:brick':                        'Brique carton',
-  'en:milk-carton':                  'Brique lait',
+  'en:carton':                                   'Brique carton',
+  'en:tetra-pak':                                'Brique carton (Tetra Pak)',
+  'en:brick':                                    'Brique carton',
+  'en:small-brick':                              'Petite brique',
+  'en:milk-carton':                              'Brique lait',
   // Boîtes carton
-  'en:box':                          'Boîte carton',
-  'en:cardboard-box':                'Boîte carton',
-  'en:folding-box':                  'Boîte pliante',
-  'en:clamshell':                    'Barquette coque',
+  'en:box':                                      'Boîte carton',
+  'en:cardboard-box':                            'Boîte carton',
+  'en:folding-box':                              'Boîte pliante',
+  'en:clamshell':                                'Barquette coque',
+  'en:egg-carton':                               'Boîte à œufs',
+  'en:pizza-box':                                'Boîte à pizza',
+  'en:pill-box':                                 'Boîte à comprimés',
+  'en:case':                                     'Étui',
+  'en:packet':                                   'Paquet',
   // Sachets / poches
-  'en:bag':                          'Sachet',
-  'en:plastic-bag':                  'Sachet plastique',
-  'en:paper-bag':                    'Sac papier',
-  'en:string-bag':                   'Filet',
-  'en:net':                          'Filet',
-  'en:mesh-bag':                     'Filet',
-  'en:pouch':                        'Pochette',
-  'en:stand-up-pouch':               'Pochette doypack',
-  'en:doy-pack':                     'Pochette doypack',
-  'en:sachet':                       'Sachet individuel',
-  'en:envelope':                     'Enveloppe',
-  // Barquettes
-  'en:tray':                         'Barquette',
-  'en:plastic-tray':                 'Barquette plastique',
-  'en:cardboard-tray':               'Barquette carton',
-  'en:foam-tray':                    'Barquette mousse',
-  'en:aluminium-tray':               'Barquette aluminium',
+  'en:bag':                                      'Sachet',
+  'en:plastic-bag':                              'Sachet plastique',
+  'en:paper-bag':                                'Sac papier',
+  'en:individual-bag':                           'Sachet individuel',
+  'en:carrying-bag':                             'Sac de transport',
+  'en:string-bag':                               'Filet',
+  'en:net':                                      'Filet',
+  'en:mesh-bag':                                 'Filet',
+  'en:pouch':                                    'Pochette',
+  'en:stand-up-pouch':                           'Pochette doypack',
+  'en:doy-pack':                                 'Pochette doypack',
+  'en:sachet':                                   'Sachet individuel',
+  'en:tea-bag':                                  'Sachet de thé',
+  'en:envelope':                                 'Enveloppe',
+  'en:bag-in-box':                               'Bag-in-Box',
+  // Barquettes / assiettes
+  'en:tray':                                     'Barquette',
+  'en:plastic-tray':                             'Barquette plastique',
+  'en:cardboard-tray':                           'Barquette carton',
+  'en:foam-tray':                                'Barquette mousse',
+  'en:aluminium-tray':                           'Barquette aluminium',
+  'en:salad-bowl':                               'Saladier',
+  'en:bowl':                                     'Bol',
+  'en:tumbler':                                  'Gobelet',
+  'en:dish':                                     'Assiette',
+  'en:plate':                                    'Assiette',
   // Tubes
-  'en:tube':                         'Tube',
-  'en:squeezable-tube':              'Tube souple',
+  'en:tube':                                     'Tube',
+  'en:squeezable-tube':                          'Tube souple',
+  'en:stick':                                    'Stick',
+  'en:cosmetic-stick':                           'Stick cosmétique',
   // Emballages souples / films
-  'en:wrap':                         'Emballage souple',
-  'en:film':                         'Film plastique',
-  'en:plastic-film':                 'Film plastique',
-  'en:shrink-wrap':                  'Film rétractable',
-  'en:blister-pack':                 'Blister',
-  'en:blister':                      'Blister',
-  'en:skin-pack':                    'Sous vide plastique',
-  'en:wrapper':                      'Emballage souple',
-  'en:wax-paper':                    'Papier ciré',
-  'en:waxed-paper':                  'Papier ciré',
+  'en:wrap':                                     'Emballage souple',
+  'en:film':                                     'Film plastique',
+  'en:plastic-film':                             'Film plastique',
+  'en:shrink-wrap':                              'Film rétractable',
+  'en:bubble-wrap':                              'Film à bulles',
+  'en:blister-pack':                             'Blister',
+  'en:blister':                                  'Blister',
+  'en:skin-pack':                                'Sous vide plastique',
+  'en:wrapper':                                  'Emballage souple',
+  'en:wax-paper':                                'Papier ciré',
+  'en:waxed-paper':                              'Papier ciré',
+  'en:roll':                                     'Rouleau',
+  'en:sheet':                                    'Feuille',
+  'en:strip':                                    'Bandelette',
+  'en:overpack':                                 'Suremballage',
   // Pots / cups
-  'en:cup':                          'Pot / Cup',
-  'en:yogurt-pot':                   'Pot de yaourt',
-  'en:pot':                          'Pot',
-  'en:plastic-pot':                  'Pot plastique',
-  'en:glass-pot':                    'Pot en verre',
-  // Bouchons / couvercles
-  'en:lid':                          'Couvercle',
-  'en:cap':                          'Bouchon',
-  'en:bottle-cap':                   'Capsule bouteille',
-  'en:screw-cap':                    'Bouchon vissant',
-  'en:cork':                         'Bouchon liège',
-  'en:stopper':                      'Bouchon',
-  'en:seal':                         'Opercule',
-  'en:foil-seal':                    'Opercule aluminium',
+  'en:cup':                                      'Pot / Cup',
+  'en:yogurt-pot':                               'Pot de yaourt',
+  'en:pot':                                      'Pot',
+  'en:plastic-pot':                              'Pot plastique',
+  'en:glass-pot':                                'Pot en verre',
+  'en:terrine-pot':                              'Terrine',
+  'en:individual-pot':                           'Pot individuel',
+  // Capsules / dosettes
+  'en:capsule':                                  'Capsule',
+  'en:coffee-capsule':                           'Capsule café',
+  'en:nespresso-compatible-capsules':            'Capsule Nespresso',
+  'en:senseo-compatible-coffee-capsules':        'Capsule Senseo',
+  'en:tassimo-compatible-capsules':              'Capsule Tassimo',
+  'en:dolce-gusto-compatible-capsules':          'Capsule Dolce Gusto',
+  'en:tea-capsules':                             'Capsule thé',
+  'en:coffee-pad':                               'Dosette café',
+  // Bouchons / couvercles / fermetures
+  'en:lid':                                      'Couvercle',
+  'en:lid-or-cap':                               'Couvercle / Bouchon',
+  'en:cap':                                      'Bouchon',
+  'en:bottle-cap':                               'Capsule bouteille',
+  'en:screw-cap':                                'Bouchon vissant',
+  'en:tethered-cap':                             'Bouchon attaché',
+  'en:flip-top':                                 'Bouchon flip-top',
+  'en:grinder-cap':                              'Bouchon moulin',
+  'en:pouring-cap':                              'Bouchon verseur',
+  'en:special-cap':                              'Bouchon spécial',
+  'en:cork':                                     'Bouchon liège',
+  'en:wine-cork':                                'Bouchon de vin',
+  'en:champagne-cork':                           'Bouchon de champagne',
+  'en:crown-cork':                               'Capsule couronne',
+  'en:stopper':                                  'Bouchon',
+  'en:seal':                                     'Opercule',
+  'en:foil-seal':                                'Opercule aluminium',
+  'en:neck-seal':                                'Sceau de col',
   // Accessoires
-  'en:straw':                        'Paille',
-  'en:spoon':                        'Cuillère',
-  'en:label':                        'Étiquette',
-  'en:sleeve':                       'Manchon',
+  'en:straw':                                    'Paille',
+  'en:drinking-straw':                           'Paille',
+  'en:spoon':                                    'Cuillère',
+  'en:teaspoon':                                 'Petite cuillère',
+  'en:tablespoon':                               'Grande cuillère',
+  'en:fork':                                     'Fourchette',
+  'en:knife':                                    'Couteau',
+  'en:label':                                    'Étiquette',
+  'en:sleeve':                                   'Manchon',
+  'en:applicator':                               'Applicateur',
+  'en:reducer':                                  'Réducteur',
+  'en:spout':                                    'Bec verseur',
+  'en:valve':                                    'Valve',
+  'en:handle':                                   'Poignée',
+  'en:inlay':                                    'Insert',
+  'en:backing':                                  'Support',
+  'en:cartridge':                                'Cartouche',
+  'en:syringe':                                  'Seringue',
+  'en:individual-dose':                          'Dose individuelle',
   // Grands contenants
-  'en:barrel':                       'Fût / Tonneau',
-  'en:drum':                         'Fût',
-  'en:crate':                        'Caisse',
-  'en:pallet':                       'Palette',
+  'en:barrel':                                   'Fût / Tonneau',
+  'en:drum':                                     'Fût',
+  'en:crate':                                    'Caisse',
+  'en:pallet':                                   'Palette',
+  'en:basket':                                   'Panier',
+  'en:grouping-package':                         'Emballage groupé',
 };
 
 const _materialLabels = <String, String>{
   // Métaux
   'en:steel':                                        'Acier',
+  'en:tin-plated-steel':                             'Acier étamé',
   'en:tinplate':                                     'Fer-blanc',
   'en:tin':                                          'Fer-blanc',
   'en:aluminium':                                    'Aluminium',
   'en:aluminum':                                     'Aluminium',
   'en:recycled-aluminium':                           'Aluminium recyclé',
   'en:recycled-aluminum':                            'Aluminium recyclé',
+  'en:light-aluminium':                              'Aluminium léger',
+  'en:aluminium-foil':                               'Feuille d\'aluminium',
   'en:metal':                                        'Métal',
+  'en:recyclable-metals':                            'Métaux recyclables',
   // Verre
   'en:glass':                                        'Verre',
   'en:recycled-glass':                               'Verre recyclé',
   'en:clear-glass':                                  'Verre transparent',
+  'en:uncoloured-glass':                             'Verre incolore',
   'en:colored-glass':                                'Verre coloré',
+  'en:coloured-glass':                               'Verre coloré',
+  'en:green-glass':                                  'Verre vert',
+  'en:dark-sort-glass':                              'Verre foncé',
+  'en:light-sort-glass':                             'Verre clair',
   // Plastiques standards
   'en:plastic':                                      'Plastique',
+  'en:hard-plastic':                                 'Plastique rigide',
+  'en:soft-plastic':                                 'Plastique souple',
+  'en:mixed-plastics':                               'Plastiques mélangés',
+  'en:recyclable-plastic':                           'Plastique recyclable',
+  'en:recycled-plastic':                             'Plastique recyclé',
+  // PET et variantes
   'en:pet-1-polyethylene-terephthalate':             'PET (Plastique n°1)',
   'en:pet':                                          'PET (Plastique)',
+  'en:pet-transparent':                              'PET transparent',
+  'en:pet-colored':                                  'PET coloré',
+  'en:rpet-recycled-polyethylene-terephthalate':     'rPET (PET recyclé)',
+  'en:rpet-transparent':                             'rPET transparent',
+  'en:petg-polyethylene-terephthalate-glycol':       'PETG (Plastique)',
+  'en:petmet-metalized-polyethylene-terephthalate':  'PET métallisé',
+  'en:bpet-biobased-pet':                            'PET biosourcé',
+  // HDPE
   'en:hdpe-2-high-density-polyethylene':             'HDPE (Plastique n°2)',
   'en:hdpe':                                         'HDPE (Plastique)',
-  'en:pvc-3-polyvinyl-chloride':                     'PVC (Plastique n°3)',
-  'en:pvc':                                          'PVC (Plastique)',
+  'en:mdpe-medium-density-polyethylene':             'MDPE (Plastique)',
   'en:ldpe-4-low-density-polyethylene':              'LDPE (Plastique n°4)',
   'en:ldpe':                                         'LDPE (Plastique)',
+  'en:lldpe-linear-low-density-polyethylene':        'LLDPE (Plastique)',
+  'en:pe-7-polyethylene':                            'PE (Polyéthylène n°7)',
+  // PP et variantes
   'en:pp-5-polypropylene':                           'Polypropylène (PP n°5)',
   'en:pp':                                           'Polypropylène (PP)',
+  'en:opp-oriented-polypropylen':                    'OPP (Polypropylène orienté)',
+  'en:cpp-cast-polypropylen':                        'CPP (Polypropylène cast)',
+  // PVC
+  'en:pvc-3-polyvinyl-chloride':                     'PVC (Plastique n°3)',
+  'en:pvc':                                          'PVC (Plastique)',
+  'en:pvdc-7-polyvinylidene-chloride':               'PVDC (Plastique n°7)',
+  // PS et variantes
   'en:ps-6-polystyrene':                             'Polystyrène (PS n°6)',
   'en:ps':                                           'Polystyrène (PS)',
+  'en:eps-expanded-polystyrene':                     'Polystyrène expansé (EPS)',
+  // Autres plastiques
+  'en:o-7-other-plastics':                           'Autre plastique (n°7)',
   'en:other-plastics-7':                             'Autre plastique (n°7)',
   'en:abs-acrylonitrile-butadiene-styrene':          'ABS (Plastique)',
   'en:abs':                                          'ABS (Plastique)',
@@ -678,30 +854,71 @@ const _materialLabels = <String, String>{
   'en:evoh-ethylene-vinyl-alcohol':                  'EVOH (barrière)',
   'en:evoh':                                         'EVOH (barrière)',
   'en:nylon-polyamide':                              'Nylon (Polyamide)',
+  'en:pa-polyamide':                                 'PA (Polyamide)',
   'en:polyamide':                                    'Polyamide',
+  'en:pc-polycarbonate':                             'Polycarbonate (PC)',
   'en:polycarbonate':                                'Polycarbonate',
+  'en:pmma-poly-methyl-methacrylate':                'PMMA (Acrylique)',
   'en:pmma-acrylic':                                 'PMMA (Acrylique)',
-  'en:recycled-plastic':                             'Plastique recyclé',
+  'en:pu-pur-polyurethane':                          'Polyuréthane',
+  'en:pla-polylactic-acid':                          'PLA (Bioplastique)',
   'en:bioplastic':                                   'Bioplastique',
+  'en:biobased-plastic':                             'Plastique biosourcé',
+  'en:biodegradable-plastic':                        'Plastique biodégradable',
   'en:bio-sourced-plastic':                          'Plastique biosourcé',
   // Papier / Carton
   'en:cardboard':                                    'Carton',
   'en:recycled-cardboard':                           'Carton recyclé',
+  'en:non-corrugated-cardboard':                     'Carton plat',
   'en:waxed-cardboard':                              'Carton ciré',
+  'en:armed-cardboard':                              'Carton armé',
+  'en:grass-carton':                                 'Carton végétal',
+  'en:paperboard':                                   'Carton souple',
   'en:paper':                                        'Papier',
   'en:kraft-paper':                                  'Papier kraft',
   'en:recycled-paper':                               'Papier recyclé',
+  'en:fsc-paper':                                    'Papier FSC',
+  'en:other-paper':                                  'Autre papier',
+  'en:paper-or-cardboard':                           'Papier ou carton',
   'en:cellulose':                                    'Cellulose',
-  // Matériaux composites
+  'en:wax':                                          'Cire',
+  'en:washi-tape':                                   'Washi',
+  // Matériaux composites — briques aseptiques
   'en:composite-material':                           'Matériau composite',
-  'en:tetra-pak':                                    'Tetra Pak (composite)',
+  'en:tetra-pak':                                    'Brique Tetra Pak',
+  'en:tetra-brik-aseptic':                           'Brique Tetra Brik',
+  'en:tetra-fino-aseptic':                           'Brique Tetra Fino',
+  'en:elopak':                                       'Brique Elopak',
+  'en:pure-pak':                                     'Brique Pure-Pak',
+  'en:pure-pak-sense-aseptic':                       'Brique Pure-Pak Sense',
+  'en:pure-pak-esense':                              'Brique Pure-Pak eSense',
+  'en:pure-pak-sense':                               'Brique Pure-Pak Sense',
+  'en:pure-pak-imagine':                             'Brique Pure-Pak Imagine',
+  'en:naturally-pure-pak':                           'Brique Pure-Pak',
+  'en:pure-pak-classic':                             'Brique Pure-Pak Classic',
+  'en:sig':                                          'Brique SIG',
+  'en:sig-combibloc':                                'Brique SIG Combibloc',
+  'en:d-pak':                                        'Brique D-Pak',
   'en:multilayer':                                   'Multicouche',
+  // Composites mixtes
+  'en:plastic-aluminium':                            'Plastique-aluminium',
+  'en:glass-aluminium':                              'Verre-aluminium',
+  'en:glass-plastic':                                'Verre-plastique',
+  'en:glass-tinplate':                               'Verre-fer blanc',
+  'en:paper-and-plastic':                            'Papier-plastique',
+  'en:paper-and-fibreboard-aluminium':               'Papier-aluminium',
+  'en:paper-and-cardboard-plastic-aluminium':        'Papier-plastique-aluminium',
+  'en:recycled-material':                            'Matériau recyclé',
   // Matériaux naturels
   'en:wood':                                         'Bois',
   'en:cork':                                         'Liège',
   'en:cotton':                                       'Coton',
+  'en:linen':                                        'Lin',
   'en:jute':                                         'Jute',
+  'en:textile':                                      'Textile',
+  'en:other-textiles':                               'Textile',
   'en:silicone':                                     'Silicone',
+  'en:ceramic':                                      'Céramique',
 };
 
 String _labelForTag(String tag, Map<String, String> map) {
@@ -719,18 +936,35 @@ _MaterialType _typeFromMaterialTag(String tag) {
   final t = tag.toLowerCase();
   if (t.contains('glass'))     { return _MaterialType.glass; }
   if (t.contains('steel') || t.contains('alumin') || t.contains('tinplate') ||
-      t.contains(':metal'))    { return _MaterialType.metal; }
+      t.contains(':metal')    || t.contains('recyclable-metal')) { return _MaterialType.metal; }
   // ':tin' uniquement en tag exact (évite de matcher 'satin', 'atin', etc.)
   if (t == 'en:tin' || t.endsWith(':tin')) { return _MaterialType.metal; }
-  if (t.contains('cardboard') || t.contains('paper') || t.contains('wood') ||
-      t.contains('kraft') || t.contains('cellulose') ||
-      t == 'en:tetra-pak' || t.contains('multilayer')) {
+  // Briques composite (marques aseptiques) → carton
+  if (t == 'en:tetra-pak'      || t.contains('tetra-brik') || t.contains('tetra-fino') ||
+      t.contains('elopak')     || t.contains('pure-pak')   || t.contains('sig-combi') ||
+      t == 'en:sig'            || t == 'en:d-pak') {
     return _MaterialType.cardboard;
   }
-  if (t.contains('plastic') || t.contains(':pet') || t.contains(':hdpe') ||
-      t.contains(':pvc')    || t.contains(':ldpe') || t.contains(':pp-') ||
-      t == 'en:pp'          || t.contains('polyprop') || t.contains('polysty') ||
-      t.contains('bioplast') || t.contains('polyamide') || t.contains('silicone')) {
+  if (t.contains('cardboard') || t.contains('paper') || t.contains('wood') ||
+      t.contains('kraft') || t.contains('cellulose') || t.contains('multilayer') ||
+      t.contains('paperboard') || t.contains('grass-carton') || t.contains('washi') ||
+      t == 'en:wax' || t == 'en:composite-material') {
+    return _MaterialType.cardboard;
+  }
+  if (t.contains('plastic')    || t.contains(':pet')   || t.contains(':hdpe') ||
+      t.contains(':pvc')       || t.contains(':ldpe')  || t.contains(':lldpe') ||
+      t.contains(':pp-')       || t == 'en:pp'         || t.contains(':opp') ||
+      t.contains(':cpp')       || t.contains(':pvdc')  || t.contains(':pe-') ||
+      t.contains(':pla-')      || t.contains(':eps-')  || t.contains(':petg') ||
+      t.contains(':petmet')    || t.contains(':rpet')  || t.contains(':bpet') ||
+      t.contains(':o-7')       || t.contains(':pu-')   || t.contains(':pur-') ||
+      t.contains(':mdpe')      || t.contains(':abs')   || t.contains(':eva') ||
+      t.contains(':evoh')      || t.contains(':ps-')   || t == 'en:ps' ||
+      t.contains(':pmma')      || t.contains('acrylic') ||
+      t.contains('polyprop')   || t.contains('polysty') || t.contains('polyethylene') ||
+      t.contains('polylactic') || t.contains('polyureth') || t.contains('polycarbonate') ||
+      t.contains('polyamide')  || t.contains('polyvinyl') || t.contains('bioplast') ||
+      t.contains('silicone')   || t.contains(':pa-')) {
     return _MaterialType.plastic;
   }
   return _MaterialType.unknown;
@@ -747,17 +981,24 @@ int _materialScore(_MaterialType type) {
   }
 }
 
-// Priorité effective d'un tag : les plastiques nommés (PET, HDPE, PP…) battent le carton générique
+// Priorité effective d'un tag : les plastiques nommés battent le carton générique
 int _tagPriority(String tag, _MaterialType type) {
   if (type == _MaterialType.plastic) {
     final t = tag.toLowerCase();
-    if (t.contains(':pet') || t.contains(':hdpe') || t.contains(':pp') ||
-        t.contains(':pvc')  || t.contains(':ldpe') || t.contains(':ps-') ||
-        t.contains(':abs')  || t.contains(':eva')  ||
-        t.contains('polyprop') || t.contains('polyethylene') || t.contains('polysty')) {
-      return 5; // plastique nommé > verre(4) > métal(3) > carton(2) > plastique générique(1)
+    if (t.contains(':pet')       || t.contains(':hdpe')  || t.contains(':pp') ||
+        t.contains(':pvc')       || t.contains(':ldpe')  || t.contains(':lldpe') ||
+        t.contains(':mdpe')      || t.contains(':pe-')   || t.contains(':opp') ||
+        t.contains(':cpp')       || t.contains(':pvdc')  || t.contains(':ps-') ||
+        t.contains(':eps-')      || t.contains(':abs')   || t.contains(':eva') ||
+        t.contains(':evoh')      || t.contains(':pla-')  || t.contains(':petg') ||
+        t.contains(':petmet')    || t.contains(':rpet')  || t.contains(':bpet') ||
+        t.contains(':o-7')       || t.contains(':pu-')   || t.contains(':pa-') ||
+        t.contains('polyprop')   || t.contains('polyethylene') || t.contains('polysty') ||
+        t.contains('polylactic') || t.contains('polyureth')    || t.contains('polycarbonate') ||
+        t.contains('polyamide')  || t.contains('polyvinyl')) {
+      return 5; // plastique nommé > verre(4) > métal(3) > carton(2) > plastique générique(2)
     }
-    return 1; // plastique générique
+    return 2; // plastique générique (même niveau que carton)
   }
   return _materialScore(type);
 }
@@ -773,20 +1014,34 @@ _MaterialInfo? _bestMaterialFromTags(List<String> tags, bool? recycling) {
     _MaterialType? type;
     String label = '';
 
-    if (t.contains(':glass'))                                { type = _MaterialType.glass;     label = 'Verre'; }
-    else if (t.contains(':aluminium') || t.contains(':aluminum')) { type = _MaterialType.metal; label = 'Aluminium'; }
-    else if (t.contains(':steel'))                           { type = _MaterialType.metal;     label = 'Acier'; }
+    if (t.contains(':glass'))                                        { type = _MaterialType.glass;     label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':aluminium') || t.contains(':aluminum'))  { type = _MaterialType.metal;     label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':steel'))                                  { type = _MaterialType.metal;     label = _labelForTag(tag, _materialLabels); }
     else if (t.contains(':tinplate') || t == 'en:tin' || t.endsWith(':tin')) { type = _MaterialType.metal; label = 'Fer-blanc'; }
-    else if (t.contains(':cardboard'))                       { type = _MaterialType.cardboard; label = 'Carton'; }
-    else if (t.contains(':kraft'))                           { type = _MaterialType.cardboard; label = 'Papier kraft'; }
-    else if (t.contains(':paper'))                           { type = _MaterialType.cardboard; label = 'Papier'; }
-    else if (t.contains(':pet-') || t == 'en:pet')           { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
-    else if (t.contains(':hdpe'))                            { type = _MaterialType.plastic;   label = 'HDPE (Plastique n°2)'; }
-    else if (t.contains(':pp-') || t == 'en:pp')             { type = _MaterialType.plastic;   label = 'Polypropylène (PP n°5)'; }
-    else if (t.contains(':pvc'))                             { type = _MaterialType.plastic;   label = 'PVC (Plastique n°3)'; }
-    else if (t.contains(':ldpe'))                            { type = _MaterialType.plastic;   label = 'LDPE (Plastique n°4)'; }
-    else if (t.contains(':ps-') || t.contains(':polysty'))   { type = _MaterialType.plastic;   label = 'Polystyrène (PS n°6)'; }
-    else if (t.contains(':plastic'))                         { type = _MaterialType.plastic;   label = 'Plastique'; }
+    else if (t.contains(':metal') || t.contains('recyclable-metal')) { type = _MaterialType.metal; label = 'Métal'; }
+    // Briques composites (marques aseptiques) → carton
+    else if (t == 'en:tetra-pak'   || t.contains('tetra-brik') || t.contains('tetra-fino') ||
+             t.contains('elopak')  || t.contains('pure-pak')   || t.contains('sig-combi') ||
+             t == 'en:sig'         || t == 'en:d-pak')             { type = _MaterialType.cardboard; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':cardboard') || t.contains('paperboard'))  { type = _MaterialType.cardboard; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':kraft'))                                  { type = _MaterialType.cardboard; label = 'Papier kraft'; }
+    else if (t.contains(':paper'))                                  { type = _MaterialType.cardboard; label = _labelForTag(tag, _materialLabels); }
+    // Plastiques nommés (score élevé dans _tagPriority)
+    else if (t.contains(':rpet') || t.contains(':bpet'))            { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':pet-') || t == 'en:pet' || t.contains(':petg') || t.contains(':petmet')) { type = _MaterialType.plastic; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':hdpe') || t.contains(':mdpe') || t.contains(':lldpe')) { type = _MaterialType.plastic; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':pp-')  || t == 'en:pp' || t.contains(':opp') || t.contains(':cpp')) { type = _MaterialType.plastic; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':ldpe'))                                   { type = _MaterialType.plastic;   label = 'LDPE (Plastique n°4)'; }
+    else if (t.contains(':pe-'))                                    { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':pvc') || t.contains(':pvdc'))             { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':ps-') || t == 'en:ps' || t.contains(':eps-')) { type = _MaterialType.plastic; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':pla-'))                                   { type = _MaterialType.plastic;   label = 'PLA (Bioplastique)'; }
+    else if (t.contains(':pu-')  || t.contains(':pur-'))            { type = _MaterialType.plastic;   label = 'Polyuréthane'; }
+    else if (t.contains(':pa-')  || t.contains(':o-7'))             { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':abs')  || t.contains(':eva') || t.contains(':evoh')) { type = _MaterialType.plastic; label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':pmma') || t.contains('acrylic'))          { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
+    else if (t.contains(':plastic') || t.contains('bioplast'))      { type = _MaterialType.plastic;   label = _labelForTag(tag, _materialLabels); }
+    else if (t == 'en:wax' || t == 'en:composite-material')        { type = _MaterialType.cardboard; label = _labelForTag(tag, _materialLabels); }
     else {
       // Fallback via _typeFromMaterialTag (ignore tags non-matériaux)
       final ft = _typeFromMaterialTag(t);
@@ -889,19 +1144,16 @@ _MaterialInfo _detectMaterial(FoodProduct p) {
   final cats = p.categoriesTags;
   if (cat.contains('conserves') || cat.contains('canned') ||
       cats.any((c) => c.contains('canned') || c.contains('en-conserve')))   { return _MaterialInfo(_MaterialType.metal,     'Acier',        true); }
+  // Uniquement les catégories qui utilisent quasi-exclusivement le verre
   if (cat.contains('vins')  || cat.contains('wines')  ||
       cat.contains('spiritueux') || cat.contains('spirits') ||
-      cat.contains('huiles') || cat.contains('oils') ||
       cat.contains('confiture') || cat.contains('jam') ||
-      cat.contains('moutarde') || cat.contains('mustard') ||
-      cat.contains('sauce') || cat.contains('condiment') ||
       cat.contains('cornichon') || cat.contains('pickle') ||
       cat.contains('vinaigre') || cat.contains('vinegar') ||
-      cat.contains('bocal') || cat.contains('aliment bébé') || cat.contains('baby food') ||
-      cats.any((c) => c.contains('wine') || c.contains('spirit') || c.contains('oil') ||
+      cat.contains('bocal') ||
+      cats.any((c) => c.contains('wine') || c.contains('spirit') ||
                       c.contains('jam') || c.contains('spread') || c.contains('pickle') ||
-                      c.contains('condiment') || c.contains('mustard') || c.contains('vinegar') ||
-                      c.contains('baby-food') || c.contains('sauce'))) { return _MaterialInfo(_MaterialType.glass, 'Verre', true); }
+                      c.contains('vinegar'))) { return _MaterialInfo(_MaterialType.glass, 'Verre', true); }
   if (cat.contains('eaux minérales') || cat.contains('mineral waters') ||
       cat.contains('boissons gazeuses') || cat.contains('sodas') ||
       cats.any((c) => c.contains('mineral-water') || c.contains('soda') || c.contains('cola'))) { return _MaterialInfo(_MaterialType.plastic, 'Plastique', true); }
@@ -976,32 +1228,28 @@ String _detectShape(FoodProduct p) {
       cats.any((c) => c.contains('canned') || c.contains('en-conserve'))) {
     return 'Boîte conserve';
   }
+  // Vins/spiritueux → presque exclusivement verre
   if (cat.contains('vins') || cat.contains('wines') || cat.contains('spiritueux') ||
-      cat.contains('spirits') || cat.contains('huiles') ||
-      cats.any((c) => c.contains('wine') || c.contains('spirit') || c.contains('oil'))) {
+      cat.contains('spirits') ||
+      cats.any((c) => c.contains('wine') || c.contains('spirit'))) {
     return 'Bouteille en verre';
   }
+  // Confitures/cornichons/vinaigres → presque exclusivement bocal verre
   if (cat.contains('confiture') || cat.contains('jam') ||
-      cat.contains('moutarde') || cat.contains('mustard') ||
-      cat.contains('sauce') || cat.contains('condiment') ||
       cat.contains('cornichon') || cat.contains('pickle') ||
       cat.contains('vinaigre') || cat.contains('vinegar') ||
-      cat.contains('bocal') || cat.contains('aliment bébé') || cat.contains('baby food') ||
+      cat.contains('bocal') ||
       cats.any((c) => c.contains('jam') || c.contains('spread') || c.contains('pickle') ||
-                      c.contains('condiment') || c.contains('mustard') || c.contains('vinegar') ||
-                      c.contains('baby-food') || c.contains('sauce'))) {
+                      c.contains('vinegar'))) {
     return 'Bocal en verre';
   }
+  // Eaux/sodas → bouteille (plastique ou verre selon produit)
   if (cat.contains('eaux minérales') || cat.contains('mineral waters') ||
       cat.contains('boissons gazeuses') || cat.contains('sodas') ||
       cats.any((c) => c.contains('mineral-water') || c.contains('soda'))) {
     return 'Bouteille';
   }
-  if (cat.contains('laits') || cat.contains('milks') ||
-      cat.contains('jus de fruits') || cat.contains('fruit juices') ||
-      cats.any((c) => c.contains('milk') || c.contains('fruit-juice'))) {
-    return 'Brique carton';
-  }
+  // Laits/jus → peut être brique OU bouteille, ne pas inférer la forme
   if (cat.contains('yaourts') || cat.contains('yogurts') ||
       cat.contains('fromages frais') ||
       cats.any((c) => c.contains('yogurt') || c.contains('fresh-cheese'))) {
@@ -1034,36 +1282,54 @@ class _RecyclabilityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final info      = _detectMaterial(product);
-    final shape     = _detectShape(product);
+    final info       = _detectMaterial(product);
+    final shapeFb    = _detectShape(product);   // fallback si API muette sur les formes
     final recyclable = info.recyclable ?? (info.type != _MaterialType.unknown);
 
     final Color mainColor;
     final IconData matIcon;
-    final String matiere;
+    final String matiereGeneric;
 
     switch (info.type) {
       case _MaterialType.glass:
-        mainColor = const Color(0xFF2E7D32);
-        matIcon   = Icons.liquor_rounded;
-        matiere   = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Verre';
+        mainColor     = const Color(0xFF2E7D32);
+        matIcon       = Icons.liquor_rounded;
+        matiereGeneric = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Verre';
       case _MaterialType.cardboard:
-        mainColor = const Color(0xFF1565C0);
-        matIcon   = Icons.inventory_2_rounded;
-        matiere   = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Carton / Papier';
+        mainColor     = const Color(0xFF1565C0);
+        matIcon       = Icons.inventory_2_rounded;
+        matiereGeneric = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Carton / Papier';
       case _MaterialType.metal:
-        mainColor = const Color(0xFFF9A825);
-        matIcon   = Icons.local_drink_rounded;
-        matiere   = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Métal';
+        mainColor     = const Color(0xFFF9A825);
+        matIcon       = Icons.local_drink_rounded;
+        matiereGeneric = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Métal';
       case _MaterialType.plastic:
-        mainColor = const Color(0xFFE65100);
-        matIcon   = Icons.water_drop_rounded;
-        matiere   = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Plastique';
+        mainColor     = const Color(0xFFE65100);
+        matIcon       = Icons.water_drop_rounded;
+        matiereGeneric = info.preciseLabel.isNotEmpty ? info.preciseLabel : 'Plastique';
       case _MaterialType.unknown:
-        mainColor = const Color(0xFF616161);
-        matIcon   = Icons.help_outline_rounded;
-        matiere   = 'Non renseigné';
+        mainColor     = const Color(0xFF616161);
+        matIcon       = Icons.help_outline_rounded;
+        matiereGeneric = '';
     }
+
+    // ── Matières : tout ce que l'API retourne ─────────────────────────────
+    final List<String> matChips = product.packagingMaterialsTags.isNotEmpty
+        ? product.packagingMaterialsTags
+            .map((t) => s.translatePackagingLabel(_labelForTag(t, _materialLabels)))
+            .toSet().toList()
+        : (matiereGeneric.isNotEmpty
+            ? [s.translatePackagingLabel(matiereGeneric)]
+            : []);
+
+    // ── Formes : tout ce que l'API retourne ──────────────────────────────
+    final List<String> shapeChips = product.packagingShapesTags.isNotEmpty
+        ? product.packagingShapesTags
+            .map((t) => s.translatePackagingLabel(_labelForTag(t, _shapeLabels)))
+            .toSet().toList()
+        : (shapeFb.isNotEmpty
+            ? [s.translatePackagingLabel(shapeFb)]
+            : []);
 
     final ecoColor = product.ecoScore == 'A' ? const Color(0xFF1B9E3E)
         : product.ecoScore == 'B' ? const Color(0xFF85BB2F)
@@ -1092,11 +1358,10 @@ class _RecyclabilityCard extends StatelessWidget {
             child: Icon(matIcon, color: mainColor, size: 22),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text('Emballage', style: TextStyle(
+          Expanded(child: Text(s.barcodePackaging, style: TextStyle(
             fontFamily: 'Poppins', fontSize: 15, fontWeight: FontWeight.bold,
             color: isDark ? AppColors.darkText : AppColors.textPrimary,
           ))),
-          // Badge recyclable uniquement si recyclable
           if (recyclable)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1105,11 +1370,9 @@ class _RecyclabilityCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFF00C853), width: 1.5),
               ),
-              child: Text(
-                s.barcodeRecyclable,
+              child: Text(s.barcodeRecyclable,
                 style: const TextStyle(fontFamily: 'Poppins', fontSize: 11,
-                    fontWeight: FontWeight.bold, color: Color(0xFF00C853)),
-              ),
+                    fontWeight: FontWeight.bold, color: Color(0xFF00C853))),
             ),
         ]),
 
@@ -1117,25 +1380,25 @@ class _RecyclabilityCard extends StatelessWidget {
         Divider(color: mainColor.withValues(alpha: 0.2), height: 1),
         const SizedBox(height: 14),
 
-        // ── Type de l'emballage ──────────────────────────────────────────
-        _PackagingInfoRow(
+        // ── Formes : tout ce que l'API retourne ──────────────────────────
+        _PackagingChipsRow(
           label: s.packagingTypeLabel,
-          value: shape.isNotEmpty ? shape : s.packagingNotSpecified,
+          chips: shapeChips,
+          emptyText: s.packagingNotSpecified,
           icon: Icons.category_outlined,
           color: mainColor,
           isDark: isDark,
-          muted: shape.isEmpty,
         ),
         const SizedBox(height: 10),
 
-        // ── Matière de l'emballage ───────────────────────────────────────
-        _PackagingInfoRow(
+        // ── Matières : tout ce que l'API retourne ────────────────────────
+        _PackagingChipsRow(
           label: s.packagingMaterialLabel,
-          value: matiere,
+          chips: matChips,
+          emptyText: s.packagingNotSpecified,
           icon: Icons.science_outlined,
           color: mainColor,
           isDark: isDark,
-          muted: info.type == _MaterialType.unknown,
         ),
 
         // ── Eco-Score ────────────────────────────────────────────────────
@@ -1146,8 +1409,7 @@ class _RecyclabilityCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
-                color: ecoColor,
-                borderRadius: BorderRadius.circular(12),
+                color: ecoColor, borderRadius: BorderRadius.circular(12),
               ),
               child: Text('Eco-Score ${product.ecoScore}', style: const TextStyle(
                 fontFamily: 'Poppins', fontSize: 12,
@@ -1161,40 +1423,56 @@ class _RecyclabilityCard extends StatelessWidget {
   }
 }
 
-class _PackagingInfoRow extends StatelessWidget {
+class _PackagingChipsRow extends StatelessWidget {
   final String label;
-  final String value;
+  final List<String> chips;
+  final String emptyText;
   final IconData icon;
   final Color color;
   final bool isDark;
-  final bool muted;
-  const _PackagingInfoRow({
-    required this.label, required this.value, required this.icon,
-    required this.color, required this.isDark, this.muted = false,
+  const _PackagingChipsRow({
+    required this.label, required this.chips, required this.emptyText,
+    required this.icon, required this.color, required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
+    final empty = chips.isEmpty;
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Container(
         padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: muted ? 0.07 : 0.12),
+          color: color.withValues(alpha: empty ? 0.07 : 0.12),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: muted ? AppColors.textSecondary : color, size: 16),
+        child: Icon(icon, color: empty ? AppColors.textSecondary : color, size: 16),
       ),
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(
           fontFamily: 'Poppins', fontSize: 11, color: AppColors.textSecondary,
         )),
-        Text(value, style: TextStyle(
-          fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600,
-          color: muted
-              ? AppColors.textSecondary
-              : (isDark ? AppColors.darkText : AppColors.textPrimary),
-        )),
+        const SizedBox(height: 4),
+        if (empty)
+          Text(emptyText, style: const TextStyle(
+            fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ))
+        else
+          Wrap(spacing: 6, runSpacing: 6, children: chips.map((chip) =>
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: color.withValues(alpha: 0.35)),
+              ),
+              child: Text(chip, style: TextStyle(
+                fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkText : color,
+              )),
+            ),
+          ).toList()),
       ])),
     ]);
   }

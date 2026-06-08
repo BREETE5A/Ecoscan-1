@@ -23,8 +23,8 @@ class NotificationService {
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
 
-    final token = await _messaging.getToken();
-    await _saveToken(token);
+    // Fire & forget — ne bloque pas si hors-ligne (FCM nécessite internet)
+    _messaging.getToken().then(_saveToken).catchError((_) {});
     _messaging.onTokenRefresh.listen(_saveToken);
 
     FirebaseMessaging.onMessage.listen(_handleForeground);

@@ -75,7 +75,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final lang        = ref.watch(localeProvider).languageCode;
     final s           = AppStrings.of(lang);
     final isDark      = Theme.of(context).brightness == Brightness.dark;
-    final user        = ref.watch(userProvider);
+    final UserModel user = ref.watch(userStatsStreamProvider).valueOrNull
+                        ?? ref.watch(userProvider);
     final avatarPath  = ref.watch(avatarPathProvider);
     final weatherAsync = ref.watch(weatherEnvProvider);
     final aqiAsync     = ref.watch(airQualityEnvProvider);
@@ -447,30 +448,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ];
     }
 
-    const catIcons = <String, IconData>{
-      'Plastique':    Icons.opacity_rounded,
-      'Verre':        Icons.local_bar_outlined,
-      'MÃ©tal':        Icons.hardware_rounded,
-      'Papier':       Icons.article_outlined,
-      'Organique':    Icons.compost_rounded,
-      'Ã‰lectronique': Icons.electrical_services_rounded,
-      'Textile':      Icons.checkroom_rounded,
-      'Dangereux':    Icons.warning_amber_rounded,
+    final catIcons = <String, IconData>{
+      'plastique':    Icons.opacity_rounded,
+      'verre':        Icons.local_bar_outlined,
+      'metal':        Icons.hardware_rounded,
+      'paper':        Icons.article_outlined,
+      'cardboard':    Icons.article_outlined,
+      'organique':    Icons.compost_rounded,
+      'electronique': Icons.electrical_services_rounded,
+      'trash':        Icons.delete_outline_rounded,
+      'unknown':      Icons.help_outline_rounded,
     };
-    const catColors = <String, Color>{
-      'Plastique':    AppColors.plastic,
-      'Verre':        AppColors.glass,
-      'MÃ©tal':        AppColors.metal,
-      'Papier':       AppColors.paper,
-      'Organique':    Color(0xFF795548),
-      'Ã‰lectronique': AppColors.electronics,
-      'Textile':      Color(0xFF9B59B6),
-      'Dangereux':    Color(0xFFE74C3C),
+    final catColors = <String, Color>{
+      'plastique':    AppColors.plastic,
+      'verre':        AppColors.glass,
+      'metal':        AppColors.metal,
+      'paper':        AppColors.paper,
+      'cardboard':    AppColors.paper,
+      'organique':    const Color(0xFF795548),
+      'electronique': AppColors.electronics,
+      'trash':        const Color(0xFF607D8B),
+      'unknown':      const Color(0xFF9E9E9E),
+    };
+    final catNames = <String, String>{
+      'plastique':    s.catPlastic,
+      'verre':        s.catGlass,
+      'metal':        s.catMetal,
+      'paper':        s.catPaper,
+      'cardboard':    s.catCardboard,
+      'organique':    s.catOrganic,
+      'electronique': s.catElectronic,
+      'trash':        s.catTrash,
+      'unknown':      s.catUnknown,
     };
 
     return List.generate(scans.length, (i) {
       final scan = scans[i];
-      final cat = scan['category'] as String? ?? 'Inconnu';
+      final cat = (scan['category'] as String? ?? 'unknown').toLowerCase();
       final date = scan['scanned_at'] != null
           ? DateTime.tryParse(scan['scanned_at'] as String)
           : null;
@@ -482,7 +496,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: _ActivityItem(
           icon: catIcons[cat] ?? Icons.recycling_rounded,
           color: catColors[cat] ?? AppColors.primary,
-          title: 'Scan $cat',
+          title: '${s.scanCategory} ${catNames[cat] ?? cat}',
           date: dateStr,
           points: '+10 pts',
         ).animate(delay: (460 + i * 60).ms).fadeIn(duration: 280.ms).slideX(begin: 0.08),

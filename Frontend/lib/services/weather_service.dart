@@ -25,8 +25,10 @@ class WeatherData {
 }
 
 // SharedPreferences keys
-const _kWeatherCity = 'weather_city';
-const _kWeatherTs   = 'weather_city_ts';
+const _kWeatherCity  = 'weather_city';
+const _kWeatherTs    = 'weather_city_ts';
+const _kLastLat      = 'last_gps_lat';
+const _kLastLng      = 'last_gps_lng';
 // Refresh GPS-based city at most once per hour
 const _kCityRefreshMs = 3600000;
 
@@ -71,6 +73,9 @@ class WeatherService {
                 timeLimit: Duration(seconds: 8),
               ),
             );
+            // Sauvegarde les dernières coordonnées GPS connues
+            await prefs.setDouble(_kLastLat, pos.latitude);
+            await prefs.setDouble(_kLastLng, pos.longitude);
             final data = await _fetchCoords(pos.latitude, pos.longitude);
             if (data != null) {
               await prefs.setString(_kWeatherCity, data.city);
@@ -79,10 +84,21 @@ class WeatherService {
           }
         }
       } catch (_) {
-        // GPS échoue → utilise la ville en cache
+        // GPS échoue → utilise les dernières coordonnées connues
       }
 
-      // Utilise la ville cachée ou Casablanca par défaut
+      // Utilise les dernières coordonnées GPS mémorisées si disponibles
+      final lastLat = prefs.getDouble(_kLastLat);
+      final lastLng = prefs.getDouble(_kLastLng);
+      if (lastLat != null && lastLng != null) {
+        final data = await _fetchCoords(lastLat, lastLng);
+        if (data != null) {
+          await prefs.setString(_kWeatherCity, data.city);
+          return data;
+        }
+      }
+
+      // Fallback final : ville en cache ou Casablanca
       return fetchByCity(city ?? 'Casablanca');
     } catch (_) {
       return fetchByCity('Casablanca');

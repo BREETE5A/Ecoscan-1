@@ -66,7 +66,7 @@ class FoodProduct {
     required this.ingredients,
   });
 
-  factory FoodProduct.fromJson(Map<String, dynamic> p, String barcode) {
+  factory FoodProduct.fromJson(Map<String, dynamic> p, String barcode, {String locale = 'fr'}) {
     String str(dynamic v) => (v ?? '').toString().trim();
 
     // Conversion sécurisée : gère null, List ET Map vide ({}) retourné par l'API
@@ -125,11 +125,22 @@ class FoodProduct {
       components = [];
     }
 
+    // Priorité : langue demandée → fr → générique
+    String localized(List<String> keys) {
+      for (final k in keys) { final v = str(p[k]); if (v.isNotEmpty) return v; }
+      return '';
+    }
+
+    final name = localized([
+      'product_name_$locale', 'product_name_fr', 'product_name_en', 'product_name',
+    ]);
+    final ingredients = localized([
+      'ingredients_text_$locale', 'ingredients_text_fr', 'ingredients_text_en', 'ingredients_text',
+    ]);
+
     return FoodProduct(
       barcode:                barcode,
-      name:                   str(p['product_name_fr']).isNotEmpty
-                                ? str(p['product_name_fr'])
-                                : str(p['product_name']),
+      name:                   name,
       brand:                  str(p['brands']),
       imageUrl:               str(p['image_front_url']),
       nutriScore:             str(p['nutriscore_grade']).toUpperCase(),
@@ -145,9 +156,7 @@ class FoodProduct {
       categoriesTags:         catTags,
       countries:              str(p['countries']),
       labels:                 labelTags,
-      ingredients:            str(p['ingredients_text_fr']).isNotEmpty
-                                ? str(p['ingredients_text_fr'])
-                                : str(p['ingredients_text']),
+      ingredients:            ingredients,
     );
   }
 }
@@ -161,26 +170,29 @@ class FoodProductService {
     headers: {'User-Agent': 'EcoScan/1.0 (badreddinehammoucha@gmail.com)'},
   ));
 
-  static Future<FoodProduct?> fetch(String barcode) async {
+  static Future<FoodProduct?> fetch(String barcode, {String locale = 'fr'}) async {
     try {
       final resp = await _dio.get(
         'product/$barcode.json',
         queryParameters: {
+          'lc': locale,
           'fields':
-              'product_name,product_name_fr,brands,image_front_url,'
+              'product_name,product_name_fr,product_name_en,product_name_ar,product_name_es,'
+              'brands,image_front_url,'
               'nutriscore_grade,ecoscore_grade,environmental_score_grade,'
               'packaging,packaging_tags,'
               'packaging_materials_tags,packaging_shapes_tags,packaging_recycling_tags,'
               'packagings,ecoscore_data,environmental_score_data,'
               'quantity,categories,categories_tags,countries,labels_tags,'
-              'ingredients_text,ingredients_text_fr',
+              'ingredients_text,ingredients_text_fr,ingredients_text_en,'
+              'ingredients_text_ar,ingredients_text_es',
         },
       );
       final data = resp.data as Map<String, dynamic>;
       if ((data['status'] ?? 0) != 1) return null;
       final product = data['product'] as Map<String, dynamic>?;
       if (product == null) return null;
-      return FoodProduct.fromJson(product, barcode);
+      return FoodProduct.fromJson(product, barcode, locale: locale);
     } catch (_) {
       return null;
     }

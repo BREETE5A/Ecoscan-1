@@ -6,10 +6,16 @@ import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ClassifierService {
-  // Ordre alphabétique Python (Keras flow_from_directory) — 8 classes exactes
+  // Ordre alphabétique des dossiers d'entraînement (TRASHNET anglais + ajouts français)
   static const _labels = [
-    'cardboard', 'electronique', 'metal', 'organique', 'paper', 'plastique', 'trash', 'verre'
+    'cardboard', 'electronique', 'glass', 'metal', 'organique', 'paper', 'plastic', 'trash'
   ];
+
+  // Normalisation vers les noms canoniques de l'app
+  static const _canonicalMap = {
+    'glass':   'verre',
+    'plastic': 'plastique',
+  };
   static const _inputSize = 224;
   // Seuil de confiance minimum : en dessous → "Objet non reconnu"
   static const _confidenceThreshold = 0.45;
@@ -70,16 +76,16 @@ class ClassifierService {
       interpreter.run(input, output);
       scores = output[0];
     } else {
-      // ecoscan_model_final.tflite contient 2 couches Rescaling internes
-      // → envoyer pixels normalisés [0.0, 1.0] pour éviter double-normalisation
+      // Les couches Rescaling internes du modèle attendent des pixels [0, 255]
+      // — ne pas pré-normaliser ici, sinon les valeurs arrivent ~0 au modèle.
       final inputBuffer = Float32List(_inputSize * _inputSize * 3);
       int idx = 0;
       for (int y = 0; y < _inputSize; y++) {
         for (int x = 0; x < _inputSize; x++) {
           final pixel = resized.getPixel(x, y);
-          inputBuffer[idx++] = pixel.r.toDouble() / 255.0;
-          inputBuffer[idx++] = pixel.g.toDouble() / 255.0;
-          inputBuffer[idx++] = pixel.b.toDouble() / 255.0;
+          inputBuffer[idx++] = pixel.r.toDouble();
+          inputBuffer[idx++] = pixel.g.toDouble();
+          inputBuffer[idx++] = pixel.b.toDouble();
         }
       }
       final input = inputBuffer.reshape([1, _inputSize, _inputSize, 3]);
@@ -100,9 +106,10 @@ class ClassifierService {
       if (probabilities[i] > probabilities[maxIdx]) maxIdx = i;
     }
 
-    final topLabel = probabilities[maxIdx] >= _confidenceThreshold
+    final rawLabel = probabilities[maxIdx] >= _confidenceThreshold
         ? _labels[maxIdx]
         : 'unknown';
+    final topLabel = _canonicalMap[rawLabel] ?? rawLabel;
 
     return (
       label: topLabel,

@@ -49,6 +49,8 @@ const moroccanCities = [
 // SharedPreferences keys
 const _kCityKey      = 'aq_city_key';
 const _kCityTs       = 'aq_city_ts';
+const _kLastLat      = 'last_gps_lat';   // clés partagées avec weather_service
+const _kLastLng      = 'last_gps_lng';
 const _kCityRefreshMs = 1800000; // 30 min
 
 class AirQualityService {
@@ -97,6 +99,9 @@ class AirQualityService {
             );
             userLat = pos.latitude;
             userLng = pos.longitude;
+            // Sauvegarde les dernières coordonnées GPS connues
+            await prefs.setDouble(_kLastLat, userLat);
+            await prefs.setDouble(_kLastLng, userLng);
             // Enregistre la ville marocaine la plus proche
             cityKey = _nearestCityKey(userLat, userLng);
             await prefs.setString(_kCityKey, cityKey);
@@ -114,18 +119,33 @@ class AirQualityService {
             );
             userLat = pos.latitude;
             userLng = pos.longitude;
+            // Sauvegarde les dernières coordonnées GPS connues
+            await prefs.setDouble(_kLastLat, userLat);
+            await prefs.setDouble(_kLastLng, userLng);
           }
         }
       } catch (_) {
-        // GPS échoue → utilise les coords de la ville en cache
+        // GPS échoue → utilise les dernières coordonnées mémorisées
       }
 
       // ── Résolution des coordonnées ────────────────────────────────────────
+      // Si GPS indisponible, utilise les dernières coords GPS mémorisées
+      if (userLat == null || userLng == null) {
+        final savedLat = prefs.getDouble(_kLastLat);
+        final savedLng = prefs.getDouble(_kLastLng);
+        if (savedLat != null && savedLng != null) {
+          userLat = savedLat;
+          userLng = savedLng;
+          // Met à jour la cityKey depuis les dernières coords si pas encore définie
+          cityKey ??= _nearestCityKey(userLat, userLng);
+        }
+      }
+
       cityKey ??= 'casablanca';
       final city = moroccanCities.where((c) => c.key == cityKey).firstOrNull
                    ?? moroccanCities.first;
 
-      // Utilise les coords GPS réelles si disponibles, sinon coords de la ville
+      // Utilise les coords GPS réelles (ou dernières mémorisées), sinon coords de la ville
       final lat = userLat ?? city.lat;
       final lng = userLng ?? city.lng;
 

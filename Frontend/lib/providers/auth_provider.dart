@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'user_provider.dart';
+import 'locale_provider.dart';
+import '../services/n8n_service.dart';
 
 // ── Raccourcis ────────────────────────────────────────────────────────────────
 final _auth        = FirebaseAuth.instance;
@@ -86,20 +88,92 @@ class RegisterState {
       );
 }
 
-// ── Traduction erreurs Firebase → Français ────────────────────────────────────
-String _translateFirebaseError(String code) => switch (code) {
-      'user-not-found'          => 'Aucun compte avec cet email.',
-      'wrong-password'          => 'Mot de passe incorrect.',
-      'invalid-credential'      => 'Email ou mot de passe incorrect.',
-      'email-already-in-use'    => 'Cette adresse email est déjà associée à un compte. Connectez-vous ou utilisez une autre adresse.',
-      'weak-password'           => 'Mot de passe trop faible (min. 6 caractères).',
-      'network-request-failed'  => 'Vérifiez votre connexion internet.',
-      'invalid-email'           => 'Adresse email invalide.',
-      'too-many-requests'       => 'Trop de tentatives. Réessayez plus tard.',
-      'account-exists-with-different-credential' =>
-          'Un compte existe déjà avec cette adresse email. Connectez-vous avec votre mot de passe.',
-      _ => 'Une erreur est survenue. Réessayez.',
-    };
+// ── Traduction erreurs Firebase (FR/EN/AR/ES) ─────────────────────────────────
+String _translateFirebaseError(String code, String locale) {
+  const msgs = <String, Map<String, String>>{
+    'user-not-found': {
+      'fr': 'Aucun compte avec cet email.',
+      'en': 'No account found with this email.',
+      'ar': 'لا يوجد حساب بهذا البريد الإلكتروني.',
+      'es': 'No se encontró ninguna cuenta con este correo.',
+    },
+    'wrong-password': {
+      'fr': 'Mot de passe incorrect.',
+      'en': 'Incorrect password.',
+      'ar': 'كلمة المرور غير صحيحة.',
+      'es': 'Contraseña incorrecta.',
+    },
+    'invalid-credential': {
+      'fr': 'Email ou mot de passe incorrect.',
+      'en': 'Invalid email or password.',
+      'ar': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+      'es': 'Email o contraseña incorrectos.',
+    },
+    'email-already-in-use': {
+      'fr': 'Cette adresse email est déjà associée à un compte. Connectez-vous ou utilisez une autre adresse.',
+      'en': 'This email is already in use. Sign in or use a different address.',
+      'ar': 'هذا البريد مرتبط بحساب آخر. سجّل الدخول أو استخدم بريدًا آخر.',
+      'es': 'Este correo ya está en uso. Inicia sesión o usa otro correo.',
+    },
+    'weak-password': {
+      'fr': 'Mot de passe trop faible (min. 6 caractères).',
+      'en': 'Password too weak (min. 6 characters).',
+      'ar': 'كلمة المرور ضعيفة جدًا (6 أحرف على الأقل).',
+      'es': 'Contraseña demasiado débil (mín. 6 caracteres).',
+    },
+    'network-request-failed': {
+      'fr': 'Vérifiez votre connexion internet.',
+      'en': 'Check your internet connection.',
+      'ar': 'تحقق من اتصالك بالإنترنت.',
+      'es': 'Verifica tu conexión a internet.',
+    },
+    'invalid-email': {
+      'fr': 'Adresse email invalide.',
+      'en': 'Invalid email address.',
+      'ar': 'عنوان البريد الإلكتروني غير صالح.',
+      'es': 'Dirección de correo electrónico inválida.',
+    },
+    'too-many-requests': {
+      'fr': 'Trop de tentatives. Réessayez plus tard.',
+      'en': 'Too many attempts. Try again later.',
+      'ar': 'محاولات كثيرة جدًا. حاول مجددًا لاحقًا.',
+      'es': 'Demasiados intentos. Inténtalo más tarde.',
+    },
+    'account-exists-with-different-credential': {
+      'fr': 'Un compte existe déjà avec cette adresse email. Connectez-vous avec votre mot de passe.',
+      'en': 'An account already exists with this email. Sign in with your password.',
+      'ar': 'يوجد حساب آخر بهذا البريد. سجّل الدخول بكلمة المرور.',
+      'es': 'Ya existe una cuenta con este correo. Inicia sesión con tu contraseña.',
+    },
+  };
+  const fallback = <String, String>{
+    'fr': 'Une erreur est survenue. Réessayez.',
+    'en': 'An error occurred. Please try again.',
+    'ar': 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+    'es': 'Ocurrió un error. Inténtalo de nuevo.',
+  };
+  return msgs[code]?[locale] ?? msgs[code]?['fr'] ?? fallback[locale] ?? fallback['fr']!;
+}
+
+String _genericError(String locale) {
+  const m = <String, String>{
+    'fr': 'Une erreur est survenue. Réessayez.',
+    'en': 'An error occurred. Please try again.',
+    'ar': 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+    'es': 'Ocurrió un error. Inténtalo de nuevo.',
+  };
+  return m[locale] ?? m['fr']!;
+}
+
+String _googleError(String locale) {
+  const m = <String, String>{
+    'fr': 'Connexion Google échouée. Réessayez.',
+    'en': 'Google sign-in failed. Please try again.',
+    'ar': 'فشل تسجيل الدخول بـ Google. حاول مجددًا.',
+    'es': 'Error al iniciar sesión con Google. Inténtalo de nuevo.',
+  };
+  return m[locale] ?? m['fr']!;
+}
 
 // ── Utilitaire : lire la ville dans Firestore ─────────────────────────────────
 Future<String> _fetchCity(String uid) async {
@@ -145,15 +219,17 @@ class LoginNotifier extends StateNotifier<AuthState> {
         firebaseCity: user.city,
       );
     } on FirebaseAuthException catch (e) {
+      final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: _translateFirebaseError(e.code),
+        errorMessage: _translateFirebaseError(e.code, lang),
       );
     } catch (e) {
       debugPrint('Login error: $e');
+      final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'Une erreur est survenue. Réessayez.',
+        errorMessage: _genericError(lang),
       );
     }
   }
@@ -229,15 +305,17 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         firebaseCity: user.city,
       );
     } on FirebaseAuthException catch (e) {
+      final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: _translateFirebaseError(e.code),
+        errorMessage: _translateFirebaseError(e.code, lang),
       );
     } catch (e) {
       debugPrint('Register error: $e');
+      final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'Une erreur est survenue. Réessayez.',
+        errorMessage: _genericError(lang),
       );
     }
   }
@@ -313,15 +391,17 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
         firebaseCity: user.city,
       );
     } on FirebaseAuthException catch (e) {
+      final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: _translateFirebaseError(e.code),
+        errorMessage: _translateFirebaseError(e.code, lang),
       );
     } catch (e) {
       debugPrint('Google Sign-In error: $e');
+      final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'Connexion Google échouée. Réessayez.',
+        errorMessage: _googleError(lang),
       );
     }
   }
