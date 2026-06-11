@@ -1,0 +1,65 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.7'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        working-directory: Frontend
+        run: flutter pub get
+
+      - name: Setup GoogleService-Info.plist
+        working-directory: Frontend/ios/Runner
+        env:
+          GOOGLE_SERVICE_INFO: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -n "$GOOGLE_SERVICE_INFO" ]; then
+            echo "$GOOGLE_SERVICE_INFO" | base64 --decode > GoogleService-Info.plist
+            echo "GoogleService-Info.plist created from secret"
+          else
+            echo "Warning: GOOGLE_SERVICE_INFO_PLIST secret not set, Firebase may not work"
+          fi
+
+      - name: Build iOS (no code signing)
+        working-directory: Frontend
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Create IPA
+        working-directory: Frontend
+        run: |
+          mkdir -p build/ios/iphoneos/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+          cd build/ios/iphoneos
+          zip -r EcoScan.ipa Payload/
+          echo "IPA created successfully"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcoScan-iOS
+          path: Frontend/build/ios/iphoneos/EcoScan.ipa
+          retention-days: 30
+
+      - name: Upload build summary
+        run: |
+          echo "## Build iOS réussi ✅" >> $GITHUB_STEP_SUMMARY
+          echo "L'IPA est disponible dans les **Artifacts** ci-dessus." >> $GITHUB_STEP_SUMMARY
+          echo "Télécharge-le et installe avec **Sideloadly** sur Windows." >> $GITHUB_STEP_SUMMARY

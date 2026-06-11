@@ -208,6 +208,11 @@ class LoginNotifier extends StateNotifier<AuthState> {
       );
       final fbUser = credential.user!;
       final city = await _fetchCity(fbUser.uid);
+      // Marque la dernière connexion — sert au comptage communautaire
+      _db.collection('users').doc(fbUser.uid).set(
+        {'lastSeen': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      ).catchError((_) {});
       final user = AppUser.fromFirebase(fbUser, city: city);
       _ref.read(currentUserProvider.notifier).state = user;
       state = state.copyWith(status: AuthStatus.success, user: user);
@@ -226,7 +231,7 @@ class LoginNotifier extends StateNotifier<AuthState> {
         errorMessage: _translateFirebaseError(e.code, lang),
       );
     } catch (e) {
-      debugPrint('Login error: $e');
+      if (kDebugMode) debugPrint('Login error: $e');
       final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
@@ -323,7 +328,7 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         errorMessage: _translateFirebaseError(e.code, lang),
       );
     } catch (e) {
-      debugPrint('Register error: $e');
+      if (kDebugMode) debugPrint('Register error: $e');
       final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,
@@ -383,6 +388,7 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
           'city':        '',
           'photoUrl':    fbUser.photoURL ?? '',
           'createdAt':   FieldValue.serverTimestamp(),
+          'lastSeen':    FieldValue.serverTimestamp(),
           'ecoPoints':   0,
           'scansCount':  0,
           'badges':      [],
@@ -394,6 +400,8 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
         ).catchError((_) {});
       } else {
         city = (docSnap.data()?['city'] as String?) ?? '';
+        // Marque la dernière connexion pour les utilisateurs existants
+        userRef.update({'lastSeen': FieldValue.serverTimestamp()}).catchError((_) {});
       }
 
       final user = AppUser.fromFirebase(fbUser, city: city);
@@ -414,7 +422,7 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
         errorMessage: _translateFirebaseError(e.code, lang),
       );
     } catch (e) {
-      debugPrint('Google Sign-In error: $e');
+      if (kDebugMode) debugPrint('Google Sign-In error: $e');
       final lang = _ref.read(localeProvider).languageCode;
       state = state.copyWith(
         status: AuthStatus.error,

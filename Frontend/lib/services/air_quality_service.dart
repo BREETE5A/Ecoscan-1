@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/api_constants.dart';
 
 enum AirQualityError { gpsDisabled, permissionDenied, networkError }
 
@@ -57,7 +58,7 @@ class AirQualityService {
   // ── OpenWeatherMap Air Pollution API ──────────────────────────────────────
   // Avantage sur WAQI : coverage mondiale garantie par coordonnées GPS
   // Pas de station physique nécessaire — données satellite + modèle numérique
-  static const _owmKey  = '40bbb318e5d3379c017f100b4a79b9b9';
+  static const _owmKey  = ApiConstants.owmKey;
   static const _owmBase = 'https://api.openweathermap.org/data/2.5';
 
   static final _dio = Dio(BaseOptions(

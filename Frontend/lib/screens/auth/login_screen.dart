@@ -99,6 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     // Réagir au login Google
     ref.listen(googleSignInProvider, (_, next) {
+      if (!mounted) return;
       if (next.status == AuthStatus.success) {
         context.go('/home');
       }

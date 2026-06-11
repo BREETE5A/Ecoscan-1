@@ -48,7 +48,7 @@ class MyAdsScreen extends ConsumerWidget {
             Expanded(
               child: listingsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error:   (_, __) => const SizedBox.shrink(),
+                error:   (_, _) => const SizedBox.shrink(),
                 data: (all) {
                   final mine = uid != null
                       ? all.where((l) => l.userId == uid).toList()
@@ -172,7 +172,7 @@ class _MyAdTile extends StatelessWidget {
             child: listing.imageUrls.isNotEmpty
                 ? Image.network(listing.imageUrls.first,
                     width: 72, height: 72, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(color))
+                    errorBuilder: (_, _, _) => _placeholder(color))
                 : _placeholder(color),
           ),
           const SizedBox(width: 14),

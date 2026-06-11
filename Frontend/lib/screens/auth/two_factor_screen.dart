@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,7 +144,7 @@ class _TwoFactorScreenState extends ConsumerState<TwoFactorScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     final formatted = _formatPhone(_prefix, _phoneCtrl.text.trim());
-    debugPrint('Sending SMS to: $formatted');
+    if (kDebugMode) debugPrint('Sending SMS to: $formatted');
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: formatted,

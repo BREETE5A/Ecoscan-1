@@ -706,7 +706,7 @@ class _DetailCard extends ConsumerWidget {
           _DetailRow(s.labelType, scan.category, isDark),
           _DetailRow(s.labelRecyclable, scan.recyclable ? s.valueYes : s.valueNo, isDark,
               valueColor: scan.recyclable ? AppColors.primary : AppColors.danger),
-          _DetailRow(s.sortingInstruction, '${s.binLabel} ${scan.binColor}', isDark),
+          _DetailRow(s.sortingInstruction, '${s.binLabel} ${s.binColorName(scan.binColor)}', isDark),
           _DetailRow(s.aiConfidence, '${(scan.recyclability * 100).round()}%', isDark, valueColor: AppColors.teal),
           if (scan.dangerous)
             _DetailRow(s.attentionLabel, s.dangerousWaste, isDark,
@@ -757,16 +757,13 @@ class _BinCard extends ConsumerWidget {
 
   Color get _binColor {
     switch (scan.binColor) {
-      case 'Jaune':
-        return const Color(0xFFF39C12);
-      case 'Bleu':
-        return const Color(0xFF3498DB);
-      case 'Vert':
-        return AppColors.primary;
-      case 'Noir':
-        return const Color(0xFF2C3E50);
-      default:
-        return AppColors.danger;
+      case 'yellow':   return const Color(0xFFF39C12);
+      case 'blue':     return const Color(0xFF3498DB);
+      case 'green':    return AppColors.primary;
+      case 'black':    return const Color(0xFF2C3E50);
+      case 'brown':    return const Color(0xFF8B5E3C);
+      case 'ecopoint': return const Color(0xFF27AE60);
+      default:         return AppColors.textSecondary;
     }
   }
 
@@ -799,7 +796,7 @@ class _BinCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${s.binLabel} ${scan.binColor}',
+                  '${s.binLabel} ${s.binColorName(scan.binColor)}',
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 15,

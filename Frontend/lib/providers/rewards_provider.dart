@@ -37,7 +37,7 @@ class RewardsNotifier extends StateNotifier<Set<String>> {
           {};
       state = list;
     } catch (e) {
-      debugPrint('RewardsProvider load error: $e');
+      if (kDebugMode) debugPrint('RewardsProvider load error: $e');
     }
   }
 
@@ -65,7 +65,7 @@ class RewardsNotifier extends StateNotifier<Set<String>> {
           );
       return true;
     } catch (e) {
-      debugPrint('RewardsProvider redeem error: $e');
+      if (kDebugMode) debugPrint('RewardsProvider redeem error: $e');
       return false;
     }
   }

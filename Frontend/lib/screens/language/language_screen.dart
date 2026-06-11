@@ -38,9 +38,17 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen>
       code: 'ar',
       name: 'العربية',
       native: 'العربية',
-      flag: '🇩🇿',
+      flag: '🇲🇦',
       greeting: '!مرحباً',
       desc: 'اللغة العربية',
+    ),
+    _LangData(
+      code: 'es',
+      name: 'Español',
+      native: 'Español',
+      flag: '🇪🇸',
+      greeting: '¡Hola!',
+      desc: 'Idioma español',
     ),
   ];
 

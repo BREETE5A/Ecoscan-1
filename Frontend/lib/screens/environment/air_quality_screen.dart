@@ -168,6 +168,7 @@ class AirQualityScreen extends ConsumerWidget {
   // ── Sélecteur de ville ──────────────────────────────────────────────────────
   void _showCityPicker(BuildContext context, bool isDark, String lang,
       String label, WidgetRef ref) {
+    final s = AppStrings.of(lang);
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
@@ -186,10 +187,7 @@ class AirQualityScreen extends ConsumerWidget {
         ListTile(
           leading: const Icon(Icons.gps_fixed_rounded, color: AppColors.primary, size: 20),
           title: Text(
-            lang == 'ar' ? 'تحديد GPS تلقائي'
-            : lang == 'en' ? 'Auto GPS detection'
-            : lang == 'es' ? 'Detección GPS automática'
-            : 'Détection GPS automatique',
+            s.autoGpsDetect,
             style: TextStyle(fontFamily: 'Poppins', fontSize: 14,
               fontWeight: ref.read(_selectedCityKeyProvider) == null
                   ? FontWeight.bold : FontWeight.normal,
@@ -318,10 +316,7 @@ class AirQualityScreen extends ConsumerWidget {
             TextButton.icon(
               onPressed: () => ref.invalidate(airQualityScreenProvider),
               icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
-              label: Text(lang == 'ar' ? 'إعادة المحاولة'
-                  : lang == 'en' ? 'Retry'
-                  : lang == 'es' ? 'Reintentar'
-                  : 'Réessayer',
+              label: Text(s.retry,
                   style: const TextStyle(fontFamily: 'Poppins',
                       color: AppColors.primary, fontSize: 14)),
             ),

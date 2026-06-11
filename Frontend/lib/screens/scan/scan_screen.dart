@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,7 +117,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       await _classifier.load();
       if (mounted) setState(() => _modelLoaded = true);
     } catch (e) {
-      debugPrint('TFLite load error: $e');
+      if (kDebugMode) debugPrint('TFLite load error: $e');
       if (mounted) {
         setState(() => _modelLoaded = false);
         final s = AppStrings.of(ref.read(localeProvider).languageCode);
@@ -226,16 +227,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       return;
     }
 
+    final lang = ref.read(localeProvider).languageCode;
     ScanEntry entry;
-    String debugInfo = '';
     try {
       // ── Étape 1 : API online YOLOv8 (priorité) ────────────────────────────
       final onlineResult = await ScanApiService.classify(imageToClassify);
 
       if (onlineResult != null && onlineResult.topLabel != 'unknown') {
-        debugInfo = '[ONLINE] raw="${onlineResult.topLabel}" conf=${(onlineResult.topConfidence*100).toStringAsFixed(1)}%';
-        debugPrint('✅ $debugInfo');
-        final base = ScanEntry.fromClassification(onlineResult.topLabel, onlineResult.topConfidence);
+        final base = ScanEntry.fromClassification(onlineResult.topLabel, onlineResult.topConfidence, lang: lang);
         entry = ScanEntry(
           id: base.id, name: base.name, category: base.category,
           recyclable: base.recyclable, dangerous: base.dangerous,
@@ -247,31 +246,15 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       } else if (_modelLoaded) {
         // ── Étape 2 : fallback TFLite local ─────────────────────────────────
         final result = await _classifier.classify(imageToClassify);
-        final scores = result.allScores.map((e) => '${e.label}=${e.score.toStringAsFixed(2)}').join(' | ');
-        debugInfo = '[LOCAL] label=${result.label} conf=${(result.confidence*100).toStringAsFixed(1)}%\nScores: $scores';
-        debugPrint('🔄 $debugInfo');
-        entry = ScanEntry.fromClassification(result.label, result.confidence);
+        entry = ScanEntry.fromClassification(result.label, result.confidence, lang: lang);
 
       } else {
         _showError(s.modelNotLoaded);
         return;
       }
     } catch (e) {
-      debugPrint('Classify error: $e');
       _showError(s.analysisError(e.toString()));
       return;
-    }
-
-    // ── Debug overlay visible ────────────────────────────────────────────────
-    if (mounted && debugInfo.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(debugInfo,
-              style: const TextStyle(fontFamily: 'Courier', fontSize: 11)),
-          backgroundColor: Colors.black87,
-          duration: const Duration(seconds: 8),
-        ),
-      );
     }
 
     final nextState =
@@ -304,10 +287,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       category: entry.category,
       binColor: entry.binColor,
       confidence: entry.recyclability,
-      co2SavedPerKg: entry.co2Saved / 100,
+      co2SavedPerKg: entry.co2Saved / 1000,
       scannedAt: entry.scannedAt,
     );
-    ref.read(userProvider.notifier).recordScan(scanResult).catchError((_) {});
+    ref.read(userProvider.notifier).recordScan(scanResult)
+        .catchError((e) { if (kDebugMode) debugPrint('recordScan error: $e'); });
     ref.read(challengesProvider.notifier).incrementScan();
   }
 

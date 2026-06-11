@@ -42,7 +42,15 @@ class ChatMessage {
         id: _uid(), text: '', isUser: false,
         timestamp: DateTime.now(), isLoading: true);
 
-  static ChatMessage get welcome => ChatMessage.bot(
-        'Bonjour ! Je suis EcoBot 🌿\n\nPosez-moi vos questions sur le tri et le recyclage au Maroc !',
-      );
+  static ChatMessage welcomeFor(String lang) {
+    // Moved to app_strings.dart — use botGreeting which is translated in 4 languages
+    const greetings = {
+      'en': 'Hello! I am EcoBot 🌿\n\nAsk me your questions about sorting and recycling in Morocco!',
+      'ar': 'مرحباً! أنا EcoBot 🌿\n\nاسألني عن الفرز وإعادة التدوير في المغرب!',
+      'es': '¡Hola! Soy EcoBot 🌿\n\n¡Hazme tus preguntas sobre clasificación y reciclaje en Marruecos!',
+    };
+    return ChatMessage.bot(
+      greetings[lang] ?? 'Bonjour ! Je suis EcoBot 🌿\n\nPosez-moi vos questions sur le tri et le recyclage au Maroc !',
+    );
+  }
 }

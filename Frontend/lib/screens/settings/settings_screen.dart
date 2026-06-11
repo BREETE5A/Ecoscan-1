@@ -13,8 +13,8 @@ import '../../providers/locale_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/scan_history_provider.dart';
 import '../../l10n/app_strings.dart';
-import 'language_screen.dart';
 import 'theme_screen.dart';
+import 'language_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -128,11 +128,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LanguageScreen()),
-                          ),
+                          onTap: () => Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => const LanguageScreen())),
                         ),
                       ],
                     ),
@@ -405,17 +402,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _preserveCommunityPoints(String uid) async {
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final db = FirebaseFirestore.instance;
+      final userDoc = await db.collection('users').doc(uid).get();
       if (!userDoc.exists) return;
-      final pts = (userDoc.data()?['ecoPoints'] as num?)?.toInt() ?? 0;
-      final Map<String, dynamic> update = {
-        'userCount': FieldValue.increment(-1),
-      };
-      if (pts > 0) update['deletedPoints'] = FieldValue.increment(pts);
-      await FirebaseFirestore.instance
-          .collection('community_totals')
-          .doc('stats')
+      final pts   = (userDoc.data()?['ecoPoints']  as num?)?.toInt() ?? 0;
+      final scans = (userDoc.data()?['scansCount'] as num?)?.toInt() ?? 0;
+      final Map<String, dynamic> update = {'userCount': FieldValue.increment(-1)};
+      if (pts > 0)   update['deletedPoints'] = FieldValue.increment(pts);
+      if (scans > 0) update['deletedScans']  = FieldValue.increment(scans);
+      await db.collection('community_totals').doc('stats')
           .set(update, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
+  /// Supprime TOUTES les données Firestore liées à [uid].
+  Future<void> _deleteAllUserData(String uid) async {
+    final db = FirebaseFirestore.instance;
+    final userRef = db.collection('users').doc(uid);
+
+    // 1. Sous-collections de users/{uid}
+    await _deleteSubcollection(userRef.collection('scans'));
+    await _deleteSubcollection(userRef.collection('progress'));
+
+    // 2. Annonces marketplace publiées par cet utilisateur
+    //    (+ leur sous-collection reviews/)
+    try {
+      QuerySnapshot listings;
+      do {
+        listings = await db.collection('marketplace')
+            .where('userId', isEqualTo: uid)
+            .limit(50)
+            .get();
+        if (listings.docs.isEmpty) break;
+        for (final listing in listings.docs) {
+          await _deleteSubcollection(listing.reference.collection('reviews'));
+          await listing.reference.delete();
+        }
+      } while (listings.docs.length == 50);
+    } catch (_) {}
+  }
+
+  Future<void> _deleteSubcollection(CollectionReference col) async {
+    try {
+      QuerySnapshot snap;
+      do {
+        snap = await col.limit(100).get();
+        if (snap.docs.isEmpty) break;
+        final batch = FirebaseFirestore.instance.batch();
+        for (final doc in snap.docs) { batch.delete(doc.reference); }
+        await batch.commit();
+      } while (snap.docs.length == 100);
     } catch (_) {}
   }
 
@@ -452,13 +488,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
       await user.reauthenticateWithCredential(cred);
       await _preserveCommunityPoints(uid);
+      await _deleteAllUserData(uid);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Erreur : ${e.message}',
+        content: Text(s.errorMsg(e.message ?? ''),
             style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
@@ -477,6 +514,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       // Mot de passe correct — fermer le dialog et supprimer
       if (dlgCtx.mounted) Navigator.pop(dlgCtx);
       await _preserveCommunityPoints(uid);
+      await _deleteAllUserData(uid);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');
@@ -484,7 +522,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } on FirebaseAuthException catch (e) {
       return e.code == 'wrong-password' || e.code == 'invalid-credential'
           ? s.wrongPassword
-          : 'Erreur : ${e.message}';
+          : s.errorMsg(e.message ?? '');
     }
   }
 }

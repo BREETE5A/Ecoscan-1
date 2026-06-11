@@ -7,7 +7,7 @@ import '../../models/listing_model.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/marketplace_provider.dart';
 import '../../theme/app_theme.dart';
-import 'marketplace_screen.dart' show typeColor, typeLabel, typeIcon;
+import 'marketplace_screen.dart' show typeColor, typeLabel;
 
 class ListingDetailScreen extends ConsumerStatefulWidget {
   final String listingId;
@@ -388,7 +388,7 @@ class _ReviewsSection extends ConsumerWidget {
     final reviewsAsync = ref.watch(reviewsProvider(listingId));
     return reviewsAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (reviews) {
         if (reviews.isEmpty) return const SizedBox.shrink();
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

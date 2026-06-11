@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/api_constants.dart';
 
 class WeatherData {
   final String city;
@@ -33,7 +34,7 @@ const _kLastLng      = 'last_gps_lng';
 const _kCityRefreshMs = 3600000;
 
 class WeatherService {
-  static const _apiKey = '40bbb318e5d3379c017f100b4a79b9b9';
+  static const _apiKey = ApiConstants.owmKey;
   static const _base   = 'https://api.openweathermap.org/data/2.5';
 
   static final _dio = Dio(BaseOptions(
@@ -43,48 +44,47 @@ class WeatherService {
 
   static Future<WeatherData?> fetchByLocation() async {
     try {
-      final prefs  = await SharedPreferences.getInstance();
-      String? city = prefs.getString(_kWeatherCity);
-      // lastTs et cityStale conservés pour usage futur (sync conditionnel)
-    // ignore: unused_local_variable
-    final cityStale = DateTime.now().millisecondsSinceEpoch - (prefs.getInt(_kWeatherTs) ?? 0) > _kCityRefreshMs;
+      final prefs    = await SharedPreferences.getInstance();
+      final city     = prefs.getString(_kWeatherCity);
+      final cityStale = DateTime.now().millisecondsSinceEpoch -
+              (prefs.getInt(_kWeatherTs) ?? 0) >
+          _kCityRefreshMs;
 
-      // ── GPS : mise à jour de la ville ─────────────────────────────────────
-      // Demande la permission uniquement au premier lancement (pas de cache).
-      // Ensuite, utilise la permission existante silencieusement.
-      try {
-        LocationPermission perm = await Geolocator.checkPermission();
+      // ── GPS : mise à jour de la ville seulement si le cache est périmé ─────
+      if (cityStale) {
+        try {
+          LocationPermission perm = await Geolocator.checkPermission();
 
-        if (perm == LocationPermission.denied && city == null) {
-          // Demande permission uniquement au tout premier lancement
-          perm = await Geolocator.requestPermission();
-        }
+          if (perm == LocationPermission.denied && city == null) {
+            perm = await Geolocator.requestPermission();
+          }
 
-        final canUseGps = perm == LocationPermission.whileInUse ||
-                          perm == LocationPermission.always;
+          final canUseGps = perm == LocationPermission.whileInUse ||
+              perm == LocationPermission.always;
 
-        if (canUseGps) {
-          // Si GPS dispo : toujours essayer (pas de gate 1h) pour avoir la position réelle
-          final serviceOn = await Geolocator.isLocationServiceEnabled();
-          if (serviceOn) {
-            final pos = await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(
-                accuracy: LocationAccuracy.low,
-                timeLimit: Duration(seconds: 8),
-              ),
-            );
-            // Sauvegarde les dernières coordonnées GPS connues
-            await prefs.setDouble(_kLastLat, pos.latitude);
-            await prefs.setDouble(_kLastLng, pos.longitude);
-            final data = await _fetchCoords(pos.latitude, pos.longitude);
-            if (data != null) {
-              await prefs.setString(_kWeatherCity, data.city);
-              return data;
+          if (canUseGps) {
+            final serviceOn = await Geolocator.isLocationServiceEnabled();
+            if (serviceOn) {
+              final pos = await Geolocator.getCurrentPosition(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.low,
+                  timeLimit: Duration(seconds: 8),
+                ),
+              );
+              await prefs.setDouble(_kLastLat, pos.latitude);
+              await prefs.setDouble(_kLastLng, pos.longitude);
+              await prefs.setInt(
+                  _kWeatherTs, DateTime.now().millisecondsSinceEpoch);
+              final data = await _fetchCoords(pos.latitude, pos.longitude);
+              if (data != null) {
+                await prefs.setString(_kWeatherCity, data.city);
+                return data;
+              }
             }
           }
+        } catch (_) {
+          // GPS échoue → utilise les dernières coordonnées connues
         }
-      } catch (_) {
-        // GPS échoue → utilise les dernières coordonnées connues
       }
 
       // Utilise les dernières coordonnées GPS mémorisées si disponibles
@@ -92,10 +92,7 @@ class WeatherService {
       final lastLng = prefs.getDouble(_kLastLng);
       if (lastLat != null && lastLng != null) {
         final data = await _fetchCoords(lastLat, lastLng);
-        if (data != null) {
-          await prefs.setString(_kWeatherCity, data.city);
-          return data;
-        }
+        if (data != null) return data;
       }
 
       // Fallback final : ville en cache ou Casablanca

@@ -13,13 +13,14 @@ final chatProvider =
     StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
   final lang = ref.read(localeProvider).languageCode;
   final greeting = AppStrings.of(lang).botGreeting;
-  return ChatNotifier(ref.read(chatServiceProvider), greeting);
+  return ChatNotifier(ref.read(chatServiceProvider), greeting, lang);
 });
 
 class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   final ChatService _service;
+  final String _lang;
 
-  ChatNotifier(this._service, String greeting)
+  ChatNotifier(this._service, String greeting, this._lang)
       : super([ChatMessage.bot(greeting)]);
 
   // Historique sous forme [{role, content}] pour le backend
@@ -78,11 +79,11 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      debugPrint('Feedback save error: $e');
+      if (kDebugMode) debugPrint('Feedback save error: $e');
     }
   }
 
-  void clearChat() => state = [ChatMessage.welcome];
+  void clearChat() => state = [ChatMessage.welcomeFor(_lang)];
 
   void updateWelcomeMessage(String greeting) {
     if (state.length == 1 && !state.first.isUser) {

@@ -45,7 +45,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _scrollCtrl.addListener(_onScroll);
     // Réveille le serveur Render en arrière-plan pour éviter le cold start au premier scan
     ScanApiService.isAvailable();
-    // RafraÃ®chissement automatique mÃ©tÃ©o + qualitÃ© air toutes les 10 min
+    // Rafraîchissement automatique météo + qualité air toutes les 10 min
     _envRefreshTimer = Timer.periodic(const Duration(minutes: 10), (_) {
       if (mounted) {
         ref.invalidate(weatherEnvProvider);
@@ -128,7 +128,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       body: CustomScrollView(
         controller: _scrollCtrl,
         slivers: [
-          // â”€â”€ AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── AppBar ──────────────────────────────────────────────────────────
           SliverAppBar(
             expandedHeight: 160,
             floating: false,
@@ -295,49 +295,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             sliver: SliverList(
               delegate: SliverChildListDelegate([
 
-                // â”€â”€ Objectif hebdomadaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Objectif hebdomadaire ───────────────────────────────────
                 _WeeklyCard(counterAnim: _counterAnim, s: s, user: user)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 130.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 16),
 
-                // â”€â”€ Impact environnemental (3 cartes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Impact environnemental (3 cartes) ──────────────────────
                 _ImpactRow(anim: _counterAnim, user: user, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 180.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 16),
 
-                // â”€â”€ Bouton Code-barres CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Bouton Code-barres CTA ─────────────────────────────────
                 _BarcodeCTACard(label: s.barcodeCtaLabel, sub: s.barcodeCtaSub)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 200.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 12),
 
-                // â”€â”€ Bouton Scan CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Bouton Scan CTA ─────────────────────────────────────────
                 _ScanCTACard(scanLabel: s.scanProduct, analyzeLabel: s.analyzeEcoImpact)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 210.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 20),
 
-                // â”€â”€ Le saviez-vous ? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Le saviez-vous ? ────────────────────────────────────────
                 const DidYouKnowCard()
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 220.ms)
                     .slideY(begin: 0.06),
                 const SizedBox(height: 20),
 
-                // â”€â”€ DÃ©fi du jour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Défi du jour ─────────────────────────────────────────────────────────
                 _DailyChallengeCard(anim: _counterAnim, dailyLabel: s.dailyChallenge, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 260.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 24),
 
-                // â”€â”€ Actions rapides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Actions rapides ──────────────────────────────────────────
                 _SectionTitle(title: s.quickActions, onSeeAll: null, seeAllLabel: null)
                     .animate().fadeIn(duration: 280.ms, delay: 300.ms),
                 const SizedBox(height: 14),
@@ -364,7 +364,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
                 const SizedBox(height: 24),
 
-                // â”€â”€ CatÃ©gories de tri â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Catégories de tri ────────────────────────────────────────────────────
                 _SectionTitle(title: s.sortingCategories, seeAllLabel: s.seeAll, onSeeAll: () => context.go('/guide'))
                     .animate().fadeIn(duration: 280.ms, delay: 360.ms),
                 const SizedBox(height: 12),
@@ -372,21 +372,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     .animate().fadeIn(duration: 350.ms, delay: 380.ms).slideX(begin: 0.08),
                 const SizedBox(height: 24),
 
-                // â”€â”€ Conseil Ã©co â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Conseil éco ──────────────────────────────────────────────────────────
                 _EcoTipBanner(s: s, lang: lang)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 400.ms)
                     .slideX(begin: 0.08),
                 const SizedBox(height: 20),
 
-                // â”€â”€ Impact communautaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Impact communautaire ────────────────────────────────────
                 _CommunityCard(anim: _counterAnim, s: s)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 430.ms)
                     .slideY(begin: 0.08),
                 const SizedBox(height: 24),
 
-                // â”€â”€ ActivitÃ© rÃ©cente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Activité récente ─────────────────────────────────────────
                 _SectionTitle(
                   title: s.recentActivity,
                   seeAllLabel: s.seeAll,
@@ -520,7 +520,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String get lang => ref.read(localeProvider).languageCode;
 }
 
-// â”€â”€ Badge environnement dans l'AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Badge environnement dans l'AppBar ───────────────────────────────────────
 // ── Badges environnement (rangée sous le header) ─────────────────────────────
 // ── Badge verre (frosted glass) dans la zone verte ───────────────────────────
 // ── Badge coloré — hors zone verte, légèrement remonté sur la vague ──────────
@@ -609,7 +609,7 @@ class _BottomWaveClipper extends CustomClipper<Path> {
   bool shouldReclip(_BottomWaveClipper old) => false;
 }
 
-// â”€â”€ Carte objectif hebdomadaire â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Carte objectif hebdomadaire ──────────────────────────────────────────────
 class _WeeklyCard extends StatelessWidget {
   final Animation<double> counterAnim;
   final AppStrings s;
@@ -704,7 +704,7 @@ class _WeeklyCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ Impact environnemental (3 mini-cartes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Impact environnemental (3 mini-cartes) ───────────────────────────────────
 class _ImpactRow extends StatelessWidget {
   final Animation<double> anim;
   final UserModel user;
@@ -871,7 +871,7 @@ class _ScanCTACardState extends State<_ScanCTACard>
   }
 }
 
-// â”€â”€ DÃ©fi du jour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Défi du jour ──────────────────────────────────────────────────────────────
 class _DailyChallengeCard extends ConsumerWidget {
   final Animation<double> anim;
   final String dailyLabel;
@@ -974,7 +974,7 @@ class _DailyChallengeCard extends ConsumerWidget {
   }
 }
 
-// â”€â”€ CatÃ©gories de tri (scroll horizontal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Catégories de tri (scroll horizontal) ────────────────────────────────────
 class _CategoriesRow extends StatelessWidget {
   final AppStrings s;
   const _CategoriesRow({required this.s});
@@ -1045,7 +1045,7 @@ class _CategoriesRow extends StatelessWidget {
   }
 }
 
-// â”€â”€ Conseil Ã©co â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Conseil éco ───────────────────────────────────────────────────────────────
 class _EcoTipBanner extends StatelessWidget {
   final AppStrings s;
   final String lang;
@@ -1340,7 +1340,7 @@ class _QuickActionCardState extends State<_QuickActionCard>
   }
 }
 
-// â”€â”€ Item activitÃ© rÃ©cente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Item activité récente ──────────────────────────────────────────────────────
 class _ActivityItem extends StatelessWidget {
   final IconData icon;
   final Color color;

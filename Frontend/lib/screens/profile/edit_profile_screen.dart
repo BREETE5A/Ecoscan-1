@@ -63,6 +63,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _pickPhoto() async {
+    final s = AppStrings.of(ref.read(localeProvider).languageCode);
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -82,12 +83,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
-              title: const Text('Caméra', style: TextStyle(fontFamily: 'Poppins')),
+              title: Text(s.cameraLabel, style: const TextStyle(fontFamily: 'Poppins')),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
-              title: const Text('Galerie', style: TextStyle(fontFamily: 'Poppins')),
+              title: Text(s.gallery, style: const TextStyle(fontFamily: 'Poppins')),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             const SizedBox(height: 8),
@@ -169,7 +170,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur : $e',
+            content: Text(s.errorMsg(e.toString()),
                 style: const TextStyle(fontFamily: 'Poppins')),
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,

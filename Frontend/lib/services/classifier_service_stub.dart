@@ -5,7 +5,7 @@ class ClassifierService {
   bool get isLoaded => false;
 
   Future<void> load() async {
-    debugPrint('ClassifierService: TFLite not available on this platform');
+    if (kDebugMode) debugPrint('ClassifierService: TFLite not available on this platform');
   }
 
   Future<({String label, double confidence, List<({String label, double score})> allScores})>

@@ -1,3 +1,5 @@
+import '../l10n/app_strings.dart';
+
 class ScanEntry {
   final String id;
   final String name;
@@ -26,24 +28,25 @@ class ScanEntry {
   });
 
   static const _categoryData = {
-    'cardboard':    (name: 'Carton recyclable',    recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.88, binColor: 'Bleu'),
-    'chaussures':   (name: 'Chaussures usagées',   recyclable: false, dangerous: false, points: 8,  co2Saved: 5.0,  recyclability: 0.15, binColor: 'Vert'),
-    'vetement':     (name: 'Vêtement / Textile',   recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'Vert'),
-    'electronique': (name: 'Appareil DEEE',        recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'Éco-point'),
-    'metal':        (name: 'Métal recyclable',     recyclable: true,  dangerous: false, points: 20, co2Saved: 80.0, recyclability: 0.97, binColor: 'Jaune'),
-    'organique':    (name: 'Déchet organique',     recyclable: true,  dangerous: false, points: 8,  co2Saved: 20.0, recyclability: 0.90, binColor: 'Marron'),
-    'paper':        (name: 'Papier recyclable',    recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.85, binColor: 'Bleu'),
-    'plastique':    (name: 'Plastique recyclable', recyclable: true,  dangerous: false, points: 15, co2Saved: 45.0, recyclability: 0.92, binColor: 'Jaune'),
-    'trash':        (name: 'Déchet non recyclable',recyclable: false, dangerous: false, points: 5,  co2Saved: 0.0,  recyclability: 0.10, binColor: 'Noir'),
-    'unknown':      (name: 'Objet non reconnu',    recyclable: false, dangerous: false, points: 0,  co2Saved: 0.0,  recyclability: 0.0,  binColor: 'Noir'),
-    'verre':        (name: 'Verre recyclable',     recyclable: true,  dangerous: false, points: 25, co2Saved: 55.0, recyclability: 1.0,  binColor: 'Vert'),
+    'cardboard':    (recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.88, binColor: 'blue'),
+    'chaussures':   (recyclable: false, dangerous: false, points: 8,  co2Saved: 5.0,  recyclability: 0.15, binColor: 'green'),
+    'vetement':     (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'green'),
+    'electronique': (recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'ecopoint'),
+    'metal':        (recyclable: true,  dangerous: false, points: 20, co2Saved: 80.0, recyclability: 0.97, binColor: 'yellow'),
+    'organique':    (recyclable: true,  dangerous: false, points: 8,  co2Saved: 20.0, recyclability: 0.90, binColor: 'brown'),
+    'paper':        (recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.85, binColor: 'blue'),
+    'plastique':    (recyclable: true,  dangerous: false, points: 15, co2Saved: 45.0, recyclability: 0.92, binColor: 'yellow'),
+    'trash':        (recyclable: false, dangerous: false, points: 5,  co2Saved: 0.0,  recyclability: 0.10, binColor: 'black'),
+    'unknown':      (recyclable: false, dangerous: false, points: 0,  co2Saved: 0.0,  recyclability: 0.0,  binColor: 'black'),
+    'verre':        (recyclable: true,  dangerous: false, points: 25, co2Saved: 55.0, recyclability: 1.0,  binColor: 'green'),
   };
 
-  static ScanEntry fromClassification(String label, double confidence) {
+  static ScanEntry fromClassification(String label, double confidence, {String lang = 'fr'}) {
     final data = _categoryData[label] ?? _categoryData['unknown']!;
+    final localizedName = AppStrings.of(lang).categoryName(label);
     return ScanEntry(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: data.name,
+      name: localizedName,
       category: label,
       recyclable: data.recyclable,
       dangerous: data.dangerous,
@@ -70,18 +73,26 @@ class ScanEntry {
     'mode': mode,
   };
 
-  factory ScanEntry.fromJson(Map<String, dynamic> json) => ScanEntry(
-    id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
-    name: json['name'] as String? ?? 'Inconnu',
-    category: json['category'] as String? ?? 'unknown',
-    recyclable: json['recyclable'] as bool? ?? false,
-    dangerous: json['dangerous'] as bool? ?? false,
-    points: (json['points'] as num?)?.toInt() ?? 0,
-    co2Saved: (json['co2Saved'] as num?)?.toDouble() ?? 0.0,
-    recyclability: (json['recyclability'] as num?)?.toDouble() ?? 0.0,
-    binColor: json['binColor'] as String? ?? 'Noir',
-    scannedAt: DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
-    mode: json['mode'] as String? ?? 'local',
-  );
+  static const _binColorMigration = {
+    'Vert': 'green', 'Bleu': 'blue', 'Jaune': 'yellow',
+    'Noir': 'black', 'Marron': 'brown',
+  };
+
+  factory ScanEntry.fromJson(Map<String, dynamic> json) {
+    final rawColor = json['binColor'] as String? ?? 'black';
+    return ScanEntry(
+      id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      name: json['name'] as String? ?? 'Inconnu',
+      category: json['category'] as String? ?? 'unknown',
+      recyclable: json['recyclable'] as bool? ?? false,
+      dangerous: json['dangerous'] as bool? ?? false,
+      points: (json['points'] as num?)?.toInt() ?? 0,
+      co2Saved: (json['co2Saved'] as num?)?.toDouble() ?? 0.0,
+      recyclability: (json['recyclability'] as num?)?.toDouble() ?? 0.0,
+      binColor: _binColorMigration[rawColor] ?? rawColor,
+      scannedAt: DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
+      mode: json['mode'] as String? ?? 'local',
+    );
+  }
 
 }

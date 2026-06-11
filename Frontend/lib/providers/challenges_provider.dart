@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 
@@ -95,6 +97,8 @@ final challengesProvider =
 });
 
 class ChallengesNotifier extends StateNotifier<ChallengeProgress> {
+  static const _prefsKey = 'challenges_progress_v1';
+
   ChallengesNotifier() : super(const ChallengeProgress());
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
@@ -109,46 +113,85 @@ class ChallengesNotifier extends StateNotifier<ChallengeProgress> {
         .doc('challenges');
   }
 
+  // ── Persistance locale (fallback hors ligne) ──────────────────────────────
+
+  Future<void> _saveLocal(ChallengeProgress p) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKey, jsonEncode(p.toJson()));
+    } catch (_) {}
+  }
+
+  Future<ChallengeProgress?> _loadLocal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_prefsKey);
+      if (raw == null) return null;
+      return ChallengeProgress.fromJson(
+          Map<String, dynamic>.from(jsonDecode(raw) as Map));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ── Applique les resets daily/weekly ─────────────────────────────────────
+
+  ChallengeProgress _applyResets(ChallengeProgress p) {
+    final today    = _dayKey();
+    final thisWeek = _weekKey();
+    if (p.dayKey != today) {
+      return ChallengeProgress(
+        dailyScans:  0,
+        ecoBotUsed:  false,
+        guideViews:  0,
+        mapOpened:   false,
+        shared:      false,
+        weeklyScans: p.weekKey == thisWeek ? p.weeklyScans : 0,
+        dayKey:      today,
+        weekKey:     thisWeek,
+      );
+    } else if (p.weekKey != thisWeek) {
+      return p.copyWith(weeklyScans: 0, weekKey: thisWeek);
+    }
+    return p;
+  }
+
   Future<void> load() async {
-    final doc = _doc;
-    if (doc == null) return;
+    final today    = _dayKey();
+    final thisWeek = _weekKey();
+    final doc      = _doc;
+
+    // Toujours charger le local d'abord (rapide, fonctionne offline)
+    final local = await _loadLocal();
+    if (local != null) {
+      state = _applyResets(local);
+    }
+
+    if (doc == null) return; // utilisateur non connecté → local suffit
+
     try {
       final snap = await doc.get();
-      final today = _dayKey();
-      final thisWeek = _weekKey();
 
       if (!snap.exists) {
         final fresh = ChallengeProgress(dayKey: today, weekKey: thisWeek);
         state = fresh;
         await doc.set(fresh.toJson());
+        await _saveLocal(fresh);
         return;
       }
 
       final data = snap.data() as Map<String, dynamic>;
-      var p = ChallengeProgress.fromJson(data);
+      var p = _applyResets(ChallengeProgress.fromJson(data));
 
-      // Reset daily if new day
-      if (p.dayKey != today) {
-        p = ChallengeProgress(
-          dailyScans: 0,
-          ecoBotUsed: false,
-          guideViews: 0,
-          mapOpened: false,
-          shared: false,
-          // Keep weekly unless new week
-          weeklyScans: p.weekKey == thisWeek ? p.weeklyScans : 0,
-          dayKey: today,
-          weekKey: thisWeek,
-        );
-        await doc.set(p.toJson());
-      } else if (p.weekKey != thisWeek) {
-        p = p.copyWith(weeklyScans: 0, weekKey: thisWeek);
+      if (p != ChallengeProgress.fromJson(data)) {
         await doc.set(p.toJson());
       }
 
       state = p;
+      await _saveLocal(p);
     } catch (e) {
-      debugPrint('ChallengesProvider load error: $e');
+      if (kDebugMode) debugPrint('ChallengesProvider load error: $e');
+      // On garde l'état local chargé au début
     }
   }
 
@@ -189,10 +232,11 @@ class ChallengesNotifier extends StateNotifier<ChallengeProgress> {
   }
 
   Future<void> _save(ChallengeProgress p) async {
+    await _saveLocal(p); // toujours persister localement en premier
     try {
       await _doc?.set(p.toJson());
     } catch (e) {
-      debugPrint('ChallengesProvider save error: $e');
+      if (kDebugMode) debugPrint('ChallengesProvider save error: $e');
     }
   }
 }

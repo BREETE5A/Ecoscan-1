@@ -8,6 +8,8 @@
 	<string>EcoScan accède à la galerie pour analyser des photos de déchets.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>EcoScan peut enregistrer des photos dans votre galerie.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>EcoScan utilise votre position pour afficher la météo et la qualité de l'air de votre région.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>EcoScan utilise le microphone avec la caméra.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

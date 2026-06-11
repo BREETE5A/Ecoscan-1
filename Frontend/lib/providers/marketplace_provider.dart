@@ -141,12 +141,25 @@ class MarketplaceActions {
     final uid = _uid;
     if (uid == null) return false;
     try {
+      // Supprimer la sous-collection reviews avant le document principal
+      await _deleteSubcollection(
+          _db.collection('marketplace').doc(listingId).collection('reviews'));
       await _db.collection('marketplace').doc(listingId).delete();
-      // Les images Cloudinary restent hébergées (suppression optionnelle via API Cloudinary admin)
       return true;
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> _deleteSubcollection(CollectionReference col) async {
+    QuerySnapshot snap;
+    do {
+      snap = await col.limit(100).get();
+      if (snap.docs.isEmpty) break;
+      final batch = _db.batch();
+      for (final doc in snap.docs) { batch.delete(doc.reference); }
+      await batch.commit();
+    } while (snap.docs.length == 100);
   }
 
   // ── Laisser un avis ───────────────────────────────────────────────────────

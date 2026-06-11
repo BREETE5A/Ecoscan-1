@@ -52,7 +52,7 @@ class StorageService {
 
     final newScans  = (p.getInt(_keyScans)  ?? 0) + 1;
     final newPoints = (p.getInt(_keyPoints) ?? 0) + pointsEarned;
-    final newCo2    = (p.getDouble(_keyCo2) ?? 0) + result.co2SavedPerKg * 100;
+    final newCo2    = (p.getDouble(_keyCo2) ?? 0) + result.co2SavedPerKg * 1000;
 
     await p.setInt(_keyScans,  newScans);
     await p.setInt(_keyPoints, newPoints);
@@ -87,27 +87,40 @@ class StorageService {
         await userRef.update({
           'ecoPoints':  FieldValue.increment(pointsEarned),
           'scansCount': FieldValue.increment(1),
-          'co2Saved':   FieldValue.increment(result.co2SavedPerKg * 100),
+          'co2Saved':   FieldValue.increment(result.co2SavedPerKg * 1000),
           'lastScanAt': FieldValue.serverTimestamp(),
           'streak':     newStreak,
         });
+        const kgEstimates = {
+          'cardboard':    0.30,
+          'paper':        0.15,
+          'plastique':    0.05,
+          'verre':        0.35,
+          'metal':        0.20,
+          'organique':    0.50,
+          'electronique': 1.00,
+          'vetement':     0.40,
+          'chaussures':   0.60,
+          'trash':        0.10,
+        };
+        final kgTries = kgEstimates[result.category] ?? 0.10;
         await userRef.collection('scans').add({
           'category':   result.category,
           'binColor':   result.binColor,
           'confidence': result.confidence,
-          'co2Saved':   result.co2SavedPerKg * 100,
+          'co2Saved':   result.co2SavedPerKg * 1000,
           'scannedAt':  FieldValue.serverTimestamp(),
           // Champs pour le workflow hebdomadaire n8n
           'user_id':    uid,
           'nom':        nom ?? '',
           'email':      email ?? '',
           'fcm_token':  fcmToken ?? '',
-          'kg_tries':   0.1,
-          'co2_evite':  double.parse((result.co2SavedPerKg * 0.1).toStringAsFixed(4)),
+          'kg_tries':   kgTries,
+          'co2_evite':  double.parse((result.co2SavedPerKg * kgTries).toStringAsFixed(4)),
           'date_scan':  FieldValue.serverTimestamp(),
         });
       } catch (e) {
-        debugPrint('Firestore sync error: $e');
+        if (kDebugMode) debugPrint('Firestore sync error: $e');
       }
     }
 

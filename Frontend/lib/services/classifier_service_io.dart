@@ -47,7 +47,7 @@ class ClassifierService {
     final outputTensor = _interpreter!.getOutputTensor(0);
     _inputIsUint8 = inputTensor.type.toString().contains('uint8') ||
                     inputTensor.type.toString().contains('UInt8');
-    debugPrint('TFLite | input: ${inputTensor.shape} ${inputTensor.type} | output: ${outputTensor.shape} ${outputTensor.type} | uint8=$_inputIsUint8');
+    if (kDebugMode) debugPrint('TFLite | input: ${inputTensor.shape} ${inputTensor.type} | output: ${outputTensor.shape} ${outputTensor.type} | uint8=$_inputIsUint8');
   }
 
   Future<({String label, double confidence, List<({String label, double score})> allScores})> classify(File imageFile) async {
@@ -107,7 +107,7 @@ class ClassifierService {
     final probabilities = (rawSum > 0.95 && rawSum < 1.05)
         ? scores
         : _softmax(scores);
-    debugPrint('TFLite probs: $probabilities  sum=${scores.reduce((a,b)=>a+b)}');
+    if (kDebugMode) debugPrint('TFLite probs: $probabilities  sum=${scores.reduce((a,b)=>a+b)}');
 
     int maxIdx = 0;
     for (int i = 1; i < probabilities.length; i++) {

@@ -36,7 +36,8 @@ class AppStrings {
   String get no          => _t('Non', 'No', 'لا', 'No');
   String get send        => _t('Envoyer', 'Send', 'إرسال', 'Enviar');
   String get update      => _t('Mettre à jour', 'Update', 'تحديث', 'Actualizar');
-  String get retry       => _t('Réessayer', 'Retry', 'إعادة المحاولة', 'Reintentar');
+  String get retry           => _t('Réessayer',              'Retry',                  'إعادة المحاولة',           'Reintentar');
+  String get autoGpsDetect   => _t('Détection GPS automatique', 'Auto GPS detection', 'تحديد GPS تلقائي',         'Detección GPS automática');
   String get done        => _t('Terminé', 'Done', 'تم', 'Listo');
   String get back        => _t('Retour', 'Back', 'رجوع', 'Volver');
   String get share       => _t('Partager', 'Share', 'مشاركة', 'Compartir');
@@ -1320,10 +1321,16 @@ class AppStrings {
   String get completedLabel     => _t('Complété !', 'Completed!', 'مكتمل!', '¡Completado!');
 
   // ── Offline ───────────────────────────────────────────────────────────────────
-  String get offlineBanner   => _t('Mode hors-ligne — Analyse TFLite locale activée',
-                                   'Offline mode — Local TFLite analysis active',
-                                   'وضع عدم الاتصال — تحليل TFLite المحلي نشط',
-                                   'Modo sin conexión — Análisis TFLite local activo');
+  String get offlineBanner        => _t('Mode hors-ligne — Analyse TFLite locale activée',
+                                        'Offline mode — Local TFLite analysis active',
+                                        'وضع عدم الاتصال — تحليل TFLite المحلي نشط',
+                                        'Modo sin conexión — Análisis TFLite local activo');
+  String get offlineTitle         => _t('Connexion introuvable', 'No connection found', 'لا يوجد اتصال', 'Sin conexión');
+  String get offlineHint          => _t('Certaines fonctions restent disponibles hors-ligne 🌿',
+                                        'Some features remain available offline 🌿',
+                                        'بعض الوظائف متاحة بدون اتصال 🌿',
+                                        'Algunas funciones siguen disponibles sin conexión 🌿');
+  String get reconnected          => _t('Connexion rétablie ✅', 'Connection restored ✅', 'تم استعادة الاتصال ✅', 'Conexión restablecida ✅');
 
   // ── Settings extra ────────────────────────────────────────────────────────────
   String get menuEditProfile    => _t('Modifier le profil', 'Edit profile', 'تعديل الملف الشخصي', 'Editar perfil');
@@ -1460,18 +1467,50 @@ class AppStrings {
   String get aiConfidence        => _t('Confiance IA',           'AI Confidence',         'دقة الذكاء الاصطناعي',      'Confianza IA');
   String get attentionLabel      => _t('⚠️ Attention',           '⚠️ Warning',            '⚠️ تنبيه',                  '⚠️ Atención');
   String get bringToPoint        => _t('Apportez ce déchet dans un point de collecte spécifique.', 'Bring this waste to a specific collection point.', 'أحضر هذه النفاية إلى نقطة جمع محددة.', 'Lleva este residuo a un punto de recogida específico.');
-  String binInstruction(String name, String bin) => _t(
-    'Déposez $name dans le bac ${bin.toLowerCase()}. Pensez à le rincer avant.',
-    'Place $name in the ${bin.toLowerCase()} bin. Remember to rinse it first.',
-    'ضع $name في الحاوية ${bin.toLowerCase()}. تذكر شطفه أولاً.',
-    'Deposita $name en el contenedor ${bin.toLowerCase()}. Recuerda enjuagarlo primero.',
-  );
+  String binColorName(String color) {
+    switch (color) {
+      case 'blue':     return _t('Bleu',    'Blue',    'أزرق',      'Azul');
+      case 'yellow':   return _t('Jaune',   'Yellow',  'أصفر',      'Amarillo');
+      case 'green':    return _t('Vert',    'Green',   'أخضر',      'Verde');
+      case 'black':    return _t('Noir',    'Black',   'أسود',      'Negro');
+      case 'brown':    return _t('Marron',  'Brown',   'بني',       'Marrón');
+      case 'ecopoint': return _t('Écopoint','Ecopoint','نقطة جمع',  'Punto ecológico');
+      default:         return color;
+    }
+  }
+
+  String binInstruction(String name, String binColor) {
+    final bin = binColorName(binColor);
+    return _t(
+      'Déposez $name dans le bac $bin. Pensez à le rincer avant.',
+      'Place $name in the $bin bin. Remember to rinse it first.',
+      'ضع $name في الحاوية $bin. تذكر شطفه أولاً.',
+      'Deposita $name en el contenedor $bin. Recuerda enjuagarlo primero.',
+    );
+  }
   String shareText(String name, bool recyclable, int recyclability, int co2, int pts) => _t(
     '🌿 J\'ai scanné "$name" avec EcoScan !\n♻️ ${recyclable ? "Recyclable" : "Non recyclable"} — $recyclability% recyclabilité\n💚 CO₂ économisé : $co2 g\n⭐ +$pts pts gagnés\n\n#EcoScan #Recyclage #EcoResponsable',
     '🌿 I scanned "$name" with EcoScan!\n♻️ ${recyclable ? "Recyclable" : "Not recyclable"} — $recyclability% recyclability\n💚 CO₂ saved: $co2 g\n⭐ +$pts pts earned\n\n#EcoScan #Recycling #EcoResponsible',
     '🌿 فحصت "$name" باستخدام EcoScan!\n♻️ ${recyclable ? "قابل لإعادة التدوير" : "غير قابل لإعادة التدوير"} — $recyclability% قابلية\n💚 CO₂ موفَّر: $co2 g\n⭐ +$pts نقطة\n\n#EcoScan #إعادة_التدوير',
     '🌿 Escaneé "$name" con EcoScan!\n♻️ ${recyclable ? "Reciclable" : "No reciclable"} — $recyclability% reciclabilidad\n💚 CO₂ ahorrado: $co2 g\n⭐ +$pts pts ganados\n\n#EcoScan #Reciclaje #EcoResponsable',
   );
+
+  // ── Noms des catégories de déchets (modèle TFLite) ──────────────────────────
+  String categoryName(String category) {
+    switch (category) {
+      case 'cardboard':    return _t('Carton recyclable',     'Recyclable cardboard',   'كرتون قابل لإعادة التدوير',    'Cartón reciclable');
+      case 'chaussures':   return _t('Chaussures usagées',    'Used shoes',             'أحذية مستعملة',                'Calzado usado');
+      case 'vetement':     return _t('Vêtement / Textile',    'Clothing / Textile',     'ملابس / نسيج',                 'Ropa / Textil');
+      case 'electronique': return _t('Appareil DEEE',         'Electronic waste',       'نفايات إلكترونية',             'Residuo electrónico');
+      case 'metal':        return _t('Métal recyclable',      'Recyclable metal',       'معدن قابل لإعادة التدوير',     'Metal reciclable');
+      case 'organique':    return _t('Déchet organique',      'Organic waste',          'نفايات عضوية',                 'Residuo orgánico');
+      case 'paper':        return _t('Papier recyclable',     'Recyclable paper',       'ورق قابل لإعادة التدوير',      'Papel reciclable');
+      case 'plastique':    return _t('Plastique recyclable',  'Recyclable plastic',     'بلاستيك قابل لإعادة التدوير',  'Plástico reciclable');
+      case 'trash':        return _t('Déchet non recyclable', 'Non-recyclable waste',   'نفايات غير قابلة للتدوير',     'Residuo no reciclable');
+      case 'verre':        return _t('Verre recyclable',      'Recyclable glass',       'زجاج قابل لإعادة التدوير',     'Vidrio reciclable');
+      default:             return _t('Objet non reconnu',     'Unrecognized object',    'كائن غير معروف',               'Objeto no reconocido');
+    }
+  }
 
   String get guidePlasticBanFact => _t(
     'Le Maroc a interdit les sacs plastique en 2016 — l\'une des premières lois anti-plastique au monde (Loi 77-15). Contribuez : utilisez toujours un sac en tissu ou un panier.',

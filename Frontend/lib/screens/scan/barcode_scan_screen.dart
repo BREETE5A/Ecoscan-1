@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,19 +77,19 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
 
     switch (info.type) {
       case _MaterialType.glass:
-        category = 'verre'; binColor = 'Vert'; points = 25;
+        category = 'verre'; binColor = 'green'; points = 25;
         co2Grams = 55.0; recyclability = 1.0; recyclable = true;
       case _MaterialType.metal:
-        category = 'metal'; binColor = 'Jaune'; points = 20;
+        category = 'metal'; binColor = 'yellow'; points = 20;
         co2Grams = 80.0; recyclability = 0.97; recyclable = true;
       case _MaterialType.cardboard:
-        category = 'cardboard'; binColor = 'Bleu'; points = 10;
+        category = 'cardboard'; binColor = 'blue'; points = 10;
         co2Grams = 30.0; recyclability = 0.88; recyclable = true;
       case _MaterialType.plastic:
-        category = 'plastique'; binColor = 'Jaune'; points = 15;
+        category = 'plastique'; binColor = 'yellow'; points = 15;
         co2Grams = 45.0; recyclability = 0.92; recyclable = true;
       case _MaterialType.unknown:
-        category = 'unknown'; binColor = 'Noir'; points = 5;
+        category = 'unknown'; binColor = 'black'; points = 5;
         co2Grams = 0.0; recyclability = 0.0; recyclable = false;
     }
 
@@ -113,12 +114,13 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
       category: category,
       binColor: binColor,
       confidence: 1.0,
-      co2SavedPerKg: co2Grams / 100,
+      co2SavedPerKg: co2Grams / 1000,
       scannedAt: DateTime.now(),
     );
 
     ref.read(scanHistoryProvider.notifier).addScan(entry);
-    ref.read(userProvider.notifier).recordScan(result).catchError((_) {});
+    ref.read(userProvider.notifier).recordScan(result)
+        .catchError((e) { if (kDebugMode) debugPrint('recordScan error: $e'); });
   }
 
   @override

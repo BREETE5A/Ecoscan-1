@@ -134,7 +134,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
             Expanded(
               child: listingsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error:   (_, __) => const SizedBox.shrink(),
+                error:   (_, _) => const SizedBox.shrink(),
                 data: (all) {
                   final items = _apply(all);
                   if (items.isEmpty) return _buildEmpty(s, isDark);
@@ -1080,7 +1080,7 @@ class _DropField extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(labelText: label,
             labelStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13,
                 color: AppColors.textSecondary),

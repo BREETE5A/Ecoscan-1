@@ -34,9 +34,7 @@ final scanHistoryStreamProvider = StreamProvider<List<ScanEntry>>((ref) {
           final confidence = (data['confidence'] as num?)?.toDouble() ?? 1.0;
           // Timestamp peut être null brièvement (serverTimestamp en attente)
           final ts = data['scannedAt'];
-          final scannedAt = ts is Timestamp
-              ? ts.toDate()
-              : (ts == null ? DateTime.now() : DateTime.now());
+          final scannedAt = ts is Timestamp ? ts.toDate() : DateTime.now();
           final base = ScanEntry.fromClassification(category, confidence);
           return ScanEntry(
             id: doc.id,
@@ -70,19 +68,23 @@ class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
     // 1. Try SharedPreferences first (fast, offline)
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
+    bool localLoaded = false;
     if (raw != null) {
       try {
         final list = jsonDecode(raw) as List;
         state = list
             .map((e) => ScanEntry.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
-        return;
-      } catch (_) {}
+        localLoaded = true;
+      } catch (_) {
+        // Données locales corrompues — on les supprime et on recharge depuis Firestore
+        await prefs.remove(_key);
+      }
     }
 
-    // 2. No local data — load from Firestore if logged in
+    // 2. No local data (or corrupted) — load from Firestore if logged in
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    if (uid != null && !localLoaded) {
       await _loadFromFirestore(uid);
     }
   }
@@ -124,7 +126,7 @@ class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
         await _saveToPrefs();
       }
     } catch (e) {
-      debugPrint('scanHistory Firestore load error: $e');
+      if (kDebugMode) debugPrint('scanHistory Firestore load error: $e');
     }
   }
 
@@ -136,9 +138,9 @@ class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
     } catch (_) {}
   }
 
-  void addScan(ScanEntry entry) {
+  Future<void> addScan(ScanEntry entry) async {
     state = [entry, ...state];
-    _saveToPrefs();
+    await _saveToPrefs();
   }
 
   Future<void> clearHistory() async {

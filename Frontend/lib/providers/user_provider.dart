@@ -26,9 +26,10 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     final fsCo2 = (data['co2Saved'] as num?)?.toDouble() ?? 0.0;
     final fsStreak = (data['streak'] as num?)?.toInt() ?? 0;
     final rawName = ((data['displayName'] as String?) ?? '').trim();
-    final fsName = rawName.isNotEmpty ? rawName : 'Utilisateur';
+    final emailFallback = FirebaseAuth.instance.currentUser?.email?.split('@').first ?? '';
+    final fsName = rawName.isNotEmpty ? rawName : (emailFallback.isNotEmpty ? emailFallback : 'EcoUser');
     final rawCity = ((data['city'] as String?) ?? '').trim();
-    final fsCity = rawCity.isNotEmpty ? rawCity : 'Maroc';
+    final fsCity = rawCity.isNotEmpty ? rawCity : '';
     int badges = 0;
     if (fsScans >= 1) badges++;
     if (fsScans >= 5) badges++;
@@ -135,7 +136,7 @@ class UserNotifier extends StateNotifier<UserModel> {
           return;
         }
       } catch (e) {
-        debugPrint('Firestore read error: $e');
+        if (kDebugMode) debugPrint('Firestore read error: $e');
         // Fallback sur SharedPreferences si Firestore échoue
       }
     }

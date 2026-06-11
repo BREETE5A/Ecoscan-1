@@ -2,7 +2,9 @@
 // disparaît automatiquement quand la connexion revient.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_strings.dart';
 import '../providers/auth_provider.dart';
+import '../providers/locale_provider.dart';
 import '../theme/app_theme.dart';
 
 class NoConnectionOverlay extends ConsumerStatefulWidget {
@@ -119,7 +121,7 @@ class _NoConnectionOverlayState extends ConsumerState<NoConnectionOverlay>
 }
 
 // ── Panneau offline ───────────────────────────────────────────────────────────
-class _OfflinePanel extends StatelessWidget {
+class _OfflinePanel extends ConsumerWidget {
   final AnimationController wifiCtrl;
   final Animation<double> pulse;
   final VoidCallback onRetry;
@@ -131,7 +133,8 @@ class _OfflinePanel extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
@@ -161,9 +164,9 @@ class _OfflinePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Connexion introuvable',
-            style: TextStyle(
+          Text(
+            s.offlineTitle,
+            style: const TextStyle(
               fontFamily: 'Poppins',
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -171,10 +174,10 @@ class _OfflinePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Certaines fonctions restent disponibles hors-ligne 🌿',
+          Text(
+            s.offlineHint,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Poppins',
               fontSize: 13,
               color: AppColors.textSecondary,
@@ -188,7 +191,7 @@ class _OfflinePanel extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Réessayer'),
+                label: Text(s.retry),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -212,12 +215,12 @@ class _OfflinePanel extends StatelessWidget {
 }
 
 // ── Toast succès ──────────────────────────────────────────────────────────────
-class _ReconnectedToast extends StatefulWidget {
+class _ReconnectedToast extends ConsumerStatefulWidget {
   @override
-  State<_ReconnectedToast> createState() => _ReconnectedToastState();
+  ConsumerState<_ReconnectedToast> createState() => _ReconnectedToastState();
 }
 
-class _ReconnectedToastState extends State<_ReconnectedToast>
+class _ReconnectedToastState extends ConsumerState<_ReconnectedToast>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _fade;
@@ -253,14 +256,14 @@ class _ReconnectedToastState extends State<_ReconnectedToast>
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 10),
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
               Text(
-                'Connexion rétablie ✅',
-                style: TextStyle(
+                AppStrings.of(ref.watch(localeProvider).languageCode).reconnected,
+                style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
