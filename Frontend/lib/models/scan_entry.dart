@@ -26,15 +26,16 @@ class ScanEntry {
   });
 
   static const _categoryData = {
-    // ── Classes TFLite (noms exacts des dossiers d'entraînement) ──────────────
     'cardboard':    (name: 'Carton recyclable',    recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.88, binColor: 'Bleu'),
+    'chaussures':   (name: 'Chaussures usagées',   recyclable: false, dangerous: false, points: 8,  co2Saved: 5.0,  recyclability: 0.15, binColor: 'Vert'),
+    'vetement':     (name: 'Vêtement / Textile',   recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'Vert'),
     'electronique': (name: 'Appareil DEEE',        recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'Éco-point'),
     'metal':        (name: 'Métal recyclable',     recyclable: true,  dangerous: false, points: 20, co2Saved: 80.0, recyclability: 0.97, binColor: 'Jaune'),
     'organique':    (name: 'Déchet organique',     recyclable: true,  dangerous: false, points: 8,  co2Saved: 20.0, recyclability: 0.90, binColor: 'Marron'),
     'paper':        (name: 'Papier recyclable',    recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.85, binColor: 'Bleu'),
     'plastique':    (name: 'Plastique recyclable', recyclable: true,  dangerous: false, points: 15, co2Saved: 45.0, recyclability: 0.92, binColor: 'Jaune'),
     'trash':        (name: 'Déchet non recyclable',recyclable: false, dangerous: false, points: 5,  co2Saved: 0.0,  recyclability: 0.10, binColor: 'Noir'),
-    'unknown':      (name: 'Objet non reconnu',   recyclable: false, dangerous: false, points: 0,  co2Saved: 0.0,  recyclability: 0.0,  binColor: 'Noir'),
+    'unknown':      (name: 'Objet non reconnu',    recyclable: false, dangerous: false, points: 0,  co2Saved: 0.0,  recyclability: 0.0,  binColor: 'Noir'),
     'verre':        (name: 'Verre recyclable',     recyclable: true,  dangerous: false, points: 25, co2Saved: 55.0, recyclability: 1.0,  binColor: 'Vert'),
   };
 

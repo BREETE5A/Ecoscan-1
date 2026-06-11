@@ -7,6 +7,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'user_provider.dart';
 import 'locale_provider.dart';
 import '../services/n8n_service.dart';
+import '../services/storage_service.dart';
 
 // ── Raccourcis ────────────────────────────────────────────────────────────────
 final _auth        = FirebaseAuth.instance;
@@ -287,6 +288,11 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         'scansCount':  0,
         'badges':      [],
       });
+      // 4. Incrémenter le compteur global d'utilisateurs
+      _db.collection('community_totals').doc('stats').set(
+        {'userCount': FieldValue.increment(1)},
+        SetOptions(merge: true),
+      ).catchError((_) {});
 
       final user = AppUser(
         uid:         fbUser.uid,
@@ -298,6 +304,12 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
       state = state.copyWith(status: AuthStatus.success);
       // Envoyer l'email de vérification
       try { await fbUser.sendEmailVerification(); } catch (_) {}
+      // Déclencher le workflow d'accueil n8n
+      N8nService.bienvenue(
+        userId: fbUser.uid,
+        nom:    '$firstName $lastName',
+        email:  email.trim(),
+      ).catchError((_) {});
       // Pont : alimenter userProvider avec le vrai profil Firebase
       await _ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: user.displayName,
@@ -375,6 +387,11 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
           'scansCount':  0,
           'badges':      [],
         });
+        N8nService.bienvenue(
+          userId: fbUser.uid,
+          nom:    fbUser.displayName ?? '',
+          email:  fbUser.email ?? '',
+        ).catchError((_) {});
       } else {
         city = (docSnap.data()?['city'] as String?) ?? '';
       }
@@ -416,12 +433,15 @@ final googleSignInProvider =
 
 // ── Déconnexion ───────────────────────────────────────────────────────────────
 Future<void> signOut(Ref ref) async {
+  await StorageService.reset();
   await _googleSignIn.signOut();
   await _auth.signOut();
   ref.read(currentUserProvider.notifier).state = null;
 }
 
 Future<void> signOutUser(WidgetRef ref) async {
+  await StorageService.reset();
+  ref.read(userProvider.notifier).reset();
   await _googleSignIn.signOut();
   await _auth.signOut();
   ref.invalidate(userProvider);

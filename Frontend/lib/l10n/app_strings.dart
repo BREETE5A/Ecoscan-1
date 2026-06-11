@@ -1171,6 +1171,7 @@ class AppStrings {
 
   // ── Map ───────────────────────────────────────────────────────────────────
   String get searchCollection  => _t('Rechercher un point de collecte...', 'Search a collection point...', 'البحث عن نقطة جمع...', 'Buscar punto de recogida...');
+  String get allCities         => _t('Toutes les villes', 'All cities', 'كل المدن', 'Todas las ciudades');
   String get directions        => _t('Itinéraire', 'Directions', 'الاتجاهات', 'Cómo llegar');
   String get nearbyPoints      => _t('Points de collecte proches', 'Nearby collection points', 'نقاط الجمع القريبة', 'Puntos de recogida cercanos');
   String get locatingText      => _t('Localisation en cours...', 'Locating...', 'جارٍ تحديد الموقع...', 'Localizando...');
@@ -1288,7 +1289,9 @@ class AppStrings {
   String get catElectronic   => _t('Électronique', 'Electronic', 'إلكترونيات', 'Electrónico');
   String get catTrash        => _t('Ordures',   'Trash',       'نفايات',      'Basura');
   String get catDangerous    => _t('Dangereux', 'Dangerous',   'خطرة',        'Peligrosos');
-  String get catTextile      => _t('Textile',   'Textile',     'نسيج',        'Textil');
+  String get catTextile      => _t('Textile',    'Textile',     'نسيج',        'Textil');
+  String get catClothing     => _t('Vêtement',  'Clothing',    'ملابس',       'Ropa');
+  String get catShoes        => _t('Chaussures','Shoes',       'أحذية',       'Zapatos');
   String get catOil          => _t('Huiles',    'Used oil',    'زيوت',        'Aceites');
   String get catAll          => _t('Tous',      'All',         'الكل',        'Todo');
   String get catUnknown      => _t('Inconnu',   'Unknown',     'غير معروف',   'Desconocido');

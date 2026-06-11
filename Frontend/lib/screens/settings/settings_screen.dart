@@ -7,11 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/scan_history_provider.dart';
 import '../../l10n/app_strings.dart';
 import 'language_screen.dart';
 import 'theme_screen.dart';
@@ -278,7 +278,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               final messenger = ScaffoldMessenger.of(context);
-              await StorageService.clearHistory();
+              await ref.read(scanHistoryProvider.notifier).clearHistory();
               if (!mounted) return;
               messenger.showSnackBar(SnackBar(
                 content: Text(s.clearDone,
@@ -403,6 +403,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _preserveCommunityPoints(String uid) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (!userDoc.exists) return;
+      final pts = (userDoc.data()?['ecoPoints'] as num?)?.toInt() ?? 0;
+      final Map<String, dynamic> update = {
+        'userCount': FieldValue.increment(-1),
+      };
+      if (pts > 0) update['deletedPoints'] = FieldValue.increment(pts);
+      await FirebaseFirestore.instance
+          .collection('community_totals')
+          .doc('stats')
+          .set(update, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
   Future<void> _deleteAccountGoogle(AppStrings s) async {
     try {
       final user = FirebaseAuth.instance.currentUser!;
@@ -435,6 +451,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         idToken: googleAuth.idToken,
       );
       await user.reauthenticateWithCredential(cred);
+      await _preserveCommunityPoints(uid);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');
@@ -459,6 +476,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await user.reauthenticateWithCredential(cred);
       // Mot de passe correct — fermer le dialog et supprimer
       if (dlgCtx.mounted) Navigator.pop(dlgCtx);
+      await _preserveCommunityPoints(uid);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
       if (mounted) context.go('/login');

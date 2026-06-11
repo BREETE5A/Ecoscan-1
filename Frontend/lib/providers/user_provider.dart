@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../models/scan_result_model.dart';
 import '../services/storage_service.dart';
+import '../services/n8n_service.dart';
 
 // Stream Firestore en temps réel des stats utilisateur (co2, points, scans)
 final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
@@ -164,7 +166,25 @@ class UserNotifier extends StateNotifier<UserModel> {
 
   Future<void> recordScan(ScanResultModel result) async {
     final uid = state.id != 'local_user' ? state.id : null;
-    await StorageService.addScan(result, 10, uid: uid);
+    final fbUser = FirebaseAuth.instance.currentUser;
+    String? fcmToken;
+    if (uid != null) {
+      try { fcmToken = await FirebaseMessaging.instance.getToken(); } catch (_) {}
+    }
+    await StorageService.addScan(result, 10,
+      uid:      uid,
+      nom:      state.name,
+      email:    fbUser?.email,
+      fcmToken: fcmToken,
+    );
+    if (uid != null && result.category == 'electronique') {
+      N8nService.alerteDanger(
+        nom:        state.name,
+        email:      fbUser?.email ?? '',
+        typeDechet: result.category,
+        fcmToken:   fcmToken ?? '',
+      ).catchError((_) {});
+    }
     await loadFromStorage(
       firebaseName: state.name,
       firebaseUid:  uid,

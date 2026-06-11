@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_strings.dart';
 import '../../providers/locale_provider.dart';
@@ -24,6 +24,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
   late AnimationController _pulseCtrl;
   late MapController _mapController;
 
+  LatLng? _userPosition;
+  bool _isLoadingLocation = true;
+
   String _selected = 'Tous';
   final _search = TextEditingController();
 
@@ -32,11 +35,31 @@ class _MapScreenState extends ConsumerState<MapScreen>
     'Huiles', 'Métal',
   ];
 
-  LatLng? _userPosition;
-  bool _isLoadingLocation = true;
-  final List<_Point> _dynamicPoints = [];
-  bool _isLoadingPoints = false;
+  String? _selectedCity;
   int? _tapped;
+
+  static const _cityCoords = <String, LatLng>{
+    'Casablanca':  LatLng(33.5731, -7.5898),
+    'Rabat':       LatLng(33.9716, -6.8498),
+    'Tanger':      LatLng(35.7534, -5.7991),
+    'Marrakech':   LatLng(31.6350, -8.0350),
+    'Fès':         LatLng(33.9779, -4.9993),
+    'Agadir':      LatLng(30.4278, -9.5981),
+    'Oujda':       LatLng(34.6882, -1.9082),
+    'Meknès':      LatLng(33.8957, -5.5555),
+    'Kénitra':     LatLng(34.2610, -6.5802),
+    'El Jadida':   LatLng(33.2340, -8.5041),
+    'Béni Mellal': LatLng(32.3373, -6.3498),
+    'Nador':       LatLng(35.1699, -2.9303),
+    'Tétouan':     LatLng(35.5889, -5.3626),
+    'Safi':        LatLng(32.2994, -9.2372),
+    'Mohammedia':  LatLng(33.6866, -7.3828),
+    'Laâyoune':    LatLng(27.1536, -13.2030),
+    'Dakhla':      LatLng(23.6872, -15.9584),
+    'Errachidia':  LatLng(31.9310, -4.4240),
+    'Ouarzazate':  LatLng(30.9335, -6.9370),
+    'Essaouira':   LatLng(31.5083, -9.7638),
+  };
 
   // Sources : geocycle.com/fr/maroc · ecozalagh.com · smrr.ma · pndm.environnement.gov.ma · marjane.ma
   static final _staticPoints = <_Point>[
@@ -1209,11 +1232,10 @@ class _MapScreenState extends ConsumerState<MapScreen>
   ];
 
   List<_Point> get _allPoints {
-    final source = _dynamicPoints.isNotEmpty ? _dynamicPoints : _staticPoints;
     final seenCoordCat = <String>{};
     final seenNames = <String>{};
     final result = <_Point>[];
-    for (final p in source) {
+    for (final p in _staticPoints) {
       final coordKey = '${p.latLng.latitude.toStringAsFixed(4)},${p.latLng.longitude.toStringAsFixed(4)},${p.category}';
       final nameKey = p.name.toLowerCase().trim();
       if (!seenCoordCat.contains(coordKey) && !seenNames.contains(nameKey)) {
@@ -1227,6 +1249,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   List<_Point> get _visiblePoints {
     var pts = _allPoints.toList();
+    if (_selectedCity != null) {
+      pts = pts.where((p) => p.name.contains(_selectedCity!)).toList();
+    }
     if (_selected != 'Tous') {
       pts = pts.where((p) => p.category == _selected).toList();
     }
@@ -1238,7 +1263,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
               p.label.toLowerCase().contains(q))
           .toList();
     }
-    // Trier par distance réelle si la position utilisateur est disponible
     if (_userPosition != null) {
       const calc = Distance();
       pts.sort((a, b) {
@@ -1250,7 +1274,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
     return pts;
   }
 
-  // Points dans un rayon de 5 km autour de l'utilisateur
   List<_Point> get _nearbyPoints {
     if (_userPosition == null) return [];
     const calc = Distance();
@@ -1295,7 +1318,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
         await Geolocator.openLocationSettings();
         return;
       }
-
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -1308,7 +1330,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
         setState(() => _isLoadingLocation = false);
         return;
       }
-
       Position? pos;
       try {
         pos = await Geolocator.getCurrentPosition(
@@ -1318,32 +1339,23 @@ class _MapScreenState extends ConsumerState<MapScreen>
           ),
         );
       } catch (_) {
-        // Timeout ou erreur GPS — utiliser la dernière position connue
         pos = await Geolocator.getLastKnownPosition();
       }
       if (pos == null) {
         if (mounted) setState(() => _isLoadingLocation = false);
         return;
       }
-
       final userLoc = LatLng(pos.latitude, pos.longitude);
       if (!mounted) return;
-
       setState(() {
         _userPosition = userLoc;
         _isLoadingLocation = false;
         _tapped = null;
       });
       _mapController.move(userLoc, 14.5);
-      _fetchNearbyPoints(userLoc);
     } catch (_) {
       if (mounted) setState(() => _isLoadingLocation = false);
     }
-  }
-
-  Future<void> _fetchNearbyPoints(LatLng center) async {
-    // Points dynamiques désactivés — les centres statiques couvrent tout le Maroc.
-    if (mounted) setState(() => _isLoadingPoints = false);
   }
 
   void _centerOnUser() {
@@ -1541,17 +1553,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
                                       setState(() {});
                                     },
                                   ),
-                                if (_isLoadingPoints)
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 14),
-                                    child: SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.primary),
-                                    ),
-                                  ),
                               ],
                             ),
                             filled: false,
@@ -1566,7 +1567,90 @@ class _MapScreenState extends ConsumerState<MapScreen>
                           ),
                         ),
                       ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+
+                      // Sélecteur de ville
+                      Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkCard : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String?>(
+                            value: _selectedCity,
+                            isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                                color: AppColors.primary, size: 20),
+                            hint: Row(children: [
+                              const Icon(Icons.location_city_rounded,
+                                  size: 16, color: AppColors.textSecondary),
+                              const SizedBox(width: 8),
+                              Text(s.allCities,
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  )),
+                            ]),
+                            selectedItemBuilder: (_) => [
+                              null,
+                              ..._cityCoords.keys,
+                            ].map((city) => Align(
+                              alignment: Alignment.centerLeft,
+                              child: Row(children: [
+                                const Icon(Icons.location_city_rounded,
+                                    size: 16, color: AppColors.primary),
+                                const SizedBox(width: 8),
+                                Text(city ?? s.allCities,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    )),
+                              ]),
+                            )).toList(),
+                            items: [
+                              DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text(s.allCities,
+                                    style: const TextStyle(
+                                        fontFamily: 'Poppins', fontSize: 13)),
+                              ),
+                              ..._cityCoords.keys.map((city) =>
+                                  DropdownMenuItem<String?>(
+                                    value: city,
+                                    child: Text(city,
+                                        style: const TextStyle(
+                                            fontFamily: 'Poppins', fontSize: 13)),
+                                  )),
+                            ],
+                            onChanged: (city) {
+                              setState(() {
+                                _selectedCity = city;
+                                _tapped = null;
+                              });
+                              if (city != null) {
+                                final coord = _cityCoords[city]!;
+                                _mapController.move(coord, 13.0);
+                              } else {
+                                _mapController.move(
+                                    const LatLng(31.79, -7.09), 5.5);
+                              }
+                            },
+                          ),
+                        ),
+                      ).animate().fadeIn(duration: 400.ms, delay: 50.ms),
+                      const SizedBox(height: 8),
 
                       // Filtres par catégorie
                       SizedBox(
@@ -1683,8 +1767,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                  color: Colors.blue,
+                              decoration: BoxDecoration(
+                                  color: _userPosition != null ? Colors.blue : AppColors.primary,
                                   shape: BoxShape.circle),
                             ),
                             const SizedBox(width: 6),
@@ -1749,10 +1833,10 @@ class _MapScreenState extends ConsumerState<MapScreen>
               right: 0,
               child: Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkCard : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -1764,17 +1848,15 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(
-                        width: 16,
-                        height: 16,
+                        width: 16, height: 16,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: AppColors.primary),
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        s.locatingText,
+                        AppStrings.of(ref.read(localeProvider).languageCode).locatingText,
                         style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
+                          fontFamily: 'Poppins', fontSize: 13,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -1814,8 +1896,7 @@ class _MapBtn extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon,
-            size: 20, color: accent ?? AppColors.textPrimary),
+        child: Icon(icon, size: 20, color: accent ?? AppColors.textPrimary),
       ),
     );
   }

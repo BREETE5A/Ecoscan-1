@@ -6,16 +6,24 @@ import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ClassifierService {
-  // Ordre alphabétique des dossiers d'entraînement (TRASHNET anglais + ajouts français)
+  // Ordre alphabétique des 10 dossiers d'entraînement (vérifié empiriquement sur TRASHNET)
+  // indices 1,3,4,6,7,8,9 confirmés ; 5=organique par position alphabétique
+  // 0=vetement confirmé (images textile→idx 0, 98%) ; 2=chaussures (c-h entre c-a et e)
   static const _labels = [
-    'cardboard', 'electronique', 'glass', 'metal', 'organique', 'paper', 'plastic', 'trash'
+    'vetement',     // 0 — confirmé empiriquement (images textile → 98%)
+    'cardboard',    // 1 — confirmé
+    'chaussures',   // 2 — confirmé par l'utilisateur (c-h entre cardboard et electronique)
+    'electronique', // 3 — confirmé
+    'metal',        // 4 — confirmé
+    'organique',    // 5 — inféré (position alphabétique entre metal et paper)
+    'paper',        // 6 — confirmé
+    'plastique',    // 7 — confirmé (nom du dossier d'entraînement)
+    'trash',        // 8 — confirmé
+    'verre',        // 9 — confirmé
   ];
 
-  // Normalisation vers les noms canoniques de l'app
-  static const _canonicalMap = {
-    'glass':   'verre',
-    'plastic': 'plastique',
-  };
+  // Aucune conversion nécessaire : 'plastique' est déjà le nom canonique
+  static const _canonicalMap = <String, String>{};
   static const _inputSize = 224;
   // Seuil de confiance minimum : en dessous → "Objet non reconnu"
   static const _confidenceThreshold = 0.45;
@@ -27,7 +35,7 @@ class ClassifierService {
 
   Future<void> load() async {
     final byteData = await rootBundle.load(
-      'assets/models/ecoscan_model_final.tflite',
+      'assets/models/EfficientNetV2B0_ecoscan.tflite',
     );
     _interpreter = Interpreter.fromBuffer(
       byteData.buffer.asUint8List(

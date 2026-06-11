@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/listing_model.dart';
@@ -51,7 +50,7 @@ const _moroccanCities = [
   'Skhirat', 'Aïn Sebaâ', 'Hay Hassani', 'Aïn Chock', 'Sidi Bernoussi',
 ];
 
-enum _SortMode { date, priceAsc, distance }
+enum _SortMode { date, priceAsc }
 
 // ── Écran principal ────────────────────────────────────────────────────────────
 class MarketplaceScreen extends ConsumerStatefulWidget {
@@ -65,7 +64,6 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   String    _typeFilter = 'all';
   String    _cityFilter = '';
   _SortMode _sort       = _SortMode.date;
-  Position? _position;
 
   final _searchCtrl = TextEditingController();
   bool _showSearch  = false;
@@ -73,22 +71,12 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPosition();
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadPosition() async {
-    try {
-      final perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return;
-      final pos = await Geolocator.getCurrentPosition();
-      if (mounted) setState(() => _position = pos);
-    } catch (_) {}
   }
 
   List<ListingModel> _apply(List<ListingModel> all) {
@@ -122,17 +110,6 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           final pb = b.price ?? 0;
           return pa.compareTo(pb);
         });
-      case _SortMode.distance:
-        if (_position != null) {
-          double dist(ListingModel l) {
-            if (l.latitude == null || l.longitude == null) return double.maxFinite;
-            return Geolocator.distanceBetween(
-              _position!.latitude, _position!.longitude,
-              l.latitude!, l.longitude!,
-            );
-          }
-          list.sort((a, b) => dist(a).compareTo(dist(b)));
-        }
     }
 
     return list;
@@ -285,9 +262,6 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
             const SizedBox(width: 8),
             _SortChip(s.sortPriceAsc, _SortMode.priceAsc, _sort, isDark,
                 () => setState(() => _sort = _SortMode.priceAsc)),
-            const SizedBox(width: 8),
-            _SortChip(s.sortDistance, _SortMode.distance, _sort, isDark,
-                () => setState(() => _sort = _SortMode.distance)),
           ]),
         )),
         // Filtre ville
@@ -740,22 +714,6 @@ class _AddListingSheetState extends ConsumerState<AddListingSheet> {
     }
   }
 
-  Future<Position?> _tryGetPosition() async {
-    try {
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        return null;
-      }
-      return await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.low));
-    } catch (_) {
-      return null;
-    }
-  }
 
   void _pickCity(BuildContext ctx, bool isDark, AppStrings s) {
     showModalBottomSheet(
@@ -782,7 +740,6 @@ class _AddListingSheetState extends ConsumerState<AddListingSheet> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCity.isEmpty) return;
     setState(() => _loading = true);
-    final pos = await _tryGetPosition();
     final ok = await ref.read(marketplaceActionsProvider).addListing(
       title:       _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),
@@ -793,8 +750,8 @@ class _AddListingSheetState extends ConsumerState<AddListingSheet> {
       phone:       '$_phonePrefix${_phoneCtrl.text.trim()}',
       whatsapp:    _waCtrl.text.trim().isEmpty ? '' : '$_waPrefix${_waCtrl.text.trim()}',
       imageFiles:  _images,
-      latitude:    pos?.latitude,
-      longitude:   pos?.longitude,
+      latitude:    null,
+      longitude:   null,
     );
     if (!mounted) return;
     setState(() => _loading = false);

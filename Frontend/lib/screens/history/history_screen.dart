@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/scan_history_provider.dart';
+import '../../models/scan_entry.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
-import '../../services/storage_service.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -16,35 +17,43 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   String _filter = 'all';
   String _searchQuery = '';
-  List<Map<String, dynamic>> _history = [];
-  bool _loading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadHistory();
-  }
-
-  Future<void> _loadHistory() async {
-    final raw = await StorageService.getHistory();
-    if (mounted) {
-      setState(() {
-        _history = raw.map((e) => Map<String, dynamic>.from(e)).toList();
-        _loading = false;
-      });
+  Future<void> _clearAllHistory(AppStrings s) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.clearHistory,
+            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+        content: Text(s.clearHistoryConfirm,
+            style: const TextStyle(fontFamily: 'Poppins')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel,
+                style: const TextStyle(fontFamily: 'Poppins', color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.delete,
+                style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(scanHistoryProvider.notifier).clearHistory();
     }
   }
 
-  bool _isRecyclable(String binColor) => binColor != 'noir';
-
-  List<Map<String, dynamic>> get _filtered {
-    return _history.where((item) {
-      final binColor = (item['bin_color'] as String?) ?? 'gris';
-      final category = (item['category'] as String?) ?? '';
-      if (_filter == 'recyclable' && !_isRecyclable(binColor)) return false;
-      if (_filter == 'nonRecyclable' && _isRecyclable(binColor)) return false;
+  List<ScanEntry> _applyFilters(List<ScanEntry> history) {
+    return history.where((item) {
+      if (_filter == 'recyclable' && !item.recyclable) return false;
+      if (_filter == 'nonRecyclable' && item.recyclable) return false;
       if (_searchQuery.isNotEmpty &&
-          !category.toLowerCase().contains(_searchQuery.toLowerCase())) {
+          !item.category.toLowerCase().contains(_searchQuery.toLowerCase())) {
         return false;
       }
       return true;
@@ -56,22 +65,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final lang = ref.watch(localeProvider).languageCode;
     final s = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final filtered = _filtered;
+    final history = ref.watch(scanHistoryProvider);
+    final filtered = _applyFilters(history);
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(s, isDark),
-            _buildSummaryRow(s, isDark),
+            _buildHeader(s, isDark, history),
+            _buildSummaryRow(s, isDark, history),
             _buildSearchBar(s, isDark),
             _buildFilterChips(s, isDark),
             const SizedBox(height: 4),
@@ -98,40 +101,50 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  Widget _buildHeader(AppStrings s, bool isDark) {
+  Widget _buildHeader(AppStrings s, bool isDark, List<ScanEntry> history) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 0),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            s.historyTitle,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.darkText : AppColors.textPrimary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.historyTitle,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                  ),
+                ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
+                Text(
+                  '${history.length} ${_filter == 'all' ? (s.totalScans.toLowerCase()) : ''}',
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+              ],
             ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
-          Text(
-            '${_history.length} ${_filter == 'all' ? (s.totalScans.toLowerCase()) : ''}',
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              color: AppColors.textSecondary,
-            ),
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+          ),
+          if (history.isNotEmpty)
+            IconButton(
+              tooltip: s.clearHistory,
+              icon: const Icon(Icons.delete_sweep_rounded, color: AppColors.danger),
+              onPressed: () => _clearAllHistory(s),
+            ).animate().fadeIn(duration: 400.ms),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryRow(AppStrings s, bool isDark) {
-    final totalPts = _history.length * 10;
-    final recyclableCount = _history.where((i) {
-      final binColor = (i['bin_color'] as String?) ?? 'gris';
-      return _isRecyclable(binColor);
-    }).length;
+  Widget _buildSummaryRow(AppStrings s, bool isDark, List<ScanEntry> history) {
+    final totalPts = history.fold(0, (sum, e) => sum + e.points);
+    final recyclableCount = history.where((e) => e.recyclable).length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
@@ -139,7 +152,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         children: [
           _StatChip(
             label: s.totalScans,
-            value: '${_history.length}',
+            value: '${history.length}',
             icon: Icons.qr_code_scanner_rounded,
             color: AppColors.primary,
             isDark: isDark,
@@ -157,7 +170,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           const SizedBox(width: 10),
           _StatChip(
             label: s.recyclable,
-            value: '$recyclableCount/${_history.length}',
+            value: '$recyclableCount/${history.length}',
             icon: Icons.recycling_rounded,
             color: AppColors.teal,
             isDark: isDark,
@@ -355,7 +368,7 @@ class _StatChip extends StatelessWidget {
 }
 
 class _HistoryTile extends StatelessWidget {
-  final Map<String, dynamic> entry;
+  final ScanEntry entry;
   final bool isDark;
   final String lang;
   final int delay;
@@ -367,67 +380,122 @@ class _HistoryTile extends StatelessWidget {
     required this.delay,
   });
 
-  String get _category => (entry['category'] as String?) ?? 'Inconnu';
-  String get _binColor => (entry['bin_color'] as String?) ?? 'gris';
-  bool get _recyclable => _binColor != 'noir';
+  String get _category => entry.category;
+  // ScanEntry.binColor is capitalized ("Jaune", "Vert", "Bleu", "Noir", "Marron")
+  String get _binColorNorm => entry.binColor.toLowerCase();
+  bool get _recyclable => entry.recyclable;
+
+  static const _categoryTranslations = <String, List<String>>{
+    // key: [fr, en, ar, es]
+    'plastique':    ['Plastique',     'Plastic',      'بلاستيك',       'Plástico'],
+    'plastic':      ['Plastique',     'Plastic',      'بلاستيك',       'Plástico'],
+    'verre':        ['Verre',         'Glass',        'زجاج',          'Vidrio'],
+    'glass':        ['Verre',         'Glass',        'زجاج',          'Vidrio'],
+    'métal':        ['Métal',         'Metal',        'معدن',          'Metal'],
+    'metal':        ['Métal',         'Metal',        'معدن',          'Metal'],
+    'papier':       ['Papier',        'Paper',        'ورق',           'Papel'],
+    'paper':        ['Papier',        'Paper',        'ورق',           'Papel'],
+    'carton':       ['Carton',        'Cardboard',    'كرتون',         'Cartón'],
+    'cardboard':    ['Carton',        'Cardboard',    'كرتون',         'Cartón'],
+    'électronique': ['Électronique',  'Electronic',   'إلكترونيات',    'Electrónico'],
+    'electronique': ['Électronique',  'Electronic',   'إلكترونيات',    'Electrónico'],
+    'electronic':   ['Électronique',  'Electronic',   'إلكترونيات',    'Electrónico'],
+    'deee':         ['Électronique',  'Electronic',   'إلكترونيات',    'Electrónico'],
+    'organique':    ['Organique',     'Organic',      'عضوي',          'Orgánico'],
+    'organic':      ['Organique',     'Organic',      'عضوي',          'Orgánico'],
+    'vetement':     ['Vêtement',      'Clothing',     'ملابس',         'Ropa'],
+    'vêtement':     ['Vêtement',      'Clothing',     'ملابس',         'Ropa'],
+    'clothing':     ['Vêtement',      'Clothing',     'ملابس',         'Ropa'],
+    'textile':      ['Textile',       'Textile',      'منسوجات',       'Textil'],
+    'pile':         ['Pile/Batterie', 'Battery',      'بطارية',        'Batería'],
+    'battery':      ['Pile/Batterie', 'Battery',      'بطارية',        'Batería'],
+    'huile':        ['Huile usagée',  'Used oil',     'زيت مستعمل',    'Aceite usado'],
+    'unknown':      ['Inconnu',       'Unknown',      'غير معروف',     'Desconocido'],
+    'inconnu':      ['Inconnu',       'Unknown',      'غير معروف',     'Desconocido'],
+    'chaussures':   ['Chaussures',    'Shoes',        'أحذية',         'Zapatos'],
+    'trash':        ['Déchet général','General waste', 'نفايات عامة',  'Residuo general'],
+  };
+
+  String _translateCategory(String lang) {
+    final t = _categoryTranslations[_category.toLowerCase().trim()];
+    if (t == null) return _category;
+    switch (lang) {
+      case 'en': return t[1];
+      case 'ar': return t[2];
+      case 'es': return t[3];
+      default:   return t[0];
+    }
+  }
 
   String get _relativeTime {
-    final raw = (entry['scanned_at'] as String?) ?? '';
-    if (raw.isEmpty) return '';
-    try {
-      final dt = DateTime.parse(raw);
-      final diff = DateTime.now().difference(dt);
-      if (lang == 'ar') {
-        if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
-        if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعات';
-        if (diff.inDays == 1) return 'أمس';
-        return 'منذ ${diff.inDays} أيام';
-      } else if (lang == 'en') {
-        if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-        if (diff.inHours < 24) return '${diff.inHours}h ago';
-        if (diff.inDays == 1) return 'Yesterday';
-        return '${diff.inDays} days ago';
-      } else if (lang == 'es') {
-        if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
-        if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
-        if (diff.inDays == 1) return 'Ayer';
-        return 'Hace ${diff.inDays} días';
-      } else {
-        if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
-        if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
-        if (diff.inDays == 1) return 'Hier';
-        return 'Il y a ${diff.inDays} j';
-      }
-    } catch (_) {
-      return '';
+    final diff = DateTime.now().difference(entry.scannedAt);
+    if (lang == 'ar') {
+      if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
+      if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعات';
+      if (diff.inDays == 1) return 'أمس';
+      return 'منذ ${diff.inDays} أيام';
+    } else if (lang == 'en') {
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays == 1) return 'Yesterday';
+      return '${diff.inDays} days ago';
+    } else if (lang == 'es') {
+      if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
+      if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
+      if (diff.inDays == 1) return 'Ayer';
+      return 'Hace ${diff.inDays} días';
+    } else {
+      if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
+      if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
+      if (diff.inDays == 1) return 'Hier';
+      return 'Il y a ${diff.inDays} j';
     }
   }
 
   IconData get _icon {
     switch (_category.toLowerCase()) {
       case 'plastique':
+      case 'plastic':
         return Icons.local_drink_rounded;
       case 'verre':
+      case 'glass':
         return Icons.wine_bar_rounded;
       case 'métal':
       case 'metal':
         return Icons.breakfast_dining_rounded;
       case 'papier':
+      case 'paper':
         return Icons.article_rounded;
       case 'carton':
+      case 'cardboard':
         return Icons.inventory_2_rounded;
       case 'électronique':
+      case 'electronique':
+      case 'electronic':
       case 'deee':
         return Icons.phone_android_rounded;
       case 'organique':
+      case 'organic':
         return Icons.eco_rounded;
+      case 'vetement':
+      case 'vêtement':
+      case 'clothing':
+      case 'textile':
+        return Icons.checkroom_rounded;
+      case 'pile':
+      case 'battery':
+        return Icons.battery_charging_full_rounded;
+      case 'chaussures':
+        return Icons.hiking_rounded;
+      case 'trash':
+        return Icons.delete_rounded;
       default:
         return Icons.delete_outline_rounded;
     }
   }
 
   Color get _color {
-    switch (_binColor) {
+    switch (_binColorNorm) {
       case 'jaune':
         return AppColors.plastic;
       case 'vert':
@@ -443,11 +511,12 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recyclableLabel = lang == 'en'
-        ? (_recyclable ? 'Recyclable' : 'Non-recyclable')
-        : lang == 'ar'
-            ? (_recyclable ? 'قابل للتدوير' : 'غير قابل للتدوير')
-            : (_recyclable ? 'Recyclable' : 'Non recyclable');
+    final recyclableLabel = switch (lang) {
+      'en' => _recyclable ? 'Recyclable' : 'Non-recyclable',
+      'ar' => _recyclable ? 'قابل للتدوير' : 'غير قابل للتدوير',
+      'es' => _recyclable ? 'Reciclable' : 'No reciclable',
+      _    => _recyclable ? 'Recyclable' : 'Non recyclable',
+    };
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -478,7 +547,7 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _category,
+                  _translateCategory(lang),
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 14,
@@ -516,9 +585,9 @@ class _HistoryTile extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                '+10 pts',
-                style: TextStyle(
+              Text(
+                '+${entry.points} pts',
+                style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,

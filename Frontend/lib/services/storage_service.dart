@@ -44,6 +44,9 @@ class StorageService {
     ScanResultModel result,
     int pointsEarned, {
     String? uid,
+    String? nom,
+    String? email,
+    String? fcmToken,
   }) async {
     final p = await SharedPreferences.getInstance();
 
@@ -94,6 +97,14 @@ class StorageService {
           'confidence': result.confidence,
           'co2Saved':   result.co2SavedPerKg * 100,
           'scannedAt':  FieldValue.serverTimestamp(),
+          // Champs pour le workflow hebdomadaire n8n
+          'user_id':    uid,
+          'nom':        nom ?? '',
+          'email':      email ?? '',
+          'fcm_token':  fcmToken ?? '',
+          'kg_tries':   0.1,
+          'co2_evite':  double.parse((result.co2SavedPerKg * 0.1).toStringAsFixed(4)),
+          'date_scan':  FieldValue.serverTimestamp(),
         });
       } catch (e) {
         debugPrint('Firestore sync error: $e');

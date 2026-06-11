@@ -327,7 +327,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
   Widget build(BuildContext context) {
     final s = AppStrings.of(ref.watch(localeProvider).languageCode);
     final size = MediaQuery.of(context).size;
-    const frameSize = 260.0;
+    final frameWidth = size.width * 0.85;
+    final frameHeight = frameWidth * 1.3;
     final frameCol = _frameColorValue;
 
     return Scaffold(
@@ -383,7 +384,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
             animation: _rippleAnim,
             builder: (_, _) => CustomPaint(
               painter: _OverlayPainter(
-                frameSize: frameSize,
+                frameWidth: frameWidth,
+                frameHeight: frameHeight,
                 center: Offset(size.width / 2, size.height / 2 - 40),
                 frameColor: frameCol,
               ),
@@ -399,7 +401,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                 animation: _rippleAnim,
                 builder: (_, _) => CustomPaint(
                   painter: _RipplePainter(_rippleAnim.value, frameCol),
-                  size: const Size(frameSize + 80, frameSize + 80),
+                  size: Size(frameHeight + 80, frameHeight + 80),
                 ),
               ),
             ),
@@ -414,8 +416,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                 builder: (_, child) =>
                     Transform.scale(scale: _pulseAnim.value, child: child),
                 child: SizedBox(
-                  width: frameSize,
-                  height: frameSize,
+                  width: frameWidth,
+                  height: frameHeight,
                   child: Stack(
                     children: [
                       if (_state != _DetectionState.recyclable &&
@@ -423,7 +425,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                         AnimatedBuilder(
                           animation: _scanLineAnim,
                           builder: (_, _) => Positioned(
-                            top: 10 + (frameSize - 20) * _scanLineAnim.value,
+                            top: 10 + (frameHeight - 20) * _scanLineAnim.value,
                             left: 10,
                             right: 10,
                             child: Container(
@@ -495,7 +497,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                             ),
                           ).animate().fadeIn(duration: 300.ms),
                         ),
-                      ..._corners(frameSize, frameCol),
+                      ..._corners(frameWidth, frameCol),
                     ],
                   ),
                 ),
@@ -766,11 +768,13 @@ class _CornerPainter extends CustomPainter {
 }
 
 class _OverlayPainter extends CustomPainter {
-  final double frameSize;
+  final double frameWidth;
+  final double frameHeight;
   final Offset center;
   final Color frameColor;
   _OverlayPainter(
-      {required this.frameSize,
+      {required this.frameWidth,
+      required this.frameHeight,
       required this.center,
       required this.frameColor});
 
@@ -778,7 +782,7 @@ class _OverlayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.black.withValues(alpha: 0.65);
     final frameRect =
-        Rect.fromCenter(center: center, width: frameSize, height: frameSize);
+        Rect.fromCenter(center: center, width: frameWidth, height: frameHeight);
     final path = Path.combine(
       PathOperation.difference,
       Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
@@ -798,7 +802,10 @@ class _OverlayPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_OverlayPainter old) =>
-      old.frameColor != frameColor || old.center != center;
+      old.frameColor != frameColor ||
+      old.center != center ||
+      old.frameWidth != frameWidth ||
+      old.frameHeight != frameHeight;
 }
 
 class _RipplePainter extends CustomPainter {

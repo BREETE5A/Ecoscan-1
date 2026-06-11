@@ -16,21 +16,37 @@ class CommunityStats {
 }
 
 final communityStatsProvider = StreamProvider<CommunityStats>((ref) {
-  return FirebaseFirestore.instance
+  final db = FirebaseFirestore.instance;
+
+  // Stream principal : top-100 users pour les points
+  final usersStream = db
       .collection('users')
       .orderBy('ecoPoints', descending: true)
       .limit(100)
-      .snapshots()
-      .map((snap) {
-    final users = snap.docs.length;
+      .snapshots();
+
+  return usersStream.asyncMap((snap) async {
+    // Points des utilisateurs actifs (top 100)
     int totalPoints = 0;
     for (final doc in snap.docs) {
       totalPoints += (doc.data()['ecoPoints'] as num?)?.toInt() ?? 0;
     }
-    // 10 pts en moyenne par scan
+
+    // Lecture du document de totaux (userCount + deletedPoints)
+    int users = snap.docs.length;
+    try {
+      final totals = await db.collection('community_totals').doc('stats').get();
+      if (totals.exists) {
+        final data = totals.data()!;
+        // userCount maintenu par incréments/décréments à la création/suppression
+        final storedCount = (data['userCount'] as num?)?.toInt();
+        if (storedCount != null && storedCount > 0) users = storedCount;
+        totalPoints += (data['deletedPoints'] as num?)?.toInt() ?? 0;
+      }
+    } catch (_) {}
+
     final scans = (totalPoints / 10).round();
     final kg = (scans * 0.35).round();
-    // Objectif communautaire : 50 000 pts
     final progress = (totalPoints / 50000).clamp(0.0, 1.0);
     return CommunityStats(
       users: users,

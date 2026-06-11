@@ -141,6 +141,12 @@ class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
     _saveToPrefs();
   }
 
+  Future<void> clearHistory() async {
+    state = [];
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, '[]');
+  }
+
   double get totalCo2Saved => state.fold(0.0, (s, e) => s + e.co2Saved);
   int get totalPoints => state.fold(0, (s, e) => s + e.points);
   int get recyclableCount => state.where((e) => e.recyclable).length;
