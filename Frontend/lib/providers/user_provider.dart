@@ -32,10 +32,11 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     final fsCity = rawCity.isNotEmpty ? rawCity : '';
     final fsBadgesArray = (data['badges'] as List?)?.length ?? 0;
     int badges = fsBadgesArray;
-    if (fsScans >= 1) badges++;
-    if (fsScans >= 5) badges++;
-    if (fsScans >= 10) badges++;
-    if (fsScans >= 50) badges++;
+    if (fsScans >= 1)    badges++;
+    if (fsScans >= 5)    badges++;
+    if (fsScans >= 10)   badges++;
+    if (fsScans >= 20)   badges++;
+    if (fsScans >= 50)   badges++;
     if (fsPoints >= 100) badges++;
     if (fsPoints >= 500) badges++;
     return UserModel(
@@ -204,12 +205,13 @@ class UserNotifier extends StateNotifier<UserModel> {
 
   int _computeBadges(int scans, int points) {
     int count = 0;
-    if (scans >= 1)    count++;
-    if (scans >= 5)    count++;
-    if (scans >= 10)   count++;
-    if (scans >= 50)   count++;
-    if (points >= 100) count++;
-    if (points >= 500) count++;
+    if (scans >= 1)    count++;  // Explorateur Vert
+    if (scans >= 5)    count++;  // Éco-Actif — débloque Défis
+    if (scans >= 10)   count++;  // Protecteur Vert — débloque Marketplace
+    if (scans >= 20)   count++;  // Champion Vert — débloque Classement
+    if (scans >= 50)   count++;  // Légende Recycleur
+    if (points >= 100) count++;  // Contributeur Éco — débloque Récompenses
+    if (points >= 500) count++;  // Éco-Expert — récompenses premium
     return count;
   }
 }

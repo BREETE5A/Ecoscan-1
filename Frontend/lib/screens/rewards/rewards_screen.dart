@@ -491,6 +491,21 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     final balance = ref.watch(userProvider).points;
     final redeemed = ref.watch(rewardsProvider);
 
+    // Verrou : 100 points requis / badge Contributeur Éco
+    final statsAsync = ref.watch(userStatsStreamProvider);
+    final currentPoints = statsAsync.when(
+      data: (u) => u.points,
+      loading: () => balance,
+      error: (_, _) => balance,
+    );
+    if (currentPoints < 100) {
+      return Scaffold(
+        body: SafeArea(
+          child: _RewardsLocked(currentPoints: currentPoints, isDark: isDark),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -1134,4 +1149,147 @@ class _RewardData {
     required this.color,
     required this.redeemed,
   });
+}
+
+// ── Écran de verrou Récompenses (requis : 100 pts / badge Contributeur Éco) ──
+class _RewardsLocked extends StatelessWidget {
+  final int currentPoints;
+  final bool isDark;
+  const _RewardsLocked({required this.currentPoints, required this.isDark});
+
+  static const _required = 100;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (currentPoints / _required).clamp(0.0, 1.0);
+    final remaining = _required - currentPoints;
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
+              border: Border.all(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.3), width: 2),
+            ),
+            child: const Icon(Icons.card_giftcard_rounded,
+                color: Color(0xFFFF6B35), size: 46),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Boutique verrouillée',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                const Text('🎁', style: TextStyle(fontSize: 28)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Badge requis : Contributeur Éco',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFF6B35),
+                        ),
+                      ),
+                      Text(
+                        'Accumulez $_required points éco pour débloquer les récompenses',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Points : $currentPoints/$_required pts',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '$remaining pts restants',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFFF6B35),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOut,
+              builder: (_, v, _) => LinearProgressIndicator(
+                value: v,
+                backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+                minHeight: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'Chaque scan vous rapporte 10 points — continuez à recycler !',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

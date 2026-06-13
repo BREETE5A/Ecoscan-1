@@ -78,6 +78,19 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
     final allAsync = ref.watch(_leaderboardStream);
 
+    // Verrou : 20 scans requis pour accéder au classement
+    final statsAsync = ref.watch(userStatsStreamProvider);
+    final currentScans = statsAsync.when(
+      data: (u) => u.scans,
+      loading: () => user.scans,
+      error: (_, _) => user.scans,
+    );
+    if (currentScans < 20) {
+      return Scaffold(
+        body: SafeArea(child: _LeaderboardLocked(currentScans: currentScans, isDark: isDark)),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -469,6 +482,149 @@ class _RankRow extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Écran de verrou Classement (requis : 20 scans / badge Champion Vert) ─────
+class _LeaderboardLocked extends StatelessWidget {
+  final int currentScans;
+  final bool isDark;
+  const _LeaderboardLocked({required this.currentScans, required this.isDark});
+
+  static const _required = 20;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (currentScans / _required).clamp(0.0, 1.0);
+    final remaining = _required - currentScans;
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF7B1FA2).withValues(alpha: 0.1),
+              border: Border.all(
+                  color: const Color(0xFF7B1FA2).withValues(alpha: 0.3), width: 2),
+            ),
+            child: const Icon(Icons.leaderboard_rounded,
+                color: Color(0xFF7B1FA2), size: 46),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Classement verrouillé',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF7B1FA2).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: const Color(0xFF7B1FA2).withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                const Text('🏆', style: TextStyle(fontSize: 28)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Badge requis : Champion Vert',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF7B1FA2),
+                        ),
+                      ),
+                      Text(
+                        'Réalisez $_required scans pour rejoindre le classement national',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Progression : $currentScans/$_required scans',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '$remaining restant${remaining > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF7B1FA2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOut,
+              builder: (_, v, _) => LinearProgressIndicator(
+                value: v,
+                backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Color(0xFF7B1FA2)),
+                minHeight: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'Continuez à scanner des déchets pour grimper dans le classement !',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

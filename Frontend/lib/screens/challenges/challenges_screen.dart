@@ -491,6 +491,19 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
       return ac ? 1 : -1;
     });
 
+    // Verrou : 5 scans requis pour accéder aux défis
+    final statsAsync = ref.watch(userStatsStreamProvider);
+    final currentScans = statsAsync.when(
+      data: (u) => u.scans,
+      loading: () => user.scans,
+      error: (_, _) => user.scans,
+    );
+    if (currentScans < 5) {
+      return Scaffold(
+        body: SafeArea(child: _ChallengesLocked(currentScans: currentScans)),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -935,4 +948,143 @@ class _ChallengeData {
     required this.total,
     required this.color,
   });
+}
+
+// ── Écran de verrou Défis (requis : 5 scans / badge Éco-Actif) ───────────────
+class _ChallengesLocked extends StatelessWidget {
+  final int currentScans;
+  const _ChallengesLocked({required this.currentScans});
+
+  static const _required = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = (currentScans / _required).clamp(0.0, 1.0);
+    final remaining = _required - currentScans;
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.accent.withValues(alpha: 0.1),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3), width: 2),
+            ),
+            child: const Icon(Icons.lock_rounded, color: AppColors.accent, size: 46),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Défis verrouillés',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                const Text('⚡', style: TextStyle(fontSize: 28)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Badge requis : Éco-Actif',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                      Text(
+                        'Réalisez $_required scans pour débloquer les défis',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Progression : $currentScans/$_required scans',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '$remaining restant${remaining > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOut,
+              builder: (_, v, _) => LinearProgressIndicator(
+                value: v,
+                backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+                minHeight: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'Scannez des déchets avec l\'appareil photo pour progresser',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                color: isDark ? AppColors.primary : AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
