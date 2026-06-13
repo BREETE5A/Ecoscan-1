@@ -64,8 +64,19 @@ final appRouter = GoRouter(
   initialLocation: '/splash',
   redirect: (context, state) {
     final isPublic = _publicRoutes.contains(state.matchedLocation);
-    final isAuthed = FirebaseAuth.instance.currentUser != null;
+    final user = FirebaseAuth.instance.currentUser;
+    final isAuthed = user != null;
+
     if (!isPublic && !isAuthed) return '/login';
+
+    if (isAuthed) {
+      final isGoogleUser = user.providerData.any((p) => p.providerId == 'google.com');
+      final onVerifyScreen = state.matchedLocation == '/verify-email';
+      if (!user.emailVerified && !isGoogleUser && !onVerifyScreen && !isPublic) {
+        return '/verify-email';
+      }
+    }
+
     return null;
   },
   routes: [

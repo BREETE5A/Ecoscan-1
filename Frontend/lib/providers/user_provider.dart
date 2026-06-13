@@ -30,7 +30,8 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     final fsName = rawName.isNotEmpty ? rawName : (emailFallback.isNotEmpty ? emailFallback : 'EcoUser');
     final rawCity = ((data['city'] as String?) ?? '').trim();
     final fsCity = rawCity.isNotEmpty ? rawCity : '';
-    int badges = 0;
+    final fsBadgesArray = (data['badges'] as List?)?.length ?? 0;
+    int badges = fsBadgesArray;
     if (fsScans >= 1) badges++;
     if (fsScans >= 5) badges++;
     if (fsScans >= 10) badges++;
@@ -122,7 +123,7 @@ class UserNotifier extends StateNotifier<UserModel> {
             city:           fsCity,
             points:         fsPoints,
             scans:          fsScans,
-            badges:         _computeBadges(fsScans, fsPoints),
+            badges:         ((data['badges'] as List?)?.length ?? 0) + _computeBadges(fsScans, fsPoints),
             rank:           fsRank,
             level:          (fsPoints ~/ 200) + 1,
             xp:             fsPoints % 200,
