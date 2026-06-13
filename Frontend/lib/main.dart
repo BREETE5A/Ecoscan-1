@@ -19,6 +19,16 @@ Future<void> _autoSignOutIfDeleted() async {
   final fbUser = FirebaseAuth.instance.currentUser;
   if (fbUser == null) return;
   try {
+    // Vérifier côté serveur si le compte Auth existe encore
+    await fbUser.reload();
+  } catch (_) {
+    // reload() lance une exception si le compte a été supprimé de Firebase Auth
+    await GoogleSignIn().signOut();
+    await FirebaseAuth.instance.signOut();
+    return;
+  }
+  try {
+    // Vérifier aussi si le document Firestore existe
     final doc = await FirebaseFirestore.instance
         .collection('users')
         .doc(fbUser.uid)
