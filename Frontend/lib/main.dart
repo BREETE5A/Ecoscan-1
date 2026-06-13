@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'router/app_router.dart';
@@ -12,12 +15,29 @@ import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'services/notification_service.dart';
 
+Future<void> _autoSignOutIfDeleted() async {
+  final fbUser = FirebaseAuth.instance.currentUser;
+  if (fbUser == null) return;
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(fbUser.uid)
+        .get();
+    if (!doc.exists) {
+      await GoogleSignIn().signOut();
+      await FirebaseAuth.instance.signOut();
+    }
+  } catch (_) {}
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await _autoSignOutIfDeleted();
 
   if (!kIsWeb) {
     await NotificationService.init();
