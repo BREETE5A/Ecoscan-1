@@ -11,8 +11,8 @@ class ApiConstants {
   static const int scanTimeoutSeconds = 60;
 
   // n8n Automation Webhooks
-  static const String n8nBaseUrl = 'https://TON_INSTANCE_N8N';
-  static const String n8nAuthHeader = 'TON_SECRET_HEADER_AUTH';
+  static const String n8nBaseUrl = 'https://badora.app.n8n.cloud';
+  static const String n8nAuthHeader = 'ecoscan';
 
   // OpenWeatherMap — injecté via --dart-define=OWM_KEY=xxx au build
   // Fallback de dev uniquement, ne pas commiter une vraie clé ici
