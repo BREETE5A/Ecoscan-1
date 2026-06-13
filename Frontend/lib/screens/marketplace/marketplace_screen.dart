@@ -9,7 +9,10 @@ import '../../l10n/app_strings.dart';
 import '../../models/listing_model.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/marketplace_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
+
+const _marketplaceScansRequired = 10;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 Color typeColor(String type) => switch (type) {
@@ -120,6 +123,16 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     final lang  = ref.watch(localeProvider).languageCode;
     final s     = AppStrings.of(lang);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final userScans = ref.watch(userProvider).scans;
+
+    if (userScans < _marketplaceScansRequired) {
+      return _MarketplaceLocked(
+        scans: userScans,
+        required: _marketplaceScansRequired,
+        isDark: isDark,
+      );
+    }
+
     final listingsAsync = ref.watch(marketplaceProvider);
 
     return Scaffold(
@@ -1210,5 +1223,104 @@ class _PhoneField extends StatelessWidget {
         ),
       )),
     ]);
+  }
+}
+
+// ── Écran verrouillé ───────────────────────────────────────────────────────────
+class _MarketplaceLocked extends StatelessWidget {
+  final int scans;
+  final int required;
+  final bool isDark;
+  const _MarketplaceLocked({required this.scans, required this.required, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = required - scans;
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 2),
+                  ),
+                  child: const Icon(Icons.lock_rounded, size: 52, color: AppColors.primary),
+                ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+                const SizedBox(height: 28),
+                Text(
+                  'Marketplace verrouillé',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                  ),
+                ).animate().fadeIn(delay: 200.ms),
+                const SizedBox(height: 12),
+                Text(
+                  'Effectuez encore $remaining scan${remaining > 1 ? 's' : ''} pour débloquer le Marketplace et échanger vos matériaux recyclables.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    height: 1.6,
+                  ),
+                ).animate().fadeIn(delay: 300.ms),
+                const SizedBox(height: 28),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      Text(
+                        '$scans / $required scans',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 400.ms),
+                const SizedBox(height: 36),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: scans / required),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOut,
+                    builder: (_, v, _) => LinearProgressIndicator(
+                      value: v,
+                      minHeight: 10,
+                      backgroundColor: isDark ? AppColors.darkInput : AppColors.inputBg,
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 500.ms),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
