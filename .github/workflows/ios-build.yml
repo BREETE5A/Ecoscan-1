@@ -27,6 +27,8 @@ jobs:
           if [ ! -d "ios" ]; then
             flutter create --platforms=ios .
           fi
+          sed -i '' "s/# platform :ios, '12.0'/platform :ios, '14.0'/" ios/Podfile
+          sed -i '' "s/platform :ios, '13.0'/platform :ios, '14.0'/" ios/Podfile
 
       - name: Install dependencies
         working-directory: Frontend
