@@ -21,26 +21,30 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Add iOS platform
+        working-directory: Frontend
+        run: |
+          if [ ! -d "ios" ]; then
+            flutter create --platforms=ios .
+          fi
+
       - name: Install dependencies
         working-directory: Frontend
         run: flutter pub get
 
       - name: Setup GoogleService-Info.plist
-        working-directory: Frontend/ios/Runner
-        env:
-          GOOGLE_SERVICE_INFO: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        working-directory: Frontend
         run: |
-          if [ -n "$GOOGLE_SERVICE_INFO" ]; then
-            echo "$GOOGLE_SERVICE_INFO" | base64 --decode > GoogleService-Info.plist
-            echo "GoogleService-Info.plist created from secret"
-          else
-            echo "Warning: GOOGLE_SERVICE_INFO_PLIST secret not set, Firebase may not work"
-          fi
+          mkdir -p ios/Runner
+          printf '%s' "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" > ios/Runner/GoogleService-Info.plist
+
+      - name: Install CocoaPods
+        working-directory: Frontend/ios
+        run: pod install --repo-update
 
       - name: Build iOS (no code signing)
         working-directory: Frontend
-        run: |
-          flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign
 
       - name: Create IPA
         working-directory: Frontend
@@ -49,7 +53,6 @@ jobs:
           cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
           cd build/ios/iphoneos
           zip -r EcoScan.ipa Payload/
-          echo "IPA created successfully"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
@@ -58,7 +61,7 @@ jobs:
           path: Frontend/build/ios/iphoneos/EcoScan.ipa
           retention-days: 30
 
-      - name: Upload build summary
+      - name: Build summary
         run: |
           echo "## Build iOS réussi ✅" >> $GITHUB_STEP_SUMMARY
           echo "L'IPA est disponible dans les **Artifacts** ci-dessus." >> $GITHUB_STEP_SUMMARY
