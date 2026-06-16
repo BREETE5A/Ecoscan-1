@@ -26,31 +26,27 @@ final communityStatsProvider = StreamProvider<CommunityStats>((ref) {
       .doc('stats')
       .snapshots()
       .asyncMap((snap) async {
-    // Première fois : initialiser les champs depuis une agrégation serveur
-    if (!snap.exists || !(snap.data()?.containsKey('totalScans') ?? false)) {
+    final data = snap.exists ? snap.data() : null;
+    final hasTotalScans = data?.containsKey('totalScans') ?? false;
+    final hasCo2        = data?.containsKey('totalCo2Grams') ?? false;
+    final rawUsers      = (data?['userCount'] as num?)?.toInt() ?? 0;
+
+    // Ré-initialiser si données manquantes ou userCount négatif
+    if (!hasTotalScans || !hasCo2 || rawUsers < 0) {
       await _initializeTotals(db);
       return const CommunityStats();
     }
 
-    final data = snap.data()!;
-
-    final totalScans    = (data['totalScans']    as num?)?.toInt()    ?? 0;
+    final totalScans    = (data!['totalScans']    as num?)?.toInt()    ?? 0;
     final totalCo2Grams = (data['totalCo2Grams'] as num?)?.toDouble() ?? 0.0;
-    final users         = (data['userCount']     as num?)?.toInt()    ?? 0;
+    final users         = rawUsers.clamp(0, 999999999);
 
-    // Ajouter les données préservées des comptes supprimés
-    final deletedScans = (data['deletedScans'] as num?)?.toInt()    ?? 0;
-    final deletedCo2   = (data['deletedCo2']   as num?)?.toDouble() ?? 0.0;
-
-    final allScans    = totalScans + deletedScans;
-    final allCo2Grams = totalCo2Grams + deletedCo2;
-
-    final kg       = (allCo2Grams / 1000).round();
-    final progress = (allScans / 10000.0).clamp(0.0, 1.0);
+    final kg       = (totalCo2Grams / 1000).round();
+    final progress = (totalScans / 10000.0).clamp(0.0, 1.0);
 
     return CommunityStats(
       users:      users,
-      scans:      allScans,
+      scans:      totalScans,
       kgRecycled: kg,
       progress:   progress,
     );

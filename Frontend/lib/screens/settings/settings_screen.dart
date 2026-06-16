@@ -342,18 +342,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _preserveCommunityPoints(String uid) async {
     try {
-      final db = FirebaseFirestore.instance;
-      final userDoc = await db.collection('users').doc(uid).get();
-      if (!userDoc.exists) return;
-      final pts   = (userDoc.data()?['ecoPoints']  as num?)?.toInt()    ?? 0;
-      final scans = (userDoc.data()?['scansCount'] as num?)?.toInt()    ?? 0;
-      final co2   = (userDoc.data()?['co2Saved']   as num?)?.toDouble() ?? 0.0;
-      final Map<String, dynamic> update = {'userCount': FieldValue.increment(-1)};
-      if (pts   > 0) update['deletedPoints'] = FieldValue.increment(pts);
-      if (scans > 0) update['deletedScans']  = FieldValue.increment(scans);
-      if (co2   > 0) update['deletedCo2']    = FieldValue.increment(co2);
-      await db.collection('community_totals').doc('stats')
-          .set(update, SetOptions(merge: true));
+      await FirebaseFirestore.instance
+          .collection('community_totals')
+          .doc('stats')
+          .set({'userCount': FieldValue.increment(-1)}, SetOptions(merge: true));
     } catch (_) {}
   }
 

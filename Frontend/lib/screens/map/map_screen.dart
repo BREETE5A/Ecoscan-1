@@ -29,13 +29,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
   LatLng? _userPosition;
   bool _isLoadingLocation = true;
 
-  String _selected = 'Tous';
   final _search = TextEditingController();
-
-  static const _filters = [
-    'Tous', 'Plastique', 'Verre', 'Papier', 'Compost', 'Piles', 'Électronique', 'Textile',
-    'Huiles', 'Métal',
-  ];
 
   String? _selectedCity;
   int? _tapped;
@@ -193,9 +187,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
     var pts = _allPoints.toList();
     if (_selectedCity != null) {
       pts = pts.where((p) => p.name.contains(_selectedCity!)).toList();
-    }
-    if (_selected != 'Tous') {
-      pts = pts.where((p) => p.category == _selected).toList();
     }
     final q = _search.text.toLowerCase();
     if (q.isNotEmpty) {
@@ -416,22 +407,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
     }
     if (meters < 1000) return '${meters.round()} m';
     return '${(meters / 1000).toStringAsFixed(1)} km';
-  }
-
-  String _filterLabel(String key, AppStrings s) {
-    switch (key) {
-      case 'Tous':        return s.catAll;
-      case 'Plastique':   return s.catPlastic;
-      case 'Verre':       return s.catGlass;
-      case 'Papier':      return s.catPaper;
-      case 'Compost':     return s.catCompost;
-      case 'Piles':       return s.catBatteries;
-      case 'Électronique': return s.catElectronic;
-      case 'Textile':     return s.catTextile;
-      case 'Huiles':      return s.catOil;
-      case 'Métal':       return s.catMetal;
-      default:            return key;
-    }
   }
 
   @override
@@ -686,67 +661,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
                           ),
                         ),
                       ).animate().fadeIn(duration: 400.ms, delay: 50.ms),
-                      const SizedBox(height: 8),
-
-                      // Filtres par catégorie
-                      SizedBox(
-                        height: 36,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _filters.length,
-                          separatorBuilder: (_, idx) => const SizedBox(width: 8),
-                          itemBuilder: (_, i) {
-                            final f = _filters[i];
-                            final active = _selected == f;
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selected = f;
-                                  _tapped = null;
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: active
-                                      ? AppColors.primary
-                                      : (isDark
-                                          ? AppColors.darkCard
-                                          : Colors.white),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.07),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  _filterLabel(f, s),
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 12,
-                                    fontWeight: active
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                    color: active
-                                        ? Colors.white
-                                        : (isDark
-                                            ? AppColors.darkText
-                                            : AppColors.textPrimary),
-                                  ),
-                                ),
-                              ),
-                            )
-                                .animate(delay: (i * 50).ms)
-                                .fadeIn(duration: 300.ms)
-                                .slideX(begin: -0.1);
-                          },
-                        ),
-                      ),
                     ],
                   ),
                 ),
