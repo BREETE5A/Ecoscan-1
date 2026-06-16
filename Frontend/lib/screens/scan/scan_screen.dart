@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,8 @@ import '../../models/scan_entry.dart';
 import '../../models/scan_result_model.dart';
 import '../../providers/scan_history_provider.dart';
 import '../../providers/user_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/n8n_service.dart';
 import '../../providers/challenges_provider.dart';
 import '../../services/classifier_service.dart';
 import '../../services/scan_api_service.dart';
@@ -51,6 +54,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
   final _classifier = ClassifierService();
   bool _modelLoaded = false;
+  Timer? _tipTimer;
+  int _tipIndex = 0;
 
   Color get _frameColorValue {
     switch (_state) {
@@ -200,6 +205,60 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     );
   }
 
+  void _startScanTips() {
+    _tipIndex = 0;
+    _tipTimer = Timer.periodic(const Duration(milliseconds: 1800), (_) {
+      if (mounted) setState(() => _tipIndex = (_tipIndex + 1) % 4);
+    });
+  }
+
+  void _stopScanTips() {
+    _tipTimer?.cancel();
+    _tipTimer = null;
+  }
+
+  void _showOfflineSnackbar(AppStrings s) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(s.offlineFallback,
+              style: const TextStyle(fontFamily: 'Poppins'))),
+        ]),
+        backgroundColor: Colors.orange.shade700,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<ScanEntry?> _classifyLocal(File image, String lang, AppStrings s) async {
+    if (!_modelLoaded) {
+      _showError(s.modelNotLoaded);
+      return null;
+    }
+    try {
+      final localResult = await _classifier.classify(image);
+      final syntheticComponents = [
+        ScanComponent(
+          partie: s.detectedObject,
+          label: localResult.label,
+          binColor: ScanEntry.binColorForLabel(localResult.label),
+          conseil: '',
+        ),
+      ];
+      return ScanEntry.fromClassification(
+        localResult.label, localResult.confidence,
+        lang: lang,
+        components: syntheticComponents,
+      );
+    } catch (e) {
+      _showError(s.analysisError(e.toString()));
+      return null;
+    }
+  }
+
   Future<void> _triggerScan() async {
     if (_scanning) return;
 
@@ -209,6 +268,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       _scanning = true;
       _state = _DetectionState.analyzing;
     });
+    _startScanTips();
 
     File? imageToClassify = _galleryImage;
 
@@ -231,7 +291,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     ScanEntry entry;
     try {
       // ── Étape 1 : API online YOLOv8 (priorité) ────────────────────────────
-      final onlineResult = await ScanApiService.classify(imageToClassify);
+      final onlineResult = await ScanApiService.classify(imageToClassify, lang: lang);
 
       if (onlineResult != null && onlineResult.topLabel != 'unknown') {
         final base = ScanEntry.fromClassification(
@@ -246,15 +306,33 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
           scannedAt: base.scannedAt, mode: 'cloud',
           components: base.components,
         );
+        // Alerte email si une composante est électronique ou dangereuse
+        final dangerComp = onlineResult.components.where(
+          (c) => c.label == 'electronique' || c.label == 'dangereux',
+        ).toList();
+        if (dangerComp.isNotEmpty) {
+          final fbUser = FirebaseAuth.instance.currentUser;
+          N8nService.alerteDanger(
+            nom:        ref.read(userProvider).name,
+            email:      fbUser?.email ?? '',
+            typeDechet: dangerComp.map((c) => c.label).join(', '),
+            fcmToken:   '',
+          );
+        }
       } else {
-        _showError(s.serverUnavailable);
-        return;
+        _showOfflineSnackbar(s);
+        final localEntry = await _classifyLocal(imageToClassify, lang, s);
+        if (localEntry == null) { _stopScanTips(); return; }
+        entry = localEntry;
       }
     } catch (e) {
-      _showError(s.analysisError(e.toString()));
-      return;
+      _showOfflineSnackbar(s);
+      final localEntry = await _classifyLocal(imageToClassify, lang, s);
+      if (localEntry == null) { _stopScanTips(); return; }
+      entry = localEntry;
     }
 
+    _stopScanTips();
     final nextState =
         entry.dangerous ? _DetectionState.dangerous : _DetectionState.recyclable;
 
@@ -277,7 +355,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       _galleryImage = null;
     });
 
-    context.go('/scan/result');
+    context.push('/scan/result');
 
     // Mise à jour Firestore en arrière-plan (ne bloque pas la navigation)
     final scanResult = ScanResultModel(
@@ -302,6 +380,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     _frameColor.dispose();
     _cameraCtrl?.dispose();
     _classifier.close();
+    _tipTimer?.cancel();
     super.dispose();
   }
 
@@ -480,6 +559,74 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                           ).animate().fadeIn(duration: 300.ms),
                         ),
                       ..._corners(frameWidth, frameCol),
+
+                      // ── Analyse tips (cycling text at bottom of frame) ──
+                      if (_state == _DetectionState.analyzing)
+                        Positioned(
+                          bottom: 12,
+                          left: 10,
+                          right: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 350),
+                              transitionBuilder: (child, anim) =>
+                                  FadeTransition(opacity: anim, child: child),
+                              child: Text(
+                                s.scanTips[_tipIndex],
+                                key: ValueKey(_tipIndex),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // ── Pulsing dots at top of frame during analysis ──
+                      if (_state == _DetectionState.analyzing)
+                        Positioned(
+                          top: 14,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              3,
+                              (i) => Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 4),
+                                width: 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  color: frameCol,
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                                  .animate(
+                                    delay: (i * 220).ms,
+                                    onPlay: (c) =>
+                                        c.repeat(reverse: true),
+                                  )
+                                  .scaleXY(
+                                    begin: 0.5,
+                                    end: 1.5,
+                                    duration: 500.ms,
+                                    curve: Curves.easeInOut,
+                                  )
+                                  .fadeIn(duration: 300.ms),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -496,45 +643,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
             ),
           ),
 
-          // Mode badge
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.5)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.eco_rounded,
-                              color: AppColors.primary, size: 13),
-                          const SizedBox(width: 4),
-                          Text(s.scanAnalysisLocal,
-                              style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
           // Top bar
           SafeArea(
@@ -544,7 +652,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/home'),
+                    onTap: () => context.push('/home'),
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -677,7 +785,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                       _BottomAction(
                         icon: Icons.history_rounded,
                         label: s.history_,
-                        onTap: () => context.go('/history'),
+                        onTap: () => context.push('/history'),
                       ),
                     ],
                   ),

@@ -148,38 +148,40 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                    child: Column(
-                      children: [
-                        // Composantes détectées
-                        if (scan.components.isNotEmpty)
-                          _ComponentsCard(scan: scan, isDark: isDark)
-                              .animate(delay: 80.ms)
-                              .fadeIn(duration: 400.ms)
-                              .slideY(begin: 0.15),
-                        if (scan.components.isNotEmpty)
-                          const SizedBox(height: 16),
+                    child: scan.mode == 'local'
+                        ? _SimpleOfflineResult(scan: scan, isDark: isDark)
+                        : Column(
+                            children: [
+                              // Composantes détectées (cloud only)
+                              if (scan.components.isNotEmpty)
+                                _ComponentsCard(scan: scan, isDark: isDark)
+                                    .animate(delay: 80.ms)
+                                    .fadeIn(duration: 400.ms)
+                                    .slideY(begin: 0.15),
+                              if (scan.components.isNotEmpty)
+                                const SizedBox(height: 16),
 
-                        // Points + CO₂
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _PointsCard(scan: scan, isDark: isDark)
-                                  .animate(delay: 300.ms)
-                                  .fadeIn(duration: 400.ms)
-                                  .slideY(begin: 0.2),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _Co2Card(scan: scan, isDark: isDark)
-                                  .animate(delay: 380.ms)
-                                  .fadeIn(duration: 400.ms)
-                                  .slideY(begin: 0.2),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
+                              // Points + CO₂
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _PointsCard(scan: scan, isDark: isDark)
+                                        .animate(delay: 300.ms)
+                                        .fadeIn(duration: 400.ms)
+                                        .slideY(begin: 0.2),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _Co2Card(scan: scan, isDark: isDark)
+                                        .animate(delay: 380.ms)
+                                        .fadeIn(duration: 400.ms)
+                                        .slideY(begin: 0.2),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
                   ),
                 ),
               ],
@@ -474,7 +476,7 @@ class _ComponentsCard extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  c.label,
+                                  s.materialName(c.label),
                                   style: const TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 12,
@@ -589,6 +591,386 @@ class _ComponentsCard extends ConsumerWidget {
           }),
         ],
       ),
+    );
+  }
+}
+
+// ── Vue simplifiée pour le mode offline TFLite ───────────────────────────────
+
+class _SimpleOfflineResult extends ConsumerWidget {
+  final ScanEntry scan;
+  final bool isDark;
+  const _SimpleOfflineResult({required this.scan, required this.isDark});
+
+  static IconData _iconForCategory(String label) {
+    switch (label) {
+      case 'plastique':    return Icons.water_drop_outlined;
+      case 'verre':        return Icons.wine_bar_outlined;
+      case 'metal':        return Icons.hardware_outlined;
+      case 'cardboard':    return Icons.inventory_2_outlined;
+      case 'paper':        return Icons.description_outlined;
+      case 'organique':    return Icons.eco_outlined;
+      case 'electronique': return Icons.devices_outlined;
+      case 'textile':
+      case 'vetement':     return Icons.checkroom_outlined;
+      case 'chaussures':   return Icons.hiking_outlined;
+      case 'dangereux':    return Icons.warning_amber_outlined;
+      case 'bois':         return Icons.forest_outlined;
+      default:             return Icons.delete_outline_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    final pct = scan.recyclability;
+    final barColor = scan.dangerous ? const Color(0xFFE74C3C) : AppColors.primary;
+    final heroGradient = scan.dangerous
+        ? [const Color(0xFFE74C3C), const Color(0xFFC0392B)]
+        : scan.recyclable
+            ? [AppColors.primary, AppColors.teal]
+            : [AppColors.textSecondary, const Color(0xFF555555)];
+
+    String qualityLabel;
+    if (pct >= 0.8) {
+      qualityLabel = '🌿 ${_t(s, 'Excellent', 'Excellent', 'ممتاز', 'Excelente')}';
+    } else if (pct >= 0.6) {
+      qualityLabel = '👍 ${_t(s, 'Bon', 'Good', 'جيد', 'Bueno')}';
+    } else if (pct >= 0.4) {
+      qualityLabel = '⚠️ ${_t(s, 'Moyen', 'Fair', 'متوسط', 'Regular')}';
+    } else {
+      qualityLabel = '🗑️ ${_t(s, 'Faible', 'Low', 'منخفض', 'Bajo')}';
+    }
+
+    return Column(
+      children: [
+        // ── Hero banner (horizontal, gradient plein) ──────────────────────
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: heroGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: heroGradient.first.withValues(alpha: 0.35),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 60, height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(_iconForCategory(scan.category),
+                    color: Colors.white, size: 30),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.93, 0.93),
+                    end: const Offset(1.07, 1.07),
+                    duration: 1400.ms,
+                    curve: Curves.easeInOut,
+                  ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      scan.dangerous
+                          ? '⚠️ ${s.dangerousResult}'
+                          : scan.recyclable
+                              ? '✅ ${s.recyclableResult}'
+                              : '🗑️ ${s.nonRecyclableResult}',
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${scan.name} — ${s.materialName(scan.category)}',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )
+            .animate(delay: 60.ms)
+            .fadeIn(duration: 400.ms)
+            .slideY(begin: 0.15),
+        const SizedBox(height: 12),
+
+        // ── Badge TFLite ──────────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.offline_bolt_rounded,
+                  color: Colors.orange, size: 15),
+              const SizedBox(width: 6),
+              Text(
+                s.modeLocal,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+        )
+            .animate(delay: 120.ms)
+            .fadeIn(duration: 350.ms),
+        const SizedBox(height: 14),
+
+        // ── Recyclabilité ─────────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    s.recyclabilityLevel,
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: pct),
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeOut,
+                    builder: (_, v, _) => Text(
+                      '${(v * 100).round()}%',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: barColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: pct),
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.easeOut,
+                builder: (_, v, _) => ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: v,
+                    minHeight: 10,
+                    backgroundColor: barColor.withValues(alpha: 0.12),
+                    valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('0%',
+                      style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: AppColors.textSecondary)),
+                  Text(qualityLabel,
+                      style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: barColor)),
+                  Text('100%',
+                      style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: AppColors.textSecondary)),
+                ],
+              ),
+            ],
+          ),
+        )
+            .animate(delay: 200.ms)
+            .fadeIn(duration: 400.ms)
+            .slideY(begin: 0.15),
+        const SizedBox(height: 14),
+
+        // ── Points + CO₂ ──────────────────────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: _PointsCard(scan: scan, isDark: isDark)
+                  .animate(delay: 300.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.2),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _Co2Card(scan: scan, isDark: isDark)
+                  .animate(delay: 380.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.2),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        // ── Détails de l'objet ────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                s.detailsTitle,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _DetailRow(label: s.materialType,
+                  value: s.materialName(scan.category), isDark: isDark),
+              _DetailRow(
+                label: s.recyclabilityLevel,
+                value: scan.recyclable
+                    ? '${s.yes} ✓'
+                    : '${s.no} ✗',
+                valueColor: scan.recyclable
+                    ? AppColors.primary
+                    : const Color(0xFFE74C3C),
+                isDark: isDark,
+              ),
+              _DetailRow(label: s.sortingInstruction,
+                  value: s.binColorName(scan.binColor), isDark: isDark),
+              _DetailRow(
+                label: s.aiConfidence,
+                value: '${(scan.recyclability * 100).round()}%',
+                valueColor: barColor,
+                isDark: isDark,
+                isLast: true,
+              ),
+            ],
+          ),
+        )
+            .animate(delay: 460.ms)
+            .fadeIn(duration: 400.ms)
+            .slideY(begin: 0.15),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  static String _t(AppStrings s, String fr, String en, String ar, String es) {
+    switch (s.languageCode) {
+      case 'en': return en;
+      case 'ar': return ar;
+      case 'es': return es;
+      default:   return fr;
+    }
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool isDark;
+  final bool isLast;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    required this.isDark,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: valueColor ??
+                      (isDark ? AppColors.darkText : AppColors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!isLast)
+          Divider(height: 1, color: Colors.grey.withValues(alpha: 0.15)),
+      ],
     );
   }
 }

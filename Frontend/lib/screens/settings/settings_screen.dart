@@ -6,12 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/scan_history_provider.dart';
 import '../../l10n/app_strings.dart';
 import 'theme_screen.dart';
 import 'language_screen.dart';
@@ -179,20 +177,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           isDark: isDark,
                           onTap: _shareApp,
                         ),
-                        _ActionRow(
-                          icon: Icons.delete_sweep_rounded,
-                          label: s.clearHistory,
-                          color: const Color(0xFFF39C12),
-                          isDark: isDark,
-                          onTap: () => _confirmClearHistory(context, s),
-                        ),
-                        _ActionRow(
-                          icon: Icons.feedback_rounded,
-                          label: s.feedbackEmail,
-                          color: AppColors.teal,
-                          isDark: isDark,
-                          onTap: _sendFeedback,
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -250,50 +234,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _shareApp() {
     Share.share('Découvrez EcoScan — l\'app de tri des déchets 🌿\nhttps://ecoscan.app');
-  }
-
-  Future<void> _sendFeedback() async {
-    final uri = Uri.parse('mailto:badreddinehammoucha@gmail.com?subject=EcoScan%20Feedback');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
-  void _confirmClearHistory(BuildContext context, AppStrings s) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(s.clearHistory,
-            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-        content: Text(s.clearHistoryConfirm,
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel, style: const TextStyle(fontFamily: 'Poppins')),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final messenger = ScaffoldMessenger.of(context);
-              await ref.read(scanHistoryProvider.notifier).clearHistory();
-              if (!mounted) return;
-              messenger.showSnackBar(SnackBar(
-                content: Text(s.clearDone,
-                    style: const TextStyle(fontFamily: 'Poppins')),
-                backgroundColor: AppColors.primary,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                margin: const EdgeInsets.all(16),
-              ));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF39C12)),
-            child: Text(s.confirm,
-                style: const TextStyle(fontFamily: 'Poppins', color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   bool get _isGoogleUser => FirebaseAuth.instance.currentUser?.providerData
@@ -405,11 +345,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final db = FirebaseFirestore.instance;
       final userDoc = await db.collection('users').doc(uid).get();
       if (!userDoc.exists) return;
-      final pts   = (userDoc.data()?['ecoPoints']  as num?)?.toInt() ?? 0;
-      final scans = (userDoc.data()?['scansCount'] as num?)?.toInt() ?? 0;
+      final pts   = (userDoc.data()?['ecoPoints']  as num?)?.toInt()    ?? 0;
+      final scans = (userDoc.data()?['scansCount'] as num?)?.toInt()    ?? 0;
+      final co2   = (userDoc.data()?['co2Saved']   as num?)?.toDouble() ?? 0.0;
       final Map<String, dynamic> update = {'userCount': FieldValue.increment(-1)};
-      if (pts > 0)   update['deletedPoints'] = FieldValue.increment(pts);
+      if (pts   > 0) update['deletedPoints'] = FieldValue.increment(pts);
       if (scans > 0) update['deletedScans']  = FieldValue.increment(scans);
+      if (co2   > 0) update['deletedCo2']    = FieldValue.increment(co2);
       await db.collection('community_totals').doc('stats')
           .set(update, SetOptions(merge: true));
     } catch (_) {}
@@ -423,6 +365,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // 1. Sous-collections de users/{uid}
     await _deleteSubcollection(userRef.collection('scans'));
     await _deleteSubcollection(userRef.collection('progress'));
+    await _deleteSubcollection(userRef.collection('notifications'));
+    await _deleteSubcollection(userRef.collection('chatFeedback'));
 
     // 2. Annonces marketplace publiées par cet utilisateur
     //    (+ leur sous-collection reviews/)
@@ -491,6 +435,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await _deleteAllUserData(uid);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
+      if (!mounted) return;
+      await signOutUser(ref);
       if (mounted) context.go('/login');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -517,6 +463,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await _deleteAllUserData(uid);
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
       await user.delete();
+      if (!mounted) return null;
+      await signOutUser(ref);
       if (mounted) context.go('/login');
       return null;
     } on FirebaseAuthException catch (e) {

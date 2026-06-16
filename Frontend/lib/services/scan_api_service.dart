@@ -12,7 +12,7 @@ class ScanApiService {
     ),
   );
 
-  static Future<ScanApiResult?> classify(File imageFile) async {
+  static Future<ScanApiResult?> classify(File imageFile, {String lang = 'fr'}) async {
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
@@ -24,6 +24,7 @@ class ScanApiService {
       final response = await _dio.post(
         ApiConstants.scanEndpoint,
         data: formData,
+        queryParameters: {'lang': lang},
       );
 
       final data = response.data as Map<String, dynamic>;

@@ -215,9 +215,10 @@ class LoginNotifier extends StateNotifier<AuthState> {
       ).catchError((_) {});
       final user = AppUser.fromFirebase(fbUser, city: city);
       _ref.read(currentUserProvider.notifier).state = user;
+      // Invalider le stream et le provider avant de charger le nouveau profil
+      _ref.invalidate(userStatsStreamProvider);
+      _ref.invalidate(userProvider);
       state = state.copyWith(status: AuthStatus.success, user: user);
-      // Réinitialiser avant de charger le nouveau profil
-      _ref.read(userProvider.notifier).reset();
       // Pont : alimenter userProvider avec le vrai profil Firebase
       await _ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: user.displayName,
@@ -306,6 +307,9 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         city:        city,
       );
       _ref.read(currentUserProvider.notifier).state = user;
+      // Invalider le stream et le provider avant de charger le nouveau profil
+      _ref.invalidate(userStatsStreamProvider);
+      _ref.invalidate(userProvider);
       state = state.copyWith(status: AuthStatus.success);
       // Envoyer l'email de vérification
       try { await fbUser.sendEmailVerification(); } catch (_) {}
@@ -406,9 +410,10 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
 
       final user = AppUser.fromFirebase(fbUser, city: city);
       _ref.read(currentUserProvider.notifier).state = user;
+      // Invalider le stream et le provider avant de charger le nouveau profil
+      _ref.invalidate(userStatsStreamProvider);
+      _ref.invalidate(userProvider);
       state = state.copyWith(status: AuthStatus.success, user: user);
-      // Réinitialiser avant de charger le nouveau profil
-      _ref.read(userProvider.notifier).reset();
       // Pont : alimenter userProvider avec le vrai profil Firebase
       await _ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: user.displayName,
@@ -444,6 +449,8 @@ Future<void> signOut(Ref ref) async {
   await StorageService.reset();
   await _googleSignIn.signOut();
   await _auth.signOut();
+  ref.invalidate(userStatsStreamProvider);
+  ref.invalidate(userProvider);
   ref.read(currentUserProvider.notifier).state = null;
 }
 
@@ -452,6 +459,7 @@ Future<void> signOutUser(WidgetRef ref) async {
   ref.read(userProvider.notifier).reset();
   await _googleSignIn.signOut();
   await _auth.signOut();
+  ref.invalidate(userStatsStreamProvider);
   ref.invalidate(userProvider);
   ref.read(currentUserProvider.notifier).state = null;
 }

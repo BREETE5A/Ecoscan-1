@@ -194,7 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () => context.go('/profile'),
+                                onTap: () => context.push('/profile'),
                                 child: Container(
                                   width: 40, height: 40,
                                   decoration: BoxDecoration(
@@ -365,7 +365,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 24),
 
                 // ── Catégories de tri ────────────────────────────────────────────────────
-                _SectionTitle(title: s.sortingCategories, seeAllLabel: s.seeAll, onSeeAll: () => context.go('/guide'))
+                _SectionTitle(title: s.sortingCategories, seeAllLabel: s.seeAll, onSeeAll: () => context.push('/guide'))
                     .animate().fadeIn(duration: 280.ms, delay: 360.ms),
                 const SizedBox(height: 12),
                 _CategoriesRow(s: s)
@@ -390,7 +390,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 _SectionTitle(
                   title: s.recentActivity,
                   seeAllLabel: s.seeAll,
-                  onSeeAll: () => context.go('/history'),
+                  onSeeAll: () => context.push('/history'),
                 ).animate().fadeIn(duration: 280.ms, delay: 460.ms),
                 const SizedBox(height: 12),
 
@@ -805,7 +805,7 @@ class _ScanCTACardState extends State<_ScanCTACard>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go('/scan'),
+      onTap: () => context.push('/scan'),
       child: Container(
         height: 76,
         decoration: BoxDecoration(
@@ -999,7 +999,7 @@ class _CategoriesRow extends StatelessWidget {
         itemBuilder: (context, i) {
           final cat = categories[i];
           return GestureDetector(
-            onTap: () => context.go('/guide'),
+            onTap: () => context.push('/guide'),
             child: Container(
               width: 74,
               decoration: BoxDecoration(
@@ -1295,7 +1295,7 @@ class _QuickActionCardState extends State<_QuickActionCard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTapDown: (_) => _tap.forward(),
-      onTapUp: (_) { _tap.reverse(); context.go(widget.route); },
+      onTapUp: (_) { _tap.reverse(); context.push(widget.route); },
       onTapCancel: () => _tap.reverse(),
       child: ScaleTransition(
         scale: _tapScale,

@@ -77,7 +77,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _Point('Geocycle – Route de Rabat km19 (Tanger)', 'Co-traitement industriel – 20 000 t/an',
         const LatLng(35.5950, -5.8300), AppColors.primary, Icons.factory_rounded, 'Tous'),
     _Point('Geocycle – Oum Azza (Rabat)', 'Valorisation déchets ménagers',
-        const LatLng(33.8800, -6.7000), AppColors.primary, Icons.factory_rounded, 'Tous'),
+        const LatLng(33.8703, -6.8100), AppColors.primary, Icons.factory_rounded, 'Tous'),
 
     // ── ECO ZALAGH – 2 bases logistiques (ecozalagh.com) ─────────────────────────
     _Point('Eco Zalagh – Sidi Hajjaj (Casablanca)', 'Collecte • Tri • Valorisation déchets',
@@ -111,7 +111,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _Point('Centre de Valorisation Essaouira', 'PNDM complété • Tri • Recyclage',
         const LatLng(31.5083, -9.7638), AppColors.primary, Icons.recycling_rounded, 'Tous'),
     _Point('Centre de Valorisation Rabat / Oum Azza', 'PNDM complété • Tri • Recyclage',
-        const LatLng(33.8800, -6.7000), AppColors.primary, Icons.recycling_rounded, 'Tous'),
+        const LatLng(33.8703, -6.8100), AppColors.primary, Icons.recycling_rounded, 'Tous'),
     _Point('Centre de Valorisation Berkane', 'PNDM complété • Tri • Recyclage',
         const LatLng(34.9223, -2.3198), AppColors.primary, Icons.recycling_rounded, 'Tous'),
     _Point('Centre de Valorisation Figuig', 'PNDM complété • Tri • Recyclage',
@@ -134,98 +134,19 @@ class _MapScreenState extends ConsumerState<MapScreen>
         const LatLng(32.8862, -6.9083), AppColors.primary, Icons.recycling_rounded, 'Tous'),
   ];
 
-  // ── Points OSM – coordonnées exactes Overpass API (2026-06-11) ──────────────
+  // ── Points OSM – coordonnées vérifiées Overpass API (Maroc uniquement) ──────
+  // Note: anciens points "Laâyoune" supprimés — étaient en réalité à Lanzarote
+  // (Îles Canaries, lat~29°N lon~-13.45°W) et non à Laâyoune (27.15°N,-13.20°W)
   static const _osmStaticPoints = <_Point>[
-    // Laâyoune – bacs multi-matériaux
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Canettes',
-        LatLng(29.1378360, -13.4562072), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac de recyclage – Laâyoune', 'Conteneur de tri',
-        LatLng(29.1445556, -13.4889802), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac de recyclage – Laâyoune', 'Conteneur de tri',
-        LatLng(29.1349760, -13.4569844), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac de recyclage – Laâyoune', 'Conteneur de tri',
-        LatLng(29.1334906, -13.4593822), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac de recyclage – Laâyoune', 'Déchets divers',
-        LatLng(29.1810282, -13.4949194), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac verre – Laâyoune', 'Verre • Déchets',
-        LatLng(29.1798867, -13.4929923), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Carton',
-        LatLng(29.1643278, -13.4949412), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac de recyclage – Laâyoune', 'Déchets divers',
-        LatLng(29.1607975, -13.4963138), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Carton',
-        LatLng(29.1582907, -13.4993776), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    // Laâyoune – huiles
-    _Point('Bac huiles – Laâyoune', 'Huile cuisine • Huile moteur',
-        LatLng(29.1438591, -13.4508934), Color(0xFF795548), Icons.oil_barrel_rounded, 'Huiles', isOsm: true, osmHours: '24/7'),
-    _Point('Bac huiles – Laâyoune', 'Huile cuisine • Huile moteur',
-        LatLng(29.1413946, -13.4522031), Color(0xFF795548), Icons.oil_barrel_rounded, 'Huiles', isOsm: true),
-    _Point('Bac huiles – Laâyoune', 'Huile cuisine • Verre • Papier',
-        LatLng(29.2237508, -13.4526787), Color(0xFF795548), Icons.oil_barrel_rounded, 'Huiles', isOsm: true),
-    // Laâyoune – verre
-    _Point('Bac verre – Laâyoune', 'Verre • Papier • Plastique',
-        LatLng(29.1454822, -13.4494757), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true, osmHours: '24/7'),
-    _Point('Bac verre – Laâyoune', 'Verre',
-        LatLng(29.1439382, -13.4508033), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true, osmHours: '24/7'),
-    _Point('Bac verre – Laâyoune', 'Verre',
-        LatLng(29.1414089, -13.4521930), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true, osmHours: '24/7'),
-    _Point('Bac verre – Laâyoune', 'Verre',
-        LatLng(29.1490809, -13.4464475), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true, osmHours: '24/7'),
-    _Point('Bac verre – Laâyoune', 'Verre',
-        LatLng(29.1473412, -13.4480383), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true, osmHours: '24/7'),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Canettes',
-        LatLng(29.1455052, -13.4494638), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true, osmHours: '24/7'),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Canettes',
-        LatLng(29.2343646, -13.4998894), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac verre – Laâyoune', 'Verre • Déchets',
-        LatLng(29.0032518, -13.4876188), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique',
-        LatLng(28.9997992, -13.4844129), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Carton',
-        LatLng(29.0703807, -13.4799497), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac multi-tri – Laâyoune', 'Verre • Papier • Plastique • Canettes',
-        LatLng(29.0621689, -13.4612520), AppColors.glass, Icons.recycling_rounded, 'Verre', isOsm: true),
-    _Point('Bac de recyclage – Laâyoune', 'Conteneur de tri',
-        LatLng(29.2039231, -13.4251867), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Laâyoune – plastique
-    _Point('Bac plastique – Laâyoune', 'Plastique • Canettes',
-        LatLng(29.1440027, -13.4507188), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true, osmHours: '24/7'),
-    _Point('Bac plastique – Laâyoune', 'Plastique • Canettes',
-        LatLng(29.1413584, -13.4522088), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true, osmHours: '24/7'),
-    _Point('Bac plastique – Laâyoune', 'Plastique • Canettes',
-        LatLng(29.1490704, -13.4464645), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true),
-    _Point('Bac plastique – Laâyoune', 'Plastique • Canettes',
-        LatLng(29.1478682, -13.4476386), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true, osmHours: '24/7'),
-    _Point('Bac plastique – Laâyoune', 'Plastique • Canettes',
-        LatLng(29.1473825, -13.4480095), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true, osmHours: '24/7'),
-    _Point('Bac plastique – Laâyoune', 'Plastique • Canettes',
-        LatLng(29.2343598, -13.4999130), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true),
-    // Laâyoune – papier
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1413798, -13.4521987), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1439814, -13.4507411), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1447879, -13.4500397), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1454653, -13.4494883), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1490582, -13.4464852), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1478505, -13.4476512), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier • Carton',
-        LatLng(29.1473666, -13.4480245), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true, osmHours: '24/7'),
-    _Point('Bac papier – Laâyoune', 'Papier',
-        LatLng(29.2343544, -13.4999365), AppColors.paper, Icons.article_outlined, 'Papier', isOsm: true),
     // Agadir
     _Point('Bac plastique – Agadir', 'Plastique',
         LatLng(30.4106444, -9.5970950), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true),
-    // Guelmim
-    _Point('Ferraille – Guelmim', 'Ferraille • Déchets à vendre',
+    // Tan-Tan (coordonnées OSM 28.42°N,-11.11°W = Tan-Tan, non Guelmim à 28.99°N,-10.06°W)
+    _Point('Ferraille – Tan-Tan', 'Ferraille • Déchets à vendre',
         LatLng(28.4270418, -11.1104707), Color(0xFF546E7A), Icons.hardware_rounded, 'Métal', isOsm: true),
-    _Point('Magasin ferraille – Guelmim', 'Ferraille',
+    _Point('Magasin ferraille – Tan-Tan', 'Ferraille',
         LatLng(28.4270565, -11.1119375), Color(0xFF546E7A), Icons.hardware_rounded, 'Métal', isOsm: true),
-    _Point('Déchetterie – Guelmim', 'Déchets divers',
+    _Point('Déchetterie – Tan-Tan', 'Déchets divers',
         LatLng(28.4135111, -11.0973287), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
     // Rabat
     _Point('Bac de recyclage – Rabat', 'Conteneur de tri',
@@ -234,16 +155,16 @@ class _MapScreenState extends ConsumerState<MapScreen>
         LatLng(34.0152547, -6.8289285), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
     _Point('Bac de recyclage – Rabat', 'Conteneur de tri',
         LatLng(34.0161735, -6.8295423), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Meknès / Sidi Kacem
-    _Point('Bac de recyclage – Sidi Kacem', 'Conteneur de tri',
+    // Région Fès-Meknès (coords 34.04°N,-5.00°W ≠ Sidi Kacem 34.22°N,-5.71°W ni Meknès 33.90°N,-5.55°W)
+    _Point('Bac de recyclage – région Fès-Meknès', 'Conteneur de tri',
         LatLng(34.0469765, -5.0052651), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('YUBA CYN – Meknès', 'Recyclage industriel',
+    _Point('YUBA CYN – région Fès-Meknès', 'Recyclage industriel',
         LatLng(34.0392846, -5.0084477), AppColors.primary, Icons.factory_rounded, 'Tous', isOsm: true),
     // Casablanca
     _Point('Point S – Casablanca', 'Centre de transfert de déchets',
         LatLng(33.5802729, -7.6378586), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Fès / zone Boulemane
-    _Point('Bac de recyclage – zone Fès', 'Conteneur de tri',
+    // Taounate (coords 34.54°N,-4.65°W = Taounate, ~55km nord de Fès)
+    _Point('Bac de recyclage – Taounate', 'Conteneur de tri',
         LatLng(34.5448495, -4.6497615), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
     // Tétouan
     _Point('2nd Hands Shop – Tétouan', 'Vêtements • Textile',
@@ -384,8 +305,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
     if (mounted) setState(() => _osmLoading = true);
     try {
       const query = '[out:json][timeout:60];'
-          '(node[amenity=recycling](27.5,-13.5,36.0,-0.5);'
-          'node[amenity=waste_transfer_station](27.5,-13.5,36.0,-0.5););'
+          '(node[amenity=recycling](27.0,-13.2,36.0,-0.5);'
+          'node[amenity=waste_transfer_station](27.0,-13.2,36.0,-0.5););'
           'out body;';
       final resp = await Dio().get<String>(
         'https://overpass-api.de/api/interpreter',
@@ -400,6 +321,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
         final lat = (e['lat'] as num?)?.toDouble();
         final lon = (e['lon'] as num?)?.toDouble();
         if (lat == null || lon == null) continue;
+        // Exclure les points hors Maroc (ex. Îles Canaries lon < -13.2)
+        if (lon < -13.2 || lon > 0.0 || lat < 27.0 || lat > 36.0) continue;
         final key = '${lat.toStringAsFixed(4)},${lon.toStringAsFixed(4)}';
         if (seen.contains(key)) continue;
         seen.add(key);

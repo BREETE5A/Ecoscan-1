@@ -4,6 +4,8 @@ class AppStrings {
 
   static AppStrings of(String locale) => AppStrings(locale);
 
+  String get languageCode => _locale;
+
   String _t(String fr, String en, String ar, [String? es]) {
     switch (_locale) {
       case 'en': return en;
@@ -1237,6 +1239,17 @@ class AppStrings {
                                         'Analysis error: $e',
                                         'خطأ في التحليل: $e',
                                         'Error de análisis: $e');
+  String get detectedObject       => _t('Objet', 'Object', 'كائن', 'Objeto');
+  String get offlineFallback      => _t('Réseau indisponible — Analyse locale activée',
+                                        'No network — Local analysis activated',
+                                        'لا شبكة — التحليل المحلي مفعّل',
+                                        'Sin red — Análisis local activado');
+  List<String> get scanTips       => [
+    _t('Détection des matériaux...', 'Detecting materials...', 'اكتشاف المواد...', 'Detectando materiales...'),
+    _t('Analyse IA en cours...', 'AI analysis in progress...', 'تحليل الذكاء الاصطناعي...', 'Análisis IA en curso...'),
+    _t('Identification des composantes...', 'Identifying components...', 'تحديد المكونات...', 'Identificando componentes...'),
+    _t('Calcul du bilan éco...', 'Computing eco score...', 'حساب النقاط البيئية...', 'Calculando eco-score...'),
+  ];
 
   // ── Guide ─────────────────────────────────────────────────────────────────
   String get sortingSubtitle  => _t('Apprenez à trier vos déchets correctement',
@@ -1478,6 +1491,26 @@ class AppStrings {
   String get dangerousTag        => _t('Dangereux',               'Dangerous',               'خطر',                          'Peligroso');
   String get materialType        => _t('Matière',                 'Material',                'المادة',                       'Material');
   String get alertEmailSent      => _t('Alerte e-déchet envoyée par email', 'E-waste alert sent by email', 'تم إرسال تنبيه النفايات الإلكترونية بالبريد', 'Alerta de residuo electrónico enviada por correo');
+
+  String materialName(String label) {
+    switch (label) {
+      case 'plastique':    return _t('Plastique',     'Plastic',      'بلاستيك',     'Plástico');
+      case 'verre':        return _t('Verre',         'Glass',        'زجاج',        'Vidrio');
+      case 'metal':        return _t('Métal',         'Metal',        'معدن',        'Metal');
+      case 'cardboard':    return _t('Carton',        'Cardboard',    'كرتون',       'Cartón');
+      case 'paper':        return _t('Papier',        'Paper',        'ورق',         'Papel');
+      case 'organique':    return _t('Organique',     'Organic',      'عضوي',        'Orgánico');
+      case 'electronique': return _t('Électronique',  'Electronic',   'إلكتروني',    'Electrónico');
+      case 'textile':      return _t('Textile',       'Textile',      'نسيج',        'Textil');
+      case 'vetement':     return _t('Vêtement',      'Clothing',     'ملابس',       'Ropa');
+      case 'chaussures':   return _t('Chaussures',    'Shoes',        'أحذية',       'Zapatos');
+      case 'dangereux':    return _t('Dangereux',     'Dangerous',    'خطر',         'Peligroso');
+      case 'bois':         return _t('Bois',          'Wood',         'خشب',         'Madera');
+      case 'trash':        return _t('Déchet',        'Waste',        'نفاية',       'Residuo');
+      default:             return label;
+    }
+  }
+
   String binColorName(String color) {
     switch (color) {
       case 'blue':     return _t('Bleu',    'Blue',    'أزرق',      'Azul');

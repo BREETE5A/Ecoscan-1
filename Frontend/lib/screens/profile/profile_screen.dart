@@ -396,7 +396,7 @@ class _BadgeRow extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => context.go('/badges'),
+              onPressed: () => context.push('/badges'),
               child: Text(
                 s.seeAll,
                 style: const TextStyle(
@@ -510,7 +510,7 @@ class _MenuItemState extends State<_MenuItem>
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) {
         _ctrl.reverse();
-        context.go(widget.route);
+        context.push(widget.route);
       },
       onTapCancel: () => _ctrl.reverse(),
       child: ScaleTransition(

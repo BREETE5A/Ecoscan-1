@@ -255,7 +255,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             )
                           else
                             GestureDetector(
-                              onTap: () => context.go('/login'),
+                              onTap: () { if (context.canPop()) { context.pop(); } else { context.go('/login'); } },
                               child: Container(
                                 width: 38,
                                 height: 38,
@@ -328,7 +328,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             ),
                           ),
                           GestureDetector(
-                            onTap: () => context.go('/login'),
+                            onTap: () { if (context.canPop()) { context.pop(); } else { context.go('/login'); } },
                             child: Text(
                               l10n.login,
                               style: const TextStyle(

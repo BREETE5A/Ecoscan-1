@@ -163,7 +163,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             margin: const EdgeInsets.all(16),
           ),
         );
-        context.go('/profile');
+        if (context.canPop()) { context.pop(); } else { context.go('/profile'); }
       }
     } catch (e) {
       if (mounted) {
@@ -191,7 +191,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: GestureDetector(
-          onTap: () => context.go('/profile'),
+          onTap: () { if (context.canPop()) { context.pop(); } else { context.go('/profile'); } },
           child: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
         title: Text(s.editProfile),
