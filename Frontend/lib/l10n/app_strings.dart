@@ -1199,6 +1199,10 @@ class AppStrings {
                                     'AI model not loaded. Check the installation.',
                                     'نموذج الذكاء الاصطناعي غير محمّل. تحقق من التثبيت.',
                                     'Modelo IA no cargado. Verifica la instalación.');
+  String get serverUnavailable => _t('Serveur d\'analyse indisponible. Vérifiez votre connexion internet et réessayez.',
+                                     'Analysis server unavailable. Check your internet connection and try again.',
+                                     'خادم التحليل غير متاح. تحقق من اتصالك بالإنترنت وحاول مجدداً.',
+                                     'Servidor de análisis no disponible. Verifica tu conexión a internet e inténtalo de nuevo.');
   String get noImageAvailable => _t('Aucune image disponible. Utilisez la caméra ou la galerie.',
                                     'No image available. Use camera or gallery.',
                                     'لا توجد صورة متاحة. استخدم الكاميرا أو المعرض.',
@@ -1208,6 +1212,9 @@ class AppStrings {
   String get nonRecyclableResult => _t('Non recyclable', 'Non recyclable', 'غير قابل للتدوير', 'No reciclable');
   String get dangerousResult  => _t('Déchet dangereux', 'Dangerous waste', 'نفايات خطرة', 'Residuo peligroso');
   String get pointsEarnedScan => _t('Points gagnés', 'Points earned', 'النقاط المكتسبة', 'Puntos ganados');
+  String get componentsDetected => _t('Composantes détectées', 'Detected components', 'المكونات المكتشفة', 'Componentes detectados');
+  String get putIn             => _t('À mettre dans', 'Put in', 'ضعها في', 'Poner en');
+  String get chatWithEcobot    => _t('Chat avec EcoBot', 'Chat with EcoBot', 'تحدث مع EcoBot', 'Chatear con EcoBot');
   String get detailsTitle     => _t('Détails de l\'objet', 'Object details', 'تفاصيل الكائن', 'Detalles del objeto');
   String get recyclabilityLevel => _t('Niveau de recyclabilité', 'Recyclability level', 'مستوى قابلية إعادة التدوير', 'Nivel de reciclabilidad');
   String get nearbyCollectionPoints => _t('Points de collecte proches', 'Nearby collection points', 'نقاط الجمع القريبة', 'Puntos de recogida cercanos');
@@ -1501,6 +1508,9 @@ class AppStrings {
       case 'cardboard':    return _t('Carton recyclable',     'Recyclable cardboard',   'كرتون قابل لإعادة التدوير',    'Cartón reciclable');
       case 'chaussures':   return _t('Chaussures usagées',    'Used shoes',             'أحذية مستعملة',                'Calzado usado');
       case 'vetement':     return _t('Vêtement / Textile',    'Clothing / Textile',     'ملابس / نسيج',                 'Ropa / Textil');
+      case 'textile':      return _t('Textile / Vêtement',    'Textile / Clothing',     'نسيج / ملابس',                 'Textil / Ropa');
+      case 'dangereux':    return _t('Déchet dangereux',       'Hazardous waste',        'نفايات خطرة',                  'Residuo peligroso');
+      case 'bois':         return _t('Déchet bois',            'Wood waste',             'نفايات خشب',                   'Residuo de madera');
       case 'electronique': return _t('Appareil DEEE',         'Electronic waste',       'نفايات إلكترونية',             'Residuo electrónico');
       case 'metal':        return _t('Métal recyclable',      'Recyclable metal',       'معدن قابل لإعادة التدوير',     'Metal reciclable');
       case 'organique':    return _t('Déchet organique',      'Organic waste',          'نفايات عضوية',                 'Residuo orgánico');

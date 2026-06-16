@@ -234,22 +234,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       final onlineResult = await ScanApiService.classify(imageToClassify);
 
       if (onlineResult != null && onlineResult.topLabel != 'unknown') {
-        final base = ScanEntry.fromClassification(onlineResult.topLabel, onlineResult.topConfidence, lang: lang);
+        final base = ScanEntry.fromClassification(
+          onlineResult.topLabel, onlineResult.topConfidence,
+          lang: lang, components: onlineResult.components,
+        );
         entry = ScanEntry(
           id: base.id, name: base.name, category: base.category,
           recyclable: base.recyclable, dangerous: base.dangerous,
           points: base.points, co2Saved: base.co2Saved,
           recyclability: base.recyclability, binColor: base.binColor,
           scannedAt: base.scannedAt, mode: 'cloud',
+          components: base.components,
         );
-
-      } else if (_modelLoaded) {
-        // ── Étape 2 : fallback TFLite local ─────────────────────────────────
-        final result = await _classifier.classify(imageToClassify);
-        entry = ScanEntry.fromClassification(result.label, result.confidence, lang: lang);
-
       } else {
-        _showError(s.modelNotLoaded);
+        _showError(s.serverUnavailable);
         return;
       }
     } catch (e) {

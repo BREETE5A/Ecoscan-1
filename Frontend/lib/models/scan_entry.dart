@@ -1,5 +1,19 @@
 import '../l10n/app_strings.dart';
 
+class ScanComponent {
+  final String partie;
+  final String label;
+  final String binColor;
+  final String conseil;
+
+  const ScanComponent({
+    required this.partie,
+    required this.label,
+    required this.binColor,
+    this.conseil = '',
+  });
+}
+
 class ScanEntry {
   final String id;
   final String name;
@@ -7,11 +21,12 @@ class ScanEntry {
   final bool recyclable;
   final bool dangerous;
   final int points;
-  final double co2Saved; // grams
-  final double recyclability; // 0.0 to 1.0
+  final double co2Saved;
+  final double recyclability;
   final String binColor;
   final DateTime scannedAt;
-  final String mode; // 'cloud' or 'local'
+  final String mode;
+  final List<ScanComponent> components;
 
   const ScanEntry({
     required this.id,
@@ -25,23 +40,31 @@ class ScanEntry {
     required this.binColor,
     required this.scannedAt,
     required this.mode,
+    this.components = const [],
   });
 
   static const _categoryData = {
+    'bois':         (recyclable: true,  dangerous: false, points: 10, co2Saved: 15.0, recyclability: 0.70, binColor: 'black'),
     'cardboard':    (recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.88, binColor: 'blue'),
     'chaussures':   (recyclable: false, dangerous: false, points: 8,  co2Saved: 5.0,  recyclability: 0.15, binColor: 'green'),
-    'vetement':     (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'green'),
+    'dangereux':    (recyclable: false, dangerous: true,  points: 30, co2Saved: 0.0,  recyclability: 0.20, binColor: 'ecopoint'),
     'electronique': (recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'ecopoint'),
     'metal':        (recyclable: true,  dangerous: false, points: 20, co2Saved: 80.0, recyclability: 0.97, binColor: 'yellow'),
     'organique':    (recyclable: true,  dangerous: false, points: 8,  co2Saved: 20.0, recyclability: 0.90, binColor: 'brown'),
     'paper':        (recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.85, binColor: 'blue'),
     'plastique':    (recyclable: true,  dangerous: false, points: 15, co2Saved: 45.0, recyclability: 0.92, binColor: 'yellow'),
+    'textile':      (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'green'),
     'trash':        (recyclable: false, dangerous: false, points: 5,  co2Saved: 0.0,  recyclability: 0.10, binColor: 'black'),
     'unknown':      (recyclable: false, dangerous: false, points: 0,  co2Saved: 0.0,  recyclability: 0.0,  binColor: 'black'),
+    'vetement':     (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'green'),
     'verre':        (recyclable: true,  dangerous: false, points: 25, co2Saved: 55.0, recyclability: 1.0,  binColor: 'green'),
   };
 
-  static ScanEntry fromClassification(String label, double confidence, {String lang = 'fr'}) {
+  static String binColorForLabel(String label) =>
+      _categoryData[label]?.binColor ?? 'black';
+
+  static ScanEntry fromClassification(String label, double confidence,
+      {String lang = 'fr', List<ScanComponent> components = const []}) {
     final data = _categoryData[label] ?? _categoryData['unknown']!;
     final localizedName = AppStrings.of(lang).categoryName(label);
     return ScanEntry(
@@ -56,6 +79,7 @@ class ScanEntry {
       binColor: data.binColor,
       scannedAt: DateTime.now(),
       mode: 'local',
+      components: components,
     );
   }
 
@@ -94,5 +118,4 @@ class ScanEntry {
       mode: json['mode'] as String? ?? 'local',
     );
   }
-
 }

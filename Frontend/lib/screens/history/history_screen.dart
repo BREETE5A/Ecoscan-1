@@ -487,6 +487,10 @@ class _HistoryTile extends StatelessWidget {
         return Icons.battery_charging_full_rounded;
       case 'chaussures':
         return Icons.hiking_rounded;
+      case 'dangereux':
+        return Icons.warning_rounded;
+      case 'bois':
+        return Icons.forest_rounded;
       case 'trash':
         return Icons.delete_rounded;
       default:

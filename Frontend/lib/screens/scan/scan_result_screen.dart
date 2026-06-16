@@ -159,19 +159,14 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                             .fadeIn(duration: 400.ms),
                         const SizedBox(height: 16),
 
-                        // Mode indicator
-                        _ModeIndicator(mode: scan.mode)
-                            .animate(delay: 150.ms)
-                            .fadeIn(duration: 300.ms),
-                        const SizedBox(height: 16),
-
-                        // Recyclability bar
-                        _RecyclabilityCard(
-                            scan: scan, isDark: isDark, accentColor: accentColor)
-                            .animate(delay: 250.ms)
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.2),
-                        const SizedBox(height: 16),
+                        // Components card
+                        if (scan.components.isNotEmpty)
+                          _ComponentsCard(scan: scan, isDark: isDark)
+                              .animate(delay: 150.ms)
+                              .fadeIn(duration: 400.ms)
+                              .slideY(begin: 0.2),
+                        if (scan.components.isNotEmpty)
+                          const SizedBox(height: 16),
 
                         // Points + CO₂
                         Row(
@@ -235,9 +230,9 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () => context.go('/map'),
-                                icon: const Icon(Icons.map_rounded, size: 18),
-                                label: Text(s.viewMap,
+                                onPressed: () => context.go('/chat'),
+                                icon: const Icon(Icons.chat_rounded, size: 18),
+                                label: Text(s.chatWithEcobot,
                                     style: const TextStyle(fontFamily: 'Poppins')),
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size(0, 50),
@@ -372,158 +367,6 @@ class _HeroBanner extends ConsumerWidget {
   }
 }
 
-class _ModeIndicator extends ConsumerWidget {
-  final String mode;
-  const _ModeIndicator({required this.mode});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
-    final isCloud = mode == 'cloud';
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: isCloud
-                ? AppColors.info.withValues(alpha: 0.1)
-                : AppColors.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isCloud
-                  ? AppColors.info.withValues(alpha: 0.4)
-                  : AppColors.accent.withValues(alpha: 0.4),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isCloud
-                    ? Icons.cloud_done_rounded
-                    : Icons.offline_bolt_rounded,
-                color: isCloud ? AppColors.info : AppColors.accent,
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                isCloud ? s.modeCloud : s.modeLocal,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isCloud ? AppColors.info : AppColors.accent,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RecyclabilityCard extends ConsumerWidget {
-  final ScanEntry scan;
-  final bool isDark;
-  final Color accentColor;
-  const _RecyclabilityCard(
-      {required this.scan, required this.isDark, required this.accentColor});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
-    final pct = (scan.recyclability * 100).round();
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                s.recyclabilityLevel,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.darkText : AppColors.textPrimary,
-                ),
-              ),
-              Text(
-                '$pct%',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: accentColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: scan.recyclability),
-              duration: const Duration(milliseconds: 1400),
-              curve: Curves.easeOut,
-              builder: (_, v, _) => LinearProgressIndicator(
-                value: v,
-                backgroundColor:
-                    isDark ? AppColors.darkInput : AppColors.inputBg,
-                valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                minHeight: 14,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('0%',
-                  style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      color: AppColors.textSecondary)),
-              Text(
-                pct >= 80
-                    ? s.levelExcellent
-                    : pct >= 50
-                        ? s.levelAcceptable
-                        : s.levelLow,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: accentColor,
-                ),
-              ),
-              Text('100%',
-                  style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      color: AppColors.textSecondary)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _PointsCard extends ConsumerStatefulWidget {
   final ScanEntry scan;
@@ -819,6 +662,163 @@ class _BinCard extends ConsumerWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComponentsCard extends ConsumerWidget {
+  final ScanEntry scan;
+  final bool isDark;
+  const _ComponentsCard({required this.scan, required this.isDark});
+
+  Color _colorForBin(String bin) {
+    switch (bin) {
+      case 'yellow':   return const Color(0xFFF39C12);
+      case 'blue':     return const Color(0xFF3498DB);
+      case 'green':    return AppColors.primary;
+      case 'brown':    return const Color(0xFF8B5E3C);
+      case 'ecopoint': return const Color(0xFF27AE60);
+      default:         return AppColors.textSecondary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(ref.watch(localeProvider).languageCode);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.category_rounded, color: AppColors.primary, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                s.componentsDetected,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...scan.components.map((c) {
+            final binC = _colorForBin(c.binColor);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: binC.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: binC.withValues(alpha: 0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header : partie + label + bac
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10, height: 10,
+                          decoration: BoxDecoration(color: binC, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            c.partie,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: binC.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            c.label,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: binC,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Bac
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline_rounded, size: 13, color: binC),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${s.putIn} : ${s.binColorName(c.binColor)}',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: binC,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Conseil
+                  if (c.conseil.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.lightbulb_outline_rounded,
+                              size: 13, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              c.conseil,
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 10),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
