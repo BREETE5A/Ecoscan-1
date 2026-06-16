@@ -14,17 +14,13 @@ class WaterFootprintScreen extends ConsumerStatefulWidget {
 }
 
 class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
-  double _shower = 7;
   double _dishes = 2;
   double _laundry = 3;
   double _garden = 0;
-  double _toilet = 5;
 
-  static const _kShower  = 'wf_shower';
   static const _kDishes  = 'wf_dishes';
   static const _kLaundry = 'wf_laundry';
   static const _kGarden  = 'wf_garden';
-  static const _kToilet  = 'wf_toilet';
 
   @override
   void initState() {
@@ -36,11 +32,9 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _shower  = prefs.getDouble(_kShower)  ?? 7;
       _dishes  = prefs.getDouble(_kDishes)  ?? 2;
       _laundry = prefs.getDouble(_kLaundry) ?? 3;
       _garden  = prefs.getDouble(_kGarden)  ?? 0;
-      _toilet  = prefs.getDouble(_kToilet)  ?? 5;
     });
   }
 
@@ -50,19 +44,17 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
   }
 
   // Consommation en litres
-  double get _showerL    => _shower * 10;
   double get _dishesL    => _dishes * 15;
   double get _laundryL   => (_laundry / 7) * 60;
   double get _gardenL    => _garden * 15;
-  double get _toiletL    => _toilet * 9;
-  double get _total      => _showerL + _dishesL + _laundryL + _gardenL + _toiletL;
+  double get _total      => _dishesL + _laundryL + _gardenL;
 
-  static const _moroccanAvg = 150.0;
+  static const _moroccanAvg = 143.0;
 
   Color get _totalColor {
-    if (_total <= 100) return const Color(0xFF00C853);
-    if (_total <= 150) return const Color(0xFFFFAB00);
-    if (_total <= 200) return const Color(0xFFFF6D00);
+    if (_total <= 30)  return const Color(0xFF00C853);
+    if (_total <= 60)  return const Color(0xFFFFAB00);
+    if (_total <= 100) return const Color(0xFFFF6D00);
     return const Color(0xFFD50000);
   }
 
@@ -131,9 +123,10 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
 
   Widget _buildResultCard(bool isDark, String lang) {
     final color = _totalColor;
-    final avg = lang == 'ar' ? 'المعدل المغربي: 150 ل/يوم' :
-                lang == 'en' ? 'Moroccan average: 150 L/day' :
-                'Moyenne marocaine : 150 L/jour';
+    final avg = lang == 'ar' ? 'المعدل المغربي: 143 ل/يوم (البنك الدولي)' :
+                lang == 'en' ? 'Moroccan average: 143 L/day (World Bank)' :
+                lang == 'es' ? 'Promedio marroquí: 143 L/día (Banco Mundial)' :
+                'Moyenne marocaine : 143 L/jour (Banque Mondiale)';
     final label = lang == 'ar' ? 'ل/يوم' : lang == 'en' ? 'L/day' : 'L/jour';
     final diff = (_total - _moroccanAvg).abs().round();
     final above = _total > _moroccanAvg;
@@ -190,13 +183,6 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
                 color: isDark ? AppColors.darkText : AppColors.textPrimary)),
         const SizedBox(height: 16),
         _WaterSlider(
-          icon: Icons.shower_rounded,
-          label: lang == 'ar' ? 'مدة الدش' : lang == 'en' ? 'Shower duration' : 'Durée de douche',
-          value: _shower, min: 2, max: 30, unit: lang == 'ar' ? 'دقيقة' : lang == 'en' ? 'min' : 'min',
-          liters: _showerL, color: const Color(0xFF0288D1), isDark: isDark,
-          onChanged: (v) { setState(() => _shower = v);  _save(_kShower,  v); },
-        ),
-        _WaterSlider(
           icon: Icons.set_meal_rounded,
           label: lang == 'ar' ? 'غسيل الأطباق' : lang == 'en' ? 'Dish washing' : 'Vaisselle',
           value: _dishes, min: 0, max: 6, unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : 'x/jour',
@@ -217,30 +203,24 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
           liters: _gardenL, color: const Color(0xFF388E3C), isDark: isDark,
           onChanged: (v) { setState(() => _garden = v);  _save(_kGarden,  v); },
         ),
-        _WaterSlider(
-          icon: Icons.wc_rounded,
-          label: lang == 'ar' ? 'سحب الحمام' : lang == 'en' ? 'Toilet flushes' : 'Chasses d\'eau',
-          value: _toilet, min: 1, max: 15, unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : 'x/jour',
-          liters: _toiletL, color: const Color(0xFFE64A19), isDark: isDark,
-          onChanged: (v) { setState(() => _toilet = v);  _save(_kToilet,  v); },
-        ),
       ]),
     );
   }
 
   Widget _buildTips(bool isDark, String lang) {
     final tips = lang == 'ar' ? [
-      'تقليل الدش بدقيقتين يوفر 20 لتراً يومياً',
       'إصلاح الصنبور المتسرب يوفر 30 لتراً يومياً',
       'غسيل الملابس بماء بارد يقلل الاستهلاك بـ 30%',
       'ري الحديقة في الصباح الباكر يقلل التبخر',
     ] : lang == 'en' ? [
-      'Reducing shower by 2 min saves 20L/day',
       'Fixing a leaky tap saves 30L/day',
       'Washing clothes in cold water reduces consumption by 30%',
       'Watering garden early morning reduces evaporation',
+    ] : lang == 'es' ? [
+      'Reparar un grifo con fuga ahorra 30 L/día',
+      'Lavar la ropa en agua fría reduce el consumo en un 30%',
+      'Regar el jardín a primera hora reduce la evaporación',
     ] : [
-      'Réduire la douche de 2 min économise 20 L/jour',
       'Réparer un robinet qui fuit économise 30 L/jour',
       'Laver le linge à l\'eau froide réduit la consommation de 30%',
       'Arroser le jardin tôt le matin réduit l\'évaporation',

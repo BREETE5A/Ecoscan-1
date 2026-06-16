@@ -129,16 +129,6 @@ const List<DidYouKnowFact> allFacts = [
 
   // ── Papier / Carton ─────────────────────────────────────────────────────────
   DidYouKnowFact(
-    id: 'f10',
-    fact: 'Pour produire 1 tonne de papier neuf, il faut 17 arbres. Recyclez-le !',
-    factEn: 'To produce 1 tonne of new paper, 17 trees are needed. Recycle it!',
-    factAr: 'لإنتاج طن واحد من الورق الجديد، نحتاج إلى 17 شجرة. أعد تدويره!',
-    factEs: 'Para producir 1 tonelada de papel nuevo se necesitan 17 árboles. ¡Recíclalo!',
-    category: 'papier',
-    icon: Icons.article_outlined,
-    color: AppColors.paper,
-  ),
-  DidYouKnowFact(
     id: 'f11',
     fact: 'Le ticket de caisse contient du Bisphénol A (BPA) — ne le recyclez pas, il contamine.',
     factEn: 'Cash register receipts contain Bisphenol A (BPA) — do not recycle them, they contaminate.',
@@ -170,16 +160,6 @@ const List<DidYouKnowFact> allFacts = [
   ),
 
   // ── Métal ───────────────────────────────────────────────────────────────────
-  DidYouKnowFact(
-    id: 'f14',
-    fact: 'L\'aluminium peut être recyclé en 60 jours, de la poubelle au rayon supermarché.',
-    factEn: 'Aluminium can be recycled in 60 days, from the bin back to the supermarket shelf.',
-    factAr: 'يمكن إعادة تدوير الألمنيوم في 60 يومًا، من السلة إلى رف السوبرماركت.',
-    factEs: 'El aluminio puede reciclarse en 60 días, del contenedor de vuelta a la estantería del supermercado.',
-    category: 'metal',
-    icon: Icons.hardware_rounded,
-    color: AppColors.metal,
-  ),
   DidYouKnowFact(
     id: 'f15',
     fact: 'Recycler 1 kg d\'aluminium économise 8 kg de CO₂ et 95% de l\'énergie de production.',

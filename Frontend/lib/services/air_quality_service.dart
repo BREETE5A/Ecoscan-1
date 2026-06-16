@@ -191,10 +191,9 @@ class AirQualityService {
       if (list == null) return null;
 
       // OWM AQI : 1=Good 2=Fair 3=Moderate 4=Poor 5=Very Poor
-      // Conversion vers une valeur AQI standard 0-500 pour affichage
       final owmAqi = (list['main']?['aqi'] as num?)?.toInt() ?? 0;
       if (owmAqi <= 0) return null;
-      final aqi = _owmToAqi(owmAqi);
+      final aqi = owmAqi;
 
       final comp = list['components'] as Map? ?? {};
       final pollutants = <String, double>{
@@ -213,28 +212,16 @@ class AirQualityService {
     }
   }
 
-  // Convertit OWM AQI (1-5) vers valeur numérique affichable
-  static int _owmToAqi(int owm) {
-    switch (owm) {
-      case 1: return 25;   // Good
-      case 2: return 75;   // Fair → Modéré
-      case 3: return 125;  // Moderate → Mauvais (sensibles)
-      case 4: return 175;  // Poor → Mauvais
-      case 5: return 250;  // Very Poor → Très mauvais
-      default: return 0;
-    }
-  }
-
   // Construit l'objet AirQualityData avec niveau et couleur
+  // aqi = échelle OWM directe : 1=Bon 2=Modéré 3=Mauvais(sensibles) 4=Mauvais 5=Très mauvais
   static AirQualityData _buildData(int aqi, String city,
       Map<String, double> pollutants) {
     String level, levelAr, levelEn, levelEs; int color;
-    if      (aqi <= 50)  { level='Bon';               levelEn='Good';                  levelAr='جيد';           levelEs='Bueno';            color=0xFF00C853; }
-    else if (aqi <= 100) { level='Modéré';             levelEn='Moderate';              levelAr='معتدل';         levelEs='Moderado';         color=0xFFFFAB00; }
-    else if (aqi <= 150) { level='Mauvais (sensibles)';levelEn='Unhealthy (sensitive)'; levelAr='سيء (حساسون)';  levelEs='Malo (sensibles)'; color=0xFFFF6D00; }
-    else if (aqi <= 200) { level='Mauvais';            levelEn='Unhealthy';             levelAr='غير صحي';       levelEs='No saludable';     color=0xFFD50000; }
-    else if (aqi <= 300) { level='Très mauvais';       levelEn='Very unhealthy';        levelAr='سيء جداً';      levelEs='Muy no saludable'; color=0xFF6200EA; }
-    else                 { level='Dangereux';           levelEn='Hazardous';             levelAr='خطر';           levelEs='Peligroso';        color=0xFF880E4F; }
+    if      (aqi <= 1) { level='Bon';               levelEn='Good';                  levelAr='جيد';           levelEs='Bueno';            color=0xFF00C853; }
+    else if (aqi <= 2) { level='Modéré';             levelEn='Moderate';              levelAr='معتدل';         levelEs='Moderado';         color=0xFFFFAB00; }
+    else if (aqi <= 3) { level='Mauvais (sensibles)';levelEn='Unhealthy (sensitive)'; levelAr='سيء (حساسون)';  levelEs='Malo (sensibles)'; color=0xFFFF6D00; }
+    else if (aqi <= 4) { level='Mauvais';            levelEn='Unhealthy';             levelAr='غير صحي';       levelEs='No saludable';     color=0xFFD50000; }
+    else               { level='Très mauvais';       levelEn='Very unhealthy';        levelAr='سيء جداً';      levelEs='Muy no saludable'; color=0xFF6200EA; }
 
     return AirQualityData(
       aqi: aqi, city: city,
