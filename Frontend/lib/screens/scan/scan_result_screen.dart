@@ -72,6 +72,16 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
             : AppColors.textSecondary;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go('/chat'),
+        backgroundColor: const Color(0xFFF5A623),
+        elevation: 8,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 28),
+      )
+          .animate()
+          .scale(delay: 900.ms, duration: 500.ms, curve: Curves.elasticOut)
+          .fadeIn(duration: 300.ms),
       body: Stack(
         children: [
           // Confetti (only for recyclable)
@@ -210,38 +220,19 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                         const SizedBox(height: 24),
 
                         // Action buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => context.go('/scan'),
-                                icon: const Icon(
-                                    Icons.qr_code_scanner_rounded,
-                                    size: 18),
-                                label: Text(s.rescan,
-                                    style: const TextStyle(fontFamily: 'Poppins')),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(0, 50),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
-                                ),
-                              ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => context.go('/scan'),
+                            icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                            label: Text(s.rescan,
+                                style: const TextStyle(fontFamily: 'Poppins')),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 50),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => context.go('/chat'),
-                                icon: const Icon(Icons.chat_rounded, size: 18),
-                                label: Text(s.chatWithEcobot,
-                                    style: const TextStyle(fontFamily: 'Poppins')),
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(0, 50),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         )
                             .animate(delay: 750.ms)
                             .fadeIn(duration: 400.ms)
@@ -718,28 +709,44 @@ class _ComponentsCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...scan.components.map((c) {
+          ...scan.components.asMap().entries.map((entry) {
+            final index = entry.key;
+            final c = entry.value;
             final binC = _colorForBin(c.binColor);
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 color: binC.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: binC.withValues(alpha: 0.25)),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: binC.withValues(alpha: 0.30)),
+                boxShadow: [
+                  BoxShadow(
+                    color: binC.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header : partie + label + bac
+                  // Header : partie + label badge
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 12, 6),
                     child: Row(
                       children: [
+                        // Colored bin dot (pulsing)
                         Container(
-                          width: 10, height: 10,
-                          decoration: BoxDecoration(color: binC, shape: BoxShape.circle),
+                          width: 12, height: 12,
+                          decoration: BoxDecoration(
+                            color: binC,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: binC.withValues(alpha: 0.4), blurRadius: 6),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             c.partie,
@@ -751,37 +758,47 @@ class _ComponentsCard extends ConsumerWidget {
                             ),
                           ),
                         ),
+                        // Label badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: binC.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
+                            color: binC,
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             c.label,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'Poppins',
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: binC,
+                              color: Colors.white,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Bac
+                  // Divider
+                  Divider(height: 1, thickness: 1, color: binC.withValues(alpha: 0.15), indent: 14, endIndent: 14),
+                  // Bac row
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline_rounded, size: 13, color: binC),
-                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: binC.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.delete_rounded, size: 13, color: binC),
+                        ),
+                        const SizedBox(width: 8),
                         Text(
                           '${s.putIn} : ${s.binColorName(c.binColor)}',
                           style: TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: binC,
                           ),
@@ -792,32 +809,45 @@ class _ComponentsCard extends ConsumerWidget {
                   // Conseil
                   if (c.conseil.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.lightbulb_outline_rounded,
-                              size: 13, color: AppColors.textSecondary),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              c.conseil,
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                                height: 1.4,
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.lightbulb_rounded, size: 14, color: const Color(0xFFF5A623)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                c.conseil,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.darkText.withValues(alpha: 0.8)
+                                      : AppColors.textSecondary,
+                                  height: 1.5,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     )
                   else
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                 ],
               ),
-            );
+            )
+                .animate(delay: (120 * index).ms)
+                .fadeIn(duration: 400.ms)
+                .slideX(begin: -0.25, end: 0, curve: Curves.easeOut);
           }),
         ],
       ),
