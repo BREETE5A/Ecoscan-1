@@ -20,8 +20,7 @@ class ScanResultScreen extends ConsumerStatefulWidget {
 class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
   late ConfettiController _confetti;
 
-  // Remplacer par votre URL de webhook n8n
-  static const _n8nWebhookUrl = 'https://YOUR_N8N_INSTANCE/webhook/ecoscan-ewaste-alert';
+  static const _n8nWebhookUrl = 'https://badora.app.n8n.cloud/webhook/ecoscan/alerte-danger';
 
   @override
   void initState() {
