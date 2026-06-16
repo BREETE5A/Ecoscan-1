@@ -65,39 +65,39 @@ class _MapScreenState extends ConsumerState<MapScreen>
   static final _staticPoints = <_Point>[
     // ── GEOCYCLE – 4 plateformes industrielles (geocycle.com/fr/maroc) ──────────
     _Point('Geocycle – Bouskoura (Nouaceur)', 'Co-traitement industriel – 75 000 t/an',
-        const LatLng(33.3700, -7.6500), AppColors.primary, Icons.factory_rounded, 'Tous'),
+        const LatLng(33.4400, -7.6500), AppColors.primary, Icons.factory_rounded, 'Tous'),
     _Point('Geocycle – El Gara (Berrechid)', 'Co-traitement déchets dangereux',
-        const LatLng(33.2692, -7.5847), AppColors.primary, Icons.factory_rounded, 'Tous'),
-    _Point('Geocycle – Route de Rabat km19 (Tanger)', 'Co-traitement industriel – 20 000 t/an',
-        const LatLng(35.5950, -5.8300), AppColors.primary, Icons.factory_rounded, 'Tous'),
+        const LatLng(33.2800, -7.2300), AppColors.primary, Icons.factory_rounded, 'Tous'),
+    _Point('Geocycle – Had Gharbia km19 (Tanger)', 'Co-traitement industriel – 20 000 t/an',
+        const LatLng(35.5200, -5.9200), AppColors.primary, Icons.factory_rounded, 'Tous'),
     _Point('Geocycle – Oum Azza (Rabat)', 'Valorisation déchets ménagers',
         const LatLng(33.8703, -6.8100), AppColors.primary, Icons.factory_rounded, 'Tous'),
 
     // ── ECO ZALAGH – 2 bases logistiques (ecozalagh.com) ─────────────────────────
     _Point('Eco Zalagh – Sidi Hajjaj (Casablanca)', 'Collecte • Tri • Valorisation déchets',
-        const LatLng(33.5050, -7.4750), AppColors.primary, Icons.recycling_rounded, 'Tous'),
+        const LatLng(33.4500, -7.5000), AppColors.primary, Icons.recycling_rounded, 'Tous'),
     _Point('Eco Zalagh – Gzenaya (Tanger)', 'Collecte • Tri • Valorisation déchets',
-        const LatLng(35.6500, -5.9500), AppColors.primary, Icons.recycling_rounded, 'Tous'),
+        const LatLng(35.7810, -5.8110), AppColors.primary, Icons.recycling_rounded, 'Tous'),
 
     // ── SMRR – 4 dépôts confirmés (smrr.ma) ──────────────────────────────────────
     _Point('SMRR – Tit Mellil (Casablanca)', 'Récupération PET • Papier • Carton',
-        const LatLng(33.5800, -7.5000), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
-    _Point('SMRR – Dépôt Tanger', 'Récupération PET • Papier • Carton',
-        const LatLng(35.7534, -5.7991), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
+        const LatLng(33.5580, -7.4860), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
+    _Point('SMRR – Dépôt Tanger (Mghogha)', 'Récupération PET • Papier • Carton',
+        const LatLng(35.7700, -5.7800), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
     _Point('SMRR – Dépôt Agadir', 'Récupération PET • Papier • Carton',
         const LatLng(30.4278, -9.5981), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
     _Point('SMRR – Dépôt Marrakech', 'Récupération PET • Papier • Carton',
-        const LatLng(31.6700, -8.0600), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
+        const LatLng(31.6500, -8.0400), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
 
     // ── LOGIPRO / TECMED – DEEE Casablanca ───────────────────────────────────────
     _Point('Logipro DEEE – Maarif (Casablanca)', 'Électronique • Électroménager',
-        const LatLng(33.5800, -7.6400), AppColors.electronics, Icons.electrical_services_rounded, 'Électronique'),
-    _Point('TECMED – Zone Industrielle (Casablanca)', 'Électronique • Électroménager',
-        const LatLng(33.6500, -7.5000), AppColors.electronics, Icons.electrical_services_rounded, 'Électronique'),
+        const LatLng(33.5732, -7.6450), AppColors.electronics, Icons.electrical_services_rounded, 'Électronique'),
+    _Point('TECMED – Casablanca', 'Électronique • Électroménager',
+        const LatLng(33.5330, -7.5830), AppColors.electronics, Icons.electrical_services_rounded, 'Électronique'),
 
     // ── PNDM – 15 centres opérationnels (pndm.environnement.gov.ma) ──────────────
-    _Point('Centre de Valorisation Fès', 'PNDM complété • Tri • Recyclage',
-        const LatLng(33.9779, -4.9993), AppColors.primary, Icons.recycling_rounded, 'Tous'),
+    _Point('Centre de Valorisation Fès (Aïn Chkef)', 'PNDM complété • Tri • Recyclage',
+        const LatLng(33.9640, -5.0280), AppColors.primary, Icons.recycling_rounded, 'Tous'),
     _Point('Centre de Valorisation Oujda', 'PNDM complété • Tri • Recyclage',
         const LatLng(34.6882, -1.9082), AppColors.primary, Icons.recycling_rounded, 'Tous'),
     _Point('Centre de Valorisation El Jadida', 'PNDM complété • Tri • Recyclage',
