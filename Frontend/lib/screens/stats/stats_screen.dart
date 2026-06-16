@@ -175,7 +175,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
     final double totalCo2  = user.co2Saved;   // grammes depuis Firestore
     final int    totalPts  = user.points;      // depuis Firestore
     final int    totalScans = user.scans;      // depuis Firestore
-    final double kgRecycled = totalScans * 0.35;
     final int    recyclable  = history.where((e) => e.recyclable).length;
     final double recycleRate = history.isNotEmpty ? recyclable / history.length : 0.0;
     final periods    = [s.periodWeek, s.periodMonth, s.periodYear];
@@ -222,9 +221,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
                   _SummaryCard(
-                    icon: Icons.scale_rounded,
-                    label: s.recycledLabel,
-                    value: '${kgRecycled.toStringAsFixed(1)} kg',
+                    icon: Icons.document_scanner_rounded,
+                    label: s.totalScans,
+                    value: '$totalScans',
                     color: AppColors.primary,
                     isDark: isDark,
                   ).animate(delay: 150.ms).fadeIn(duration: 400.ms).slideX(begin: -0.1),
@@ -391,10 +390,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
                       children: [
                         Expanded(
                           child: _CircularGauge(
-                            label: s.kgSorted,
-                            value: kgRecycled,
-                            max: 50,
-                            unit: 'kg',
+                            label: s.totalScans,
+                            value: totalScans.toDouble(),
+                            max: 200,
+                            unit: '',
                             color: AppColors.primary,
                             isDark: isDark,
                           ).animate().fadeIn(duration: 500.ms, delay: 300.ms),

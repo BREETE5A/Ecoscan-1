@@ -716,9 +716,9 @@ class _ImpactRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final co2 = user.co2Saved;
     final items = [
-      (Icons.cloud_outlined,      '${(co2 / 1000).toStringAsFixed(1)} kg', s.co2Saved,    const Color(0xFF27AE60)),
-      (Icons.park_outlined,       (co2 / 8000).toStringAsFixed(2),         s.treesEquiv,  const Color(0xFF2E7D32)),
-      (Icons.water_drop_outlined, '${(co2 * 0.05).toStringAsFixed(0)} L',  s.waterSaved,  const Color(0xFF1ABC9C)),
+      (Icons.cloud_outlined,         '${(co2 / 1000).toStringAsFixed(1)} kg', s.co2Saved,   const Color(0xFF27AE60)),
+      (Icons.park_outlined,          (co2 / 8000).toStringAsFixed(2),          s.treesEquiv, const Color(0xFF2E7D32)),
+      (Icons.document_scanner_rounded, '${user.scans}',                         s.totalScans, const Color(0xFF1ABC9C)),
     ];
     return Row(
       children: [
