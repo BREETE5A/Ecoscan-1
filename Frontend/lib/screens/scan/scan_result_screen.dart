@@ -452,6 +452,7 @@ class _ComponentsCard extends ConsumerWidget {
                           child: Icon(_iconForLabel(c.label), color: binC, size: 18),
                         ),
                         const SizedBox(width: 10),
+                        // Nom + badge label (gauche)
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,55 +461,56 @@ class _ComponentsCard extends ConsumerWidget {
                                 c.partie,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: isDark ? AppColors.darkText : AppColors.textPrimary,
                                 ),
                               ),
-                              // Badge recyclable / danger
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: binC,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      c.label,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                              const SizedBox(height: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: binC,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  c.label,
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _isRecyclable(c.label)
-                                          ? AppColors.primary.withValues(alpha: 0.15)
-                                          : const Color(0xFFE74C3C).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      _isRecyclable(c.label) ? s.recyclableTag : s.dangerousTag,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: _isRecyclable(c.label)
-                                            ? AppColors.primary
-                                            : const Color(0xFFE74C3C),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
+                          ),
+                        ),
+                        // Badge Recyclable / Dangereux (droite)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _isRecyclable(c.label)
+                                ? AppColors.primary.withValues(alpha: 0.15)
+                                : const Color(0xFFE74C3C).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _isRecyclable(c.label)
+                                  ? AppColors.primary.withValues(alpha: 0.4)
+                                  : const Color(0xFFE74C3C).withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            _isRecyclable(c.label) ? s.recyclableTag : s.dangerousTag,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _isRecyclable(c.label)
+                                  ? AppColors.primary
+                                  : const Color(0xFFE74C3C),
+                            ),
                           ),
                         ),
                       ],
