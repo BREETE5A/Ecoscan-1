@@ -159,5 +159,6 @@ class StorageService {
     await p.remove(_keyPoints);
     await p.remove(_keyCo2);
     await p.remove(_keyHistory);
+    await p.remove('scan_entries_v2'); // clé utilisée par scanHistoryProvider
   }
 }

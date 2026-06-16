@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'user_provider.dart';
+import 'scan_history_provider.dart';
 import 'locale_provider.dart';
 import '../services/n8n_service.dart';
 import '../services/storage_service.dart';
@@ -456,6 +457,8 @@ Future<void> signOut(Ref ref) async {
   await _auth.signOut();
   ref.invalidate(userStatsStreamProvider);
   ref.invalidate(userProvider);
+  ref.invalidate(scanHistoryProvider);
+  ref.invalidate(scanHistoryStreamProvider);
   ref.read(currentUserProvider.notifier).state = null;
 }
 
@@ -466,6 +469,8 @@ Future<void> signOutUser(WidgetRef ref) async {
   await _auth.signOut();
   ref.invalidate(userStatsStreamProvider);
   ref.invalidate(userProvider);
+  ref.invalidate(scanHistoryProvider);
+  ref.invalidate(scanHistoryStreamProvider);
   ref.read(currentUserProvider.notifier).state = null;
 }
 
