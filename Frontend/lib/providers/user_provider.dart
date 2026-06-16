@@ -180,7 +180,8 @@ class UserNotifier extends StateNotifier<UserModel> {
       email:    fbUser?.email,
       fcmToken: fcmToken,
     );
-    if (uid != null && result.category == 'electronique') {
+    // Alerte n8n si catégorie principale est électronique ou dangereuse
+    if (uid != null && (result.category == 'electronique' || result.category == 'dangereux')) {
       N8nService.alerteDanger(
         nom:        state.name,
         email:      fbUser?.email ?? '',

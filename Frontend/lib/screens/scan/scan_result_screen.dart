@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import '../../theme/app_theme.dart';
 import '../../models/scan_entry.dart';
 import '../../providers/scan_history_provider.dart';
@@ -20,56 +19,14 @@ class ScanResultScreen extends ConsumerStatefulWidget {
 class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
   late ConfettiController _confetti;
 
-  static const _n8nWebhookUrl = 'https://badora.app.n8n.cloud/webhook/ecoscan/alerte-danger';
-
   @override
   void initState() {
     super.initState();
     _confetti = ConfettiController(duration: const Duration(seconds: 4));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final entry = ref.read(currentScanProvider);
-      if (entry == null) return;
-      if (!entry.dangerous) _confetti.play();
-      final hasEwaste = entry.components.any(
-        (c) => c.label == 'electronique' || c.label == 'dangereux',
-      );
-      if (hasEwaste) _notifyN8n(entry);
+      if (entry != null && !entry.dangerous) _confetti.play();
     });
-  }
-
-  Future<void> _notifyN8n(ScanEntry scan) async {
-    try {
-      await Dio().post(_n8nWebhookUrl, data: {
-        'email': 'badreddinehammoucha@gmail.com',
-        'objet': scan.name,
-        'date': DateTime.now().toIso8601String(),
-        'composantes': scan.components
-            .where((c) => c.label == 'electronique' || c.label == 'dangereux')
-            .map((c) => {
-                  'partie': c.partie,
-                  'label': c.label,
-                  'conseil': c.conseil,
-                })
-            .toList(),
-      });
-      if (mounted) {
-        final s = AppStrings.of(ref.read(localeProvider).languageCode);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(children: [
-              const Icon(Icons.email_rounded, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-              Text(s.alertEmailSent,
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
-            ]),
-            backgroundColor: const Color(0xFFE74C3C),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    } catch (_) {}
   }
 
   @override
