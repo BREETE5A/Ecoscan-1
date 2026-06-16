@@ -91,6 +91,11 @@ class StorageService {
           'lastScanAt': FieldValue.serverTimestamp(),
           'streak':     newStreak,
         });
+        // Mise à jour des totaux communautaires en temps réel
+        FirebaseFirestore.instance.collection('community_totals').doc('stats').set({
+          'totalScans':    FieldValue.increment(1),
+          'totalCo2Grams': FieldValue.increment(result.co2SavedPerKg * 1000),
+        }, SetOptions(merge: true)).catchError((_) {});
         const kgEstimates = {
           'cardboard':    0.30,
           'paper':        0.15,

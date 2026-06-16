@@ -21,22 +21,30 @@ Future<void> _autoSignOutIfDeleted() async {
   try {
     // Vérifier côté serveur si le compte Auth existe encore
     await fbUser.reload();
+  } on FirebaseAuthException catch (e) {
+    // Déconnecter uniquement si le compte a été supprimé ou désactivé
+    if (e.code == 'user-not-found' || e.code == 'user-disabled') {
+      await GoogleSignIn().signOut();
+      await FirebaseAuth.instance.signOut();
+    }
+    // Toute autre erreur FirebaseAuth (token expiré, etc.) → ne pas déconnecter
+    return;
   } catch (_) {
-    // reload() lance une exception si le compte a été supprimé de Firebase Auth
-    await GoogleSignIn().signOut();
-    await FirebaseAuth.instance.signOut();
+    // Erreur réseau (offline) → ne pas déconnecter, laisser l'utilisateur connecté
     return;
   }
   try {
-    // Vérifier aussi si le document Firestore existe
+    // Forcer la vérification côté serveur uniquement (pas le cache)
     final doc = await FirebaseFirestore.instance
         .collection('users')
         .doc(fbUser.uid)
-        .get();
+        .get(const GetOptions(source: Source.server));
     if (!doc.exists) {
       await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
     }
+  } on FirebaseException catch (_) {
+    // Offline ou erreur réseau → ne pas déconnecter
   } catch (_) {}
 }
 

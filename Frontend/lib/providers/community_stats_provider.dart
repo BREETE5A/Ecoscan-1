@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,55 +17,60 @@ class CommunityStats {
 
 final communityStatsProvider = StreamProvider<CommunityStats>((ref) {
   final db = FirebaseFirestore.instance;
-  final controller = StreamController<CommunityStats>();
 
-  Future<void> fetch() async {
-    try {
-      // Agrégation serveur — pas de limite, tous les utilisateurs
-      final aggResult = await db.collection('users').aggregate(
-        count(),
-        sum('scansCount'),
-        sum('co2Saved'),
-      ).get();
-
-      int totalScans      = (aggResult.getSum('scansCount') as num?)?.toInt()    ?? 0;
-      double totalCo2Grams = (aggResult.getSum('co2Saved')  as num?)?.toDouble() ?? 0.0;
-      int users           = aggResult.count ?? 0;
-
-      // Ajouter les données des comptes supprimés préservées dans community_totals
-      try {
-        final totals = await db.collection('community_totals').doc('stats').get();
-        if (totals.exists) {
-          final data = totals.data()!;
-          totalScans      += (data['deletedScans'] as num?)?.toInt()    ?? 0;
-          totalCo2Grams   += (data['deletedCo2']  as num?)?.toDouble() ?? 0.0;
-        }
-      } catch (_) {}
-
-      final kg       = (totalCo2Grams / 1000).round(); // grammes → kilogrammes
-      final progress = (totalScans / 10000.0).clamp(0.0, 1.0);
-
-      if (!controller.isClosed) {
-        controller.add(CommunityStats(
-          users:      users,
-          scans:      totalScans,
-          kgRecycled: kg,
-          progress:   progress,
-        ));
-      }
-    } catch (_) {
-      if (!controller.isClosed) controller.add(const CommunityStats());
+  // Stream temps réel sur le document community_totals/stats.
+  // Ce document est mis à jour à chaque scan (storage_service.dart),
+  // à chaque inscription (auth_provider.dart) et à chaque suppression de compte.
+  return db
+      .collection('community_totals')
+      .doc('stats')
+      .snapshots()
+      .asyncMap((snap) async {
+    // Première fois : initialiser les champs depuis une agrégation serveur
+    if (!snap.exists || !(snap.data()?.containsKey('totalScans') ?? false)) {
+      await _initializeTotals(db);
+      return const CommunityStats();
     }
-  }
 
-  fetch();
-  // Rafraîchissement toutes les 5 minutes
-  final timer = Timer.periodic(const Duration(minutes: 5), (_) => fetch());
+    final data = snap.data()!;
 
-  ref.onDispose(() {
-    timer.cancel();
-    controller.close();
+    final totalScans    = (data['totalScans']    as num?)?.toInt()    ?? 0;
+    final totalCo2Grams = (data['totalCo2Grams'] as num?)?.toDouble() ?? 0.0;
+    final users         = (data['userCount']     as num?)?.toInt()    ?? 0;
+
+    // Ajouter les données préservées des comptes supprimés
+    final deletedScans = (data['deletedScans'] as num?)?.toInt()    ?? 0;
+    final deletedCo2   = (data['deletedCo2']   as num?)?.toDouble() ?? 0.0;
+
+    final allScans    = totalScans + deletedScans;
+    final allCo2Grams = totalCo2Grams + deletedCo2;
+
+    final kg       = (allCo2Grams / 1000).round();
+    final progress = (allScans / 10000.0).clamp(0.0, 1.0);
+
+    return CommunityStats(
+      users:      users,
+      scans:      allScans,
+      kgRecycled: kg,
+      progress:   progress,
+    );
   });
-
-  return controller.stream;
 });
+
+/// Initialise totalScans, totalCo2Grams et userCount depuis une agrégation
+/// serveur — appelé une seule fois si les champs sont absents du document.
+Future<void> _initializeTotals(FirebaseFirestore db) async {
+  try {
+    final agg = await db.collection('users').aggregate(
+      count(),
+      sum('scansCount'),
+      sum('co2Saved'),
+    ).get();
+
+    await db.collection('community_totals').doc('stats').set({
+      'totalScans':    (agg.getSum('scansCount') as num?)?.toInt()    ?? 0,
+      'totalCo2Grams': (agg.getSum('co2Saved')  as num?)?.toDouble() ?? 0.0,
+      'userCount':     agg.count ?? 0,
+    }, SetOptions(merge: true));
+  } catch (_) {}
+}

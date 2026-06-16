@@ -25,9 +25,13 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     final fsScans = (data['scansCount'] as num?)?.toInt() ?? 0;
     final fsCo2 = (data['co2Saved'] as num?)?.toDouble() ?? 0.0;
     final fsStreak = (data['streak'] as num?)?.toInt() ?? 0;
-    final rawName = ((data['displayName'] as String?) ?? '').trim();
+    final rawName   = ((data['displayName'] as String?) ?? '').trim();
+    final authName  = FirebaseAuth.instance.currentUser?.displayName?.trim() ?? '';
     final emailFallback = FirebaseAuth.instance.currentUser?.email?.split('@').first ?? '';
-    final fsName = rawName.isNotEmpty ? rawName : (emailFallback.isNotEmpty ? emailFallback : 'EcoUser');
+    final fsName = rawName.isNotEmpty  ? rawName
+        : authName.isNotEmpty          ? authName
+        : emailFallback.isNotEmpty     ? emailFallback
+        : 'EcoUser';
     final rawCity = ((data['city'] as String?) ?? '').trim();
     final fsCity = rawCity.isNotEmpty ? rawCity : '';
     final fsBadgesArray = (data['badges'] as List?)?.length ?? 0;

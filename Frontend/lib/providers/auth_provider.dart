@@ -404,8 +404,13 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
         ).catchError((_) {});
       } else {
         city = (docSnap.data()?['city'] as String?) ?? '';
-        // Marque la dernière connexion pour les utilisateurs existants
-        userRef.update({'lastSeen': FieldValue.serverTimestamp()}).catchError((_) {});
+        final existingName = ((docSnap.data()?['displayName'] as String?) ?? '').trim();
+        final updateData = <String, dynamic>{'lastSeen': FieldValue.serverTimestamp()};
+        // Si le doc n'a pas de displayName, le compléter avec le nom du compte Google
+        if (existingName.isEmpty && (fbUser.displayName?.trim().isNotEmpty == true)) {
+          updateData['displayName'] = fbUser.displayName!.trim();
+        }
+        userRef.update(updateData).catchError((_) {});
       }
 
       final user = AppUser.fromFirebase(fbUser, city: city);
