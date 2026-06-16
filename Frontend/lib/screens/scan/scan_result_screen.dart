@@ -115,7 +115,13 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       GestureDetector(
-                        onTap: () => context.go('/scan'),
+                        onTap: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go('/scan');
+                          }
+                        },
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
@@ -670,9 +676,18 @@ class _ComponentsCard extends ConsumerWidget {
       case 'blue':     return const Color(0xFF3498DB);
       case 'green':    return AppColors.primary;
       case 'brown':    return const Color(0xFF8B5E3C);
+      case 'black':    return const Color(0xFF757575);
       case 'ecopoint': return const Color(0xFF27AE60);
       default:         return AppColors.textSecondary;
     }
+  }
+
+  // Electronique et dangereux → rouge (danger), autres → couleur du bac
+  Color _colorForComponent(String label, String bin) {
+    if (label == 'electronique' || label == 'dangereux') {
+      return const Color(0xFFE74C3C);
+    }
+    return _colorForBin(bin);
   }
 
   @override
@@ -712,7 +727,7 @@ class _ComponentsCard extends ConsumerWidget {
           ...scan.components.asMap().entries.map((entry) {
             final index = entry.key;
             final c = entry.value;
-            final binC = _colorForBin(c.binColor);
+            final binC = _colorForComponent(c.label, c.binColor);
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
