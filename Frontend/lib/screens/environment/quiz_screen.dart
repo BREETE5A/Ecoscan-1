@@ -178,19 +178,19 @@ const _questions = [
 
   // ── 10 ────────────────────────────────────────────────────────────────────
   _Question(
-    fr: 'Combien de litres d\'eau peut contaminer une pile bouton ?',
-    en: 'How many liters of water can one button battery contaminate?',
-    ar: 'كم لتراً من الماء يمكن أن تلوثه بطارية واحدة؟',
-    es: '¿Cuántos litros de agua puede contaminar una pila de botón?',
-    optionsFr: ['1 000 L', '10 000 L', '400 000 L', '100 L'],
-    optionsEn: ['1,000 L', '10,000 L', '400,000 L', '100 L'],
-    optionsAr: ['1000 لتر', '10000 لتر', '400000 لتر', '100 لتر'],
-    optionsEs: ['1.000 L', '10.000 L', '400.000 L', '100 L'],
+    fr: 'Quel est l\'objectif marocain de recyclage des plastiques d\'ici 2030 selon le PNVDM ?',
+    en: 'What is Morocco\'s plastic recycling target by 2030 under the PNVDM?',
+    ar: 'ما هو هدف المغرب لإعادة تدوير البلاستيك بحلول 2030 وفق البرنامج الوطني PNVDM؟',
+    es: '¿Cuál es el objetivo marroquí de reciclaje de plásticos para 2030 según el PNVDM?',
+    optionsFr: ['20%', '40%', '70%', '100%'],
+    optionsEn: ['20%', '40%', '70%', '100%'],
+    optionsAr: ['20%', '40%', '70%', '100%'],
+    optionsEs: ['20%', '40%', '70%', '100%'],
     correct: 2,
-    explanationFr: 'Une pile bouton peut contaminer jusqu\'à 400 000 litres d\'eau.',
-    explanationEn: 'One button battery can contaminate up to 400,000 liters of water.',
-    explanationAr: 'يمكن لبطارية واحدة أن تلوث ما يصل إلى 400,000 لتر من الماء.',
-    explanationEs: 'Una pila de botón puede contaminar hasta 400.000 litros de agua.',
+    explanationFr: 'Le Programme National de Valorisation des Déchets Ménagers (PNVDM 2023) fixe un objectif de 70 % de recyclage des plastiques d\'ici 2030.',
+    explanationEn: 'Morocco\'s National Household Waste Programme (PNVDM 2023) sets a 70% plastic recycling target by 2030.',
+    explanationAr: 'يحدد البرنامج الوطني لتثمين النفايات المنزلية (PNVDM 2023) هدف إعادة تدوير 70% من البلاستيك بحلول 2030.',
+    explanationEs: 'El Programa Nacional de Valorización de Residuos Domésticos (PNVDM 2023) fija un objetivo del 70% de reciclaje de plásticos para 2030.',
   ),
 
   // ── 11 ────────────────────────────────────────────────────────────────────

@@ -353,19 +353,21 @@ class _ComponentsCard extends ConsumerWidget {
       case 'green':    return AppColors.primary;
       case 'brown':    return const Color(0xFF8B5E3C);
       case 'black':    return const Color(0xFF757575);
-      case 'ecopoint': return const Color(0xFF27AE60);
+      case 'textile':  return const Color(0xFF9B59B6);
+      case 'special':
+      case 'ecopoint': return const Color(0xFFE74C3C);
       default:         return AppColors.textSecondary;
     }
   }
 
-  // Electronique et dangereux → rouge, autres → couleur du bac
+  // Electronique et dangereux → rouge (collecte spéciale), textile → violet
   Color _colorForComponent(String label, String bin) {
-    if (label == 'electronique' || label == 'dangereux') return const Color(0xFFE74C3C);
     return _colorForBin(bin);
   }
 
   bool _isRecyclable(String label) => const {
-    'plastique', 'verre', 'metal', 'cardboard', 'paper', 'organique', 'textile', 'bois',
+    'plastique', 'verre', 'metal', 'cardboard', 'paper', 'organique',
+    'textile', 'vetement', 'chaussures', 'bois',
   }.contains(label);
 
   IconData _iconForLabel(String label) {

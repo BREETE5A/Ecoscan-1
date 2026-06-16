@@ -46,17 +46,17 @@ class ScanEntry {
   static const _categoryData = {
     'bois':         (recyclable: true,  dangerous: false, points: 10, co2Saved: 15.0, recyclability: 0.70, binColor: 'black'),
     'cardboard':    (recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.88, binColor: 'blue'),
-    'chaussures':   (recyclable: false, dangerous: false, points: 8,  co2Saved: 5.0,  recyclability: 0.15, binColor: 'green'),
-    'dangereux':    (recyclable: false, dangerous: true,  points: 30, co2Saved: 0.0,  recyclability: 0.20, binColor: 'ecopoint'),
-    'electronique': (recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'ecopoint'),
+    'chaussures':   (recyclable: true,  dangerous: false, points: 8,  co2Saved: 5.0,  recyclability: 0.65, binColor: 'textile'),
+    'dangereux':    (recyclable: false, dangerous: true,  points: 30, co2Saved: 0.0,  recyclability: 0.20, binColor: 'special'),
+    'electronique': (recyclable: true,  dangerous: true,  points: 40, co2Saved: 0.0,  recyclability: 0.60, binColor: 'special'),
     'metal':        (recyclable: true,  dangerous: false, points: 20, co2Saved: 80.0, recyclability: 0.97, binColor: 'yellow'),
     'organique':    (recyclable: true,  dangerous: false, points: 8,  co2Saved: 20.0, recyclability: 0.90, binColor: 'brown'),
     'paper':        (recyclable: true,  dangerous: false, points: 10, co2Saved: 30.0, recyclability: 0.85, binColor: 'blue'),
     'plastique':    (recyclable: true,  dangerous: false, points: 15, co2Saved: 45.0, recyclability: 0.92, binColor: 'yellow'),
-    'textile':      (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'green'),
+    'textile':      (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'textile'),
     'trash':        (recyclable: false, dangerous: false, points: 5,  co2Saved: 0.0,  recyclability: 0.10, binColor: 'black'),
     'unknown':      (recyclable: false, dangerous: false, points: 0,  co2Saved: 0.0,  recyclability: 0.0,  binColor: 'black'),
-    'vetement':     (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'green'),
+    'vetement':     (recyclable: true,  dangerous: false, points: 12, co2Saved: 10.0, recyclability: 0.65, binColor: 'textile'),
     'verre':        (recyclable: true,  dangerous: false, points: 25, co2Saved: 55.0, recyclability: 1.0,  binColor: 'green'),
   };
 

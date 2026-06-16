@@ -1513,12 +1513,14 @@ class AppStrings {
 
   String binColorName(String color) {
     switch (color) {
-      case 'blue':     return _t('Bleu',    'Blue',    'أزرق',      'Azul');
-      case 'yellow':   return _t('Jaune',   'Yellow',  'أصفر',      'Amarillo');
-      case 'green':    return _t('Vert',    'Green',   'أخضر',      'Verde');
-      case 'black':    return _t('Noir',    'Black',   'أسود',      'Negro');
-      case 'brown':    return _t('Marron',  'Brown',   'بني',       'Marrón');
-      case 'ecopoint': return _t('Écopoint','Ecopoint','نقطة جمع',  'Punto ecológico');
+      case 'blue':     return _t('Bac bleu',           'Blue bin',           'حاوية زرقاء',       'Contenedor azul');
+      case 'yellow':   return _t('Bac jaune ECOVAL',   'Yellow ECOVAL bin',  'حاوية صفراء ECOVAL','Contenedor amarillo ECOVAL');
+      case 'green':    return _t('Colonne verte',      'Green column',       'عمود أخضر',         'Columna verde');
+      case 'black':    return _t('Poubelle ordinaire', 'General waste bin',  'سلة المهملات',      'Cubo de basura');
+      case 'brown':    return _t('Composteur / Bac marron', 'Composter / Brown bin', 'سماد / حاوية بنية', 'Compostador / Contenedor marrón');
+      case 'textile':  return _t('Borne textile',      'Textile bin',        'حاوية الملابس',     'Contenedor textil');
+      case 'special':  return _t('Collecte spéciale',  'Special collection', 'جمع خاص',           'Recogida especial');
+      case 'ecopoint': return _t('Éco-point ECOVAL',  'ECOVAL Eco-point',   'نقطة جمع ECOVAL',   'Punto ecológico ECOVAL');
       default:         return color;
     }
   }
