@@ -1474,6 +1474,10 @@ class AppStrings {
   String get aiConfidence        => _t('Confiance IA',           'AI Confidence',         'دقة الذكاء الاصطناعي',      'Confianza IA');
   String get attentionLabel      => _t('⚠️ Attention',           '⚠️ Warning',            '⚠️ تنبيه',                  '⚠️ Atención');
   String get bringToPoint        => _t('Apportez ce déchet dans un point de collecte spécifique.', 'Bring this waste to a specific collection point.', 'أحضر هذه النفاية إلى نقطة جمع محددة.', 'Lleva este residuo a un punto de recogida específico.');
+  String get recyclableTag       => _t('Recyclable',              'Recyclable',              'قابل للتدوير',                 'Reciclable');
+  String get dangerousTag        => _t('Dangereux',               'Dangerous',               'خطر',                          'Peligroso');
+  String get materialType        => _t('Matière',                 'Material',                'المادة',                       'Material');
+  String get alertEmailSent      => _t('Alerte e-déchet envoyée par email', 'E-waste alert sent by email', 'تم إرسال تنبيه النفايات الإلكترونية بالبريد', 'Alerta de residuo electrónico enviada por correo');
   String binColorName(String color) {
     switch (color) {
       case 'blue':     return _t('Bleu',    'Blue',    'أزرق',      'Azul');
