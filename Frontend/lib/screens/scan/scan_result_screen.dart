@@ -57,7 +57,7 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
         children: [
           FloatingActionButton(
             heroTag: 'map_fab',
-            onPressed: () => context.go('/map'),
+            onPressed: () => context.push('/map'),
             backgroundColor: AppColors.primary,
             elevation: 6,
             shape: const CircleBorder(),
@@ -69,7 +69,7 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
           const SizedBox(height: 12),
           FloatingActionButton(
             heroTag: 'ecobot_fab',
-            onPressed: () => context.go('/chat'),
+            onPressed: () => context.push('/chat'),
             backgroundColor: const Color(0xFFF5A623),
             elevation: 8,
             shape: const CircleBorder(),
