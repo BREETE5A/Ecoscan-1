@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'router/app_router.dart';
@@ -15,11 +16,21 @@ import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'services/notification_service.dart';
 
+/// Vérifie si le compte a été supprimé côté serveur.
+/// Ne fait RIEN si l'appareil est hors ligne.
 Future<void> _autoSignOutIfDeleted() async {
   final fbUser = FirebaseAuth.instance.currentUser;
   if (fbUser == null) return;
+
+  // Vérifier la connectivité avant toute requête réseau
   try {
-    // Vérifier côté serveur si le compte Auth existe encore
+    final result = await Connectivity().checkConnectivity();
+    if (result.contains(ConnectivityResult.none) || result.isEmpty) return;
+  } catch (_) {
+    return;
+  }
+
+  try {
     await fbUser.reload();
   } on FirebaseAuthException catch (e) {
     // Déconnecter uniquement si le compte a été supprimé ou désactivé
@@ -27,14 +38,12 @@ Future<void> _autoSignOutIfDeleted() async {
       await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
     }
-    // Toute autre erreur FirebaseAuth (token expiré, etc.) → ne pas déconnecter
     return;
   } catch (_) {
-    // Erreur réseau (offline) → ne pas déconnecter, laisser l'utilisateur connecté
     return;
   }
+
   try {
-    // Forcer la vérification côté serveur uniquement (pas le cache)
     final doc = await FirebaseFirestore.instance
         .collection('users')
         .doc(fbUser.uid)
@@ -54,6 +63,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Attendre que Firebase Auth restaure la session locale avant de continuer.
+  // Sans cet await, le router peut évaluer currentUser = null (pas encore chargé)
+  // et rediriger vers /login même si l'utilisateur est connecté.
+  await FirebaseAuth.instance.authStateChanges().first;
 
   await _autoSignOutIfDeleted();
 
