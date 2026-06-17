@@ -671,7 +671,7 @@ class _WeeklyCard extends StatelessWidget {
             ),
           ),
           Text(
-            s.recycled,
+            s.co2AvoidedLabel,
             style: TextStyle(
               fontFamily: 'Poppins', fontSize: 13,
               color: Colors.white.withValues(alpha: 0.75),

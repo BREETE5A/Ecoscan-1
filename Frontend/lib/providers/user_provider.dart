@@ -8,6 +8,22 @@ import '../models/scan_result_model.dart';
 import '../services/storage_service.dart';
 import '../services/n8n_service.dart';
 
+Future<double> _fetchWeeklyCo2(String uid) async {
+  try {
+    final now = DateTime.now();
+    final weekStart = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    final snap = await FirebaseFirestore.instance
+        .collection('users').doc(uid).collection('scans')
+        .where('scannedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart))
+        .get();
+    return snap.docs.fold<double>(0.0, (acc, doc) =>
+        acc + ((doc.data()['co2Saved'] as num?)?.toDouble() ?? 0.0));
+  } catch (_) {
+    return StorageService.getWeeklyCo2();
+  }
+}
+
 // Stream Firestore en temps réel des stats utilisateur (co2, points, scans)
 final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
   final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -43,7 +59,7 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     if (fsScans >= 50)   badges++;
     if (fsPoints >= 100) badges++;
     if (fsPoints >= 500) badges++;
-    final weeklyCo2 = await StorageService.getWeeklyCo2();
+    final weeklyCo2 = await _fetchWeeklyCo2(uid);
     return UserModel(
       id: uid,
       name: fsName,
@@ -136,7 +152,7 @@ class UserNotifier extends StateNotifier<UserModel> {
             xpMax:          200,
             co2Saved:       fsCo2,
             weeklyGoalKg:   50.0,
-            weeklyProgress: (await StorageService.getWeeklyCo2() / 50000).clamp(0.0, 1.0),
+            weeklyProgress: (await _fetchWeeklyCo2(firebaseUid) / 50000).clamp(0.0, 1.0),
             recentScans:    history.take(4).toList(),
             streak:         fsStreak,
           );
