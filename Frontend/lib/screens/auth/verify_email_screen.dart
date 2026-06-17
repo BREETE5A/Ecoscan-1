@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+import '../../services/n8n_service.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -64,6 +65,12 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       await user.reload();
       if (user.emailVerified && mounted) {
         _pollTimer?.cancel();
+        // Déclencher le webhook de bienvenue maintenant que l'email est vérifié
+        N8nService.bienvenue(
+          userId: user.uid,
+          nom:    user.displayName ?? user.email?.split('@').first ?? '',
+          email:  user.email ?? '',
+        ).catchError((_) {});
         context.go('/home');
       }
     });

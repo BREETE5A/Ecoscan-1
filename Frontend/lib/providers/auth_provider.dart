@@ -313,13 +313,8 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
       _ref.invalidate(userProvider);
       state = state.copyWith(status: AuthStatus.success);
       // Envoyer l'email de vérification
+      // Le webhook n8n de bienvenue sera déclenché après vérification de l'email
       try { await fbUser.sendEmailVerification(); } catch (_) {}
-      // Déclencher le workflow d'accueil n8n
-      N8nService.bienvenue(
-        userId: fbUser.uid,
-        nom:    '$firstName $lastName',
-        email:  email.trim(),
-      ).catchError((_) {});
       // Pont : alimenter userProvider avec le vrai profil Firebase
       await _ref.read(userProvider.notifier).loadFromStorage(
         firebaseName: user.displayName,
