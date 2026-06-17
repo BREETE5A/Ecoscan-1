@@ -5,10 +5,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/scan_result_model.dart';
 
 class StorageService {
-  static const _keyScans   = 'user_scans_count';
-  static const _keyPoints  = 'user_points';
-  static const _keyCo2     = 'user_co2_grams';
-  static const _keyHistory = 'scan_history';
+  static const _keyScans      = 'user_scans_count';
+  static const _keyPoints     = 'user_points';
+  static const _keyCo2        = 'user_co2_grams';
+  static const _keyHistory    = 'scan_history';
+  static const _keyWeeklyCo2  = 'weekly_co2_grams';
+  static const _keyWeekKey    = 'weekly_co2_week_key';
+
+  static String _currentWeekKey() {
+    final now = DateTime.now();
+    final week = now.difference(DateTime(now.year, 1, 1)).inDays ~/ 7;
+    return '${now.year}_$week';
+  }
+
+  static Future<double> getWeeklyCo2() async {
+    final p = await SharedPreferences.getInstance();
+    if ((p.getString(_keyWeekKey) ?? '') != _currentWeekKey()) return 0.0;
+    return p.getDouble(_keyWeeklyCo2) ?? 0.0;
+  }
 
   static Future<int> getScans() async {
     final p = await SharedPreferences.getInstance();
@@ -57,6 +71,13 @@ class StorageService {
     await p.setInt(_keyScans,  newScans);
     await p.setInt(_keyPoints, newPoints);
     await p.setDouble(_keyCo2, newCo2);
+
+    // Compteur CO2 hebdomadaire (se réinitialise automatiquement chaque semaine)
+    final weekKey = _currentWeekKey();
+    final prevWeekKey = p.getString(_keyWeekKey) ?? '';
+    final prevWeeklyCo2 = prevWeekKey == weekKey ? (p.getDouble(_keyWeeklyCo2) ?? 0.0) : 0.0;
+    await p.setDouble(_keyWeeklyCo2, prevWeeklyCo2 + result.co2SavedPerKg * 1000);
+    await p.setString(_keyWeekKey, weekKey);
 
     // Sync Firestore si connecté
     if (uid != null) {

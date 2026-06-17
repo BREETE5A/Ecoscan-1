@@ -8,15 +8,6 @@ import '../models/scan_result_model.dart';
 import '../services/storage_service.dart';
 import '../services/n8n_service.dart';
 
-double _calcWeeklyCo2(List<Map<String, dynamic>> history) {
-  final weekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
-  final start = DateTime(weekStart.year, weekStart.month, weekStart.day);
-  return history.fold(0.0, (acc, s) {
-    final at = DateTime.tryParse(s['scannedAt'] as String? ?? '') ?? DateTime(2000);
-    return at.isAfter(start) ? acc + ((s['co2Saved'] as num?)?.toDouble() ?? 0.0) : acc;
-  });
-}
-
 // Stream Firestore en temps réel des stats utilisateur (co2, points, scans)
 final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
   final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -52,8 +43,7 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     if (fsScans >= 50)   badges++;
     if (fsPoints >= 100) badges++;
     if (fsPoints >= 500) badges++;
-    final history = await StorageService.getHistory();
-    final weeklyCo2 = _calcWeeklyCo2(history);
+    final weeklyCo2 = await StorageService.getWeeklyCo2();
     return UserModel(
       id: uid,
       name: fsName,
@@ -146,7 +136,7 @@ class UserNotifier extends StateNotifier<UserModel> {
             xpMax:          200,
             co2Saved:       fsCo2,
             weeklyGoalKg:   50.0,
-            weeklyProgress: (_calcWeeklyCo2(history) / 50000).clamp(0.0, 1.0),
+            weeklyProgress: (await StorageService.getWeeklyCo2() / 50000).clamp(0.0, 1.0),
             recentScans:    history.take(4).toList(),
             streak:         fsStreak,
           );
@@ -177,7 +167,7 @@ class UserNotifier extends StateNotifier<UserModel> {
       xpMax:          200,
       co2Saved:       co2,
       weeklyGoalKg:   50.0,
-      weeklyProgress: (_calcWeeklyCo2(history) / 50000).clamp(0.0, 1.0),
+      weeklyProgress: (await StorageService.getWeeklyCo2() / 50000).clamp(0.0, 1.0),
       recentScans:    history.take(4).toList(),
     );
   }
