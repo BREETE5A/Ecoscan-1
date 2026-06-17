@@ -542,25 +542,26 @@ class _TipsCard extends StatelessWidget {
   const _TipsCard({required this.aqi, required this.isDark, required this.lang});
 
   List<String> get _tips {
-    if (aqi <= 50) { switch (lang) {
+    // aqi = échelle OWM : 1=Bon 2=Correct 3=Modéré 4=Mauvais 5=Très mauvais
+    if (aqi <= 1) { switch (lang) {
       case 'ar': return ['الهواء نقي، استمتع بالأنشطة الخارجية', 'يوم مثالي للتنزه أو الرياضة', 'استمر في الممارسات البيئية الجيدة'];
       case 'en': return ['Air is clean, enjoy outdoor activities', 'Perfect day for a walk or sports', 'Keep up your good eco practices'];
       case 'es': return ['El aire es limpio, disfruta al aire libre', 'Día perfecto para pasear o deportes', 'Mantén tus buenas prácticas ecológicas'];
       default:   return ['L\'air est pur, profitez des activités en plein air', 'Journée idéale pour une promenade ou du sport', 'Continuez vos bonnes pratiques éco'];
     }}
-    if (aqi <= 100) { switch (lang) {
+    if (aqi <= 2) { switch (lang) {
       case 'ar': return ['مقبول للأنشطة الخارجية', 'الأشخاص الحساسون يجب أن يكونوا حذرين', 'تجنب حرق النفايات — يزيد التلوث'];
       case 'en': return ['Acceptable for outdoor activities', 'Sensitive people should be cautious', 'Avoid burning waste — increases pollution'];
       case 'es': return ['Aceptable para actividades al aire libre', 'Personas sensibles deben ser precavidas', 'Evita quemar residuos — aumenta la contaminación'];
       default:   return ['Acceptable pour les activités extérieures', 'Les personnes sensibles doivent être prudentes', 'Évitez de brûler des déchets — ça aggrave la pollution'];
     }}
-    if (aqi <= 150) { switch (lang) {
+    if (aqi <= 3) { switch (lang) {
       case 'ar': return ['الأنشطة المكثفة غير مستحسنة للفئات الحساسة', 'الأطفال وكبار السن يجب تقليل الوقت خارجاً', 'فكّر في ارتداء قناع عند الخروج'];
       case 'en': return ['Intense activity not recommended for sensitive groups', 'Children and elderly should limit outdoor time', 'Consider wearing a mask outside'];
       case 'es': return ['Actividad intensa no recomendada para grupos sensibles', 'Niños y mayores deben limitar tiempo al exterior', 'Considera usar mascarilla al salir'];
       default:   return ['Activité intense déconseillée pour les groupes sensibles', 'Enfants et personnes âgées : limitez le temps dehors', 'Envisagez de porter un masque à l\'extérieur'];
     }}
-    if (aqi <= 200) { switch (lang) {
+    if (aqi <= 4) { switch (lang) {
       case 'ar': return ['تجنب الأنشطة الخارجية المكثفة', 'ارتدِ قناعاً عند الخروج', 'أبلغ عن مصادر التلوث القريبة'];
       case 'en': return ['Avoid intense outdoor activities', 'Wear a mask when going outside', 'Report nearby pollution sources'];
       case 'es': return ['Evita actividades intensas al aire libre', 'Usa mascarilla al salir', 'Reporta fuentes de contaminación cercanas'];

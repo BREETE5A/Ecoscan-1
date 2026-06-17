@@ -85,10 +85,10 @@ const _questions = [
     optionsAr: ['الحاوية الصفراء', 'نقطة ECOVAL البيئية', 'الحاوية السوداء', 'العمود الأخضر'],
     optionsEs: ['Contenedor amarillo', 'Punto eco ECOVAL', 'Contenedor negro', 'Columna verde'],
     correct: 1,
-    explanationFr: 'Les DEEE (déchets électroniques) se déposent aux 500+ éco-points ECOVAL.',
-    explanationEn: 'E-waste goes to 500+ ECOVAL eco-points across Morocco.',
-    explanationAr: 'تُودَع النفايات الإلكترونية في أكثر من 500 نقطة ECOVAL بيئية.',
-    explanationEs: 'Los residuos electrónicos van a los 500+ puntos eco ECOVAL de Marruecos.',
+    explanationFr: 'Les DEEE (déchets électroniques) se déposent aux nombreux éco-points ECOVAL répartis au Maroc.',
+    explanationEn: 'E-waste goes to the numerous ECOVAL eco-points located across Morocco.',
+    explanationAr: 'تُودَع النفايات الإلكترونية في نقاط ECOVAL البيئية المتعددة المنتشرة في المغرب.',
+    explanationEs: 'Los residuos electrónicos van a los numerosos puntos eco ECOVAL distribuidos por Marruecos.',
   ),
 
   // ── 5 ─────────────────────────────────────────────────────────────────────
@@ -178,19 +178,19 @@ const _questions = [
 
   // ── 10 ────────────────────────────────────────────────────────────────────
   _Question(
-    fr: 'Quel est l\'objectif marocain de recyclage des plastiques d\'ici 2030 selon le PNVDM ?',
-    en: 'What is Morocco\'s plastic recycling target by 2030 under the PNVDM?',
-    ar: 'ما هو هدف المغرب لإعادة تدوير البلاستيك بحلول 2030 وفق البرنامج الوطني PNVDM؟',
-    es: '¿Cuál es el objetivo marroquí de reciclaje de plásticos para 2030 según el PNVDM?',
-    optionsFr: ['20%', '40%', '70%', '100%'],
-    optionsEn: ['20%', '40%', '70%', '100%'],
-    optionsAr: ['20%', '40%', '70%', '100%'],
-    optionsEs: ['20%', '40%', '70%', '100%'],
+    fr: 'Quel est l\'objectif du Programme National des Déchets Ménagers (PNDM) du Maroc d\'ici 2030 ?',
+    en: 'What is Morocco\'s National Household Waste Programme (PNDM) target by 2030?',
+    ar: 'ما هو هدف البرنامج الوطني للنفايات المنزلية (PNDM) بالمغرب بحلول 2030؟',
+    es: '¿Cuál es el objetivo del Programa Nacional de Residuos Domésticos (PNDM) de Marruecos para 2030?',
+    optionsFr: ['50% de décharges contrôlées', '70% de décharges contrôlées', '100% de décharges contrôlées', 'Zéro déchet en décharge'],
+    optionsEn: ['50% controlled landfills', '70% controlled landfills', '100% controlled landfills', 'Zero waste in landfills'],
+    optionsAr: ['50% مدافن منضبطة', '70% مدافن منضبطة', '100% مدافن منضبطة', 'صفر نفايات في المدافن'],
+    optionsEs: ['50% vertederos controlados', '70% vertederos controlados', '100% vertederos controlados', 'Cero residuos en vertederos'],
     correct: 2,
-    explanationFr: 'Le Programme National de Valorisation des Déchets Ménagers (PNVDM 2023) fixe un objectif de 70 % de recyclage des plastiques d\'ici 2030.',
-    explanationEn: 'Morocco\'s National Household Waste Programme (PNVDM 2023) sets a 70% plastic recycling target by 2030.',
-    explanationAr: 'يحدد البرنامج الوطني لتثمين النفايات المنزلية (PNVDM 2023) هدف إعادة تدوير 70% من البلاستيك بحلول 2030.',
-    explanationEs: 'El Programa Nacional de Valorización de Residuos Domésticos (PNVDM 2023) fija un objetivo del 70% de reciclaje de plásticos para 2030.',
+    explanationFr: 'Le PNDM fixe un objectif de 100 % de mise en décharge contrôlée et la fermeture de toutes les décharges sauvages au Maroc d\'ici 2030.',
+    explanationEn: 'The PNDM sets a 100% controlled landfill target and the closure of all illegal dumps in Morocco by 2030.',
+    explanationAr: 'يحدد PNDM هدف 100% من الدفن المنضبط وإغلاق جميع المكبات العشوائية في المغرب بحلول 2030.',
+    explanationEs: 'El PNDM fija un objetivo del 100% de vertedero controlado y el cierre de todos los vertederos ilegales en Marruecos para 2030.',
   ),
 
   // ── 11 ────────────────────────────────────────────────────────────────────
@@ -306,10 +306,10 @@ const _questions = [
     optionsAr: ['حوالي 9%', 'حوالي 30%', 'حوالي 50%', 'حوالي 70%'],
     optionsEs: ['Alrededor del 9%', 'Alrededor del 30%', 'Alrededor del 50%', 'Alrededor del 70%'],
     correct: 0,
-    explanationFr: 'Seulement ~9% des plastiques produits depuis les années 50 ont été recyclés. 91% finissent en décharge ou dans la nature.',
-    explanationEn: 'Only ~9% of all plastics produced since the 1950s have been recycled. 91% end up in landfill or nature.',
-    explanationAr: 'فقط حوالي 9% من جميع البلاستيك المنتج منذ الخمسينيات أُعيد تدويره. 91% ينتهي في مكبات أو في الطبيعة.',
-    explanationEs: 'Solo ~9% de todos los plásticos producidos desde los años 50 han sido reciclados. El 91% acaba en vertederos o en la naturaleza.',
+    explanationFr: 'Seulement ~9% des plastiques produits depuis les années 50 ont été recyclés. Parmi le reste : environ 12% ont été incinérés et 79% finissent en décharge ou dans la nature (Geyer et al., Science Advances, 2017).',
+    explanationEn: 'Only ~9% of all plastics produced since the 1950s have been recycled. Of the rest: ~12% were incinerated and 79% ended up in landfills or nature (Geyer et al., Science Advances, 2017).',
+    explanationAr: 'فقط ~9% من جميع البلاستيك المنتج منذ الخمسينيات أُعيد تدويره. من الباقي: ~12% أُحرق و79% انتهى في المكبات أو الطبيعة (Geyer وآخرون، Science Advances، 2017).',
+    explanationEs: 'Solo ~9% de todos los plásticos producidos desde los años 50 han sido reciclados. Del resto: ~12% fue incinerado y 79% acabó en vertederos o en la naturaleza (Geyer et al., Science Advances, 2017).',
   ),
 
   // ── 18 ────────────────────────────────────────────────────────────────────
@@ -348,19 +348,19 @@ const _questions = [
 
   // ── 20 ────────────────────────────────────────────────────────────────────
   _Question(
-    fr: 'Les déchets électroniques représentent quel % des déchets dangereux mondiaux ?',
-    en: 'E-waste represents what % of the world\'s hazardous waste?',
-    ar: 'تمثل النفايات الإلكترونية كم بالمئة من النفايات الخطرة في العالم؟',
-    es: '¿Los residuos electrónicos representan qué % de los residuos peligrosos mundiales?',
-    optionsFr: ['2%', '10%', '70%', '50%'],
-    optionsEn: ['2%', '10%', '70%', '50%'],
-    optionsAr: ['2%', '10%', '70%', '50%'],
-    optionsEs: ['2%', '10%', '70%', '50%'],
+    fr: 'Combien de millions de tonnes de déchets électroniques le monde génère-t-il par an (ONU, 2020) ?',
+    en: 'How many million tonnes of e-waste does the world generate per year (UN, 2020)?',
+    ar: 'كم مليون طن من النفايات الإلكترونية ينتج العالم سنوياً (الأمم المتحدة، 2020)؟',
+    es: '¿Cuántos millones de toneladas de residuos electrónicos genera el mundo al año (ONU, 2020)?',
+    optionsFr: ['10 millions de tonnes', '25 millions de tonnes', '53 millions de tonnes', '100 millions de tonnes'],
+    optionsEn: ['10 million tonnes', '25 million tonnes', '53 million tonnes', '100 million tonnes'],
+    optionsAr: ['10 ملايين طن', '25 مليون طن', '53 مليون طن', '100 مليون طن'],
+    optionsEs: ['10 millones de toneladas', '25 millones de toneladas', '53 millones de toneladas', '100 millones de toneladas'],
     correct: 2,
-    explanationFr: 'Les e-déchets représentent ~2% des déchets mais 70% des déchets dangereux mondiaux !',
-    explanationEn: 'E-waste is ~2% of waste but 70% of the world\'s hazardous waste!',
-    explanationAr: 'النفايات الإلكترونية تمثل ~2% من النفايات لكن 70% من النفايات الخطرة في العالم!',
-    explanationEs: '¡Los residuos electrónicos son ~2% de los residuos pero el 70% de los peligrosos del mundo!',
+    explanationFr: 'En 2019, le monde a produit 53,6 Mt de déchets électroniques — un record absolu selon le Global E-waste Monitor 2020 (ONU/UIT).',
+    explanationEn: 'In 2019, the world generated 53.6 Mt of e-waste — an all-time record according to the Global E-waste Monitor 2020 (UN/ITU).',
+    explanationAr: 'في 2019، أنتج العالم 53.6 مليون طن من النفايات الإلكترونية — رقم قياسي وفق الرصد العالمي للنفايات الإلكترونية 2020 (الأمم المتحدة/الاتحاد الدولي للاتصالات).',
+    explanationEs: 'En 2019, el mundo generó 53,6 Mt de residuos electrónicos — un récord histórico según el Global E-waste Monitor 2020 (ONU/UIT).',
   ),
 
   // ── 21 ────────────────────────────────────────────────────────────────────

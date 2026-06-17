@@ -52,24 +52,7 @@ class LeaderboardScreen extends ConsumerStatefulWidget {
   ConsumerState<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
-  int _tabIdx = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 2, vsync: this);
-    _tab.addListener(() => setState(() => _tabIdx = _tab.index));
-  }
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
-
+class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -117,32 +100,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                       color: AppColors.textSecondary,
                     ),
                   ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-                  const SizedBox(height: 14),
-                  Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCard : AppColors.inputBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TabBar(
-                      controller: _tab,
-                      tabs: [Tab(text: s.myCity), Tab(text: s.national)],
-                      indicator: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelStyle: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600),
-                      unselectedLabelStyle:
-                          const TextStyle(fontFamily: 'Poppins', fontSize: 13),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: AppColors.textSecondary,
-                      dividerColor: Colors.transparent,
-                    ),
-                  ).animate().fadeIn(duration: 400.ms, delay: 150.ms),
                 ],
               ),
             ),
@@ -160,26 +117,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                   ),
                 ),
                 data: (all) {
-                  final national = all.take(10).toList();
-                  final cityEntries = all
-                      .where((e) =>
-                          user.city.isNotEmpty &&
-                          e.city.toLowerCase() == user.city.toLowerCase())
-                      .take(10)
-                      .toList();
-                  // Re-rank city entries
-                  final city = cityEntries.asMap().entries.map((e) =>
-                    _LeaderEntry(
-                      uid: e.value.uid,
-                      name: e.value.name,
-                      points: e.value.points,
-                      rank: e.key + 1,
-                      city: e.value.city,
-                    )).toList();
-
-                  final players = _tabIdx == 0
-                      ? (city.isEmpty ? national : city)
-                      : national;
+                  final players = all.take(10).toList();
 
                   if (players.isEmpty) {
                     return Center(

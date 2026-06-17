@@ -398,6 +398,11 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
           'scansCount':  0,
           'badges':      [],
         });
+        // Incrémenter le compteur global d'utilisateurs (identique à l'inscription email)
+        _db.collection('community_totals').doc('stats').set(
+          {'userCount': FieldValue.increment(1)},
+          SetOptions(merge: true),
+        ).catchError((_) {});
         N8nService.bienvenue(
           userId: fbUser.uid,
           nom:    fbUser.displayName ?? '',

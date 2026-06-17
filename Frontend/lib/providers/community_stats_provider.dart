@@ -18,28 +18,32 @@ class CommunityStats {
 final communityStatsProvider = StreamProvider<CommunityStats>((ref) {
   final db = FirebaseFirestore.instance;
 
-  // Stream temps réel sur le document community_totals/stats.
-  // Ce document est mis à jour à chaque scan (storage_service.dart),
-  // à chaque inscription (auth_provider.dart) et à chaque suppression de compte.
   return db
       .collection('community_totals')
       .doc('stats')
       .snapshots()
       .asyncMap((snap) async {
     final data = snap.exists ? snap.data() : null;
+
     final hasTotalScans = data?.containsKey('totalScans') ?? false;
     final hasCo2        = data?.containsKey('totalCo2Grams') ?? false;
+    final hasUserCount  = data?.containsKey('userCount') ?? false;
     final rawUsers      = (data?['userCount'] as num?)?.toInt() ?? 0;
 
-    // Ré-initialiser si données manquantes ou userCount négatif
-    if (!hasTotalScans || !hasCo2 || rawUsers < 0) {
-      await _initializeTotals(db);
-      return const CommunityStats();
+    // Initialiser si un champ obligatoire est absent ou userCount négatif
+    if (!hasTotalScans || !hasCo2 || !hasUserCount || rawUsers < 0) {
+      final stats = await _initializeTotals(db, existingData: data);
+      return stats;
     }
 
     final totalScans    = (data!['totalScans']    as num?)?.toInt()    ?? 0;
     final totalCo2Grams = (data['totalCo2Grams'] as num?)?.toDouble() ?? 0.0;
     final users         = rawUsers.clamp(0, 999999999);
+
+    // Si userCount vaut 0 mais qu'il y a des scans, le compteur est désynchronisé
+    if (users == 0 && totalScans > 0) {
+      _resyncUserCount(db);
+    }
 
     final kg       = (totalCo2Grams / 1000).round();
     final progress = (totalScans / 10000.0).clamp(0.0, 1.0);
@@ -53,20 +57,69 @@ final communityStatsProvider = StreamProvider<CommunityStats>((ref) {
   });
 });
 
-/// Initialise totalScans, totalCo2Grams et userCount depuis une agrégation
-/// serveur — appelé une seule fois si les champs sont absents du document.
-Future<void> _initializeTotals(FirebaseFirestore db) async {
+/// Compte les utilisateurs réels et remet à jour userCount sans bloquer le stream.
+Future<void> _resyncUserCount(FirebaseFirestore db) async {
+  try {
+    final countSnap = await db.collection('users').count().get();
+    final realCount = countSnap.count ?? 0;
+    if (realCount > 0) {
+      await db.collection('community_totals').doc('stats').update({
+        'userCount': realCount,
+      });
+    }
+  } catch (_) {}
+}
+
+/// Initialise le document community_totals/stats depuis les données réelles.
+/// Retourne les stats calculées immédiatement (sans attendre le prochain snapshot).
+Future<CommunityStats> _initializeTotals(
+  FirebaseFirestore db, {
+  Map<String, dynamic>? existingData,
+}) async {
+  // Valeurs déjà présentes dans le document (pour ne pas écraser)
+  final existingScans = (existingData?['totalScans'] as num?)?.toInt() ?? 0;
+  final existingCo2   = (existingData?['totalCo2Grams'] as num?)?.toDouble() ?? 0.0;
+
+  // count() fonctionne sur tous les plans Firestore (Spark inclus)
+  int userCount = 0;
+  try {
+    final countSnap = await db.collection('users').count().get();
+    userCount = countSnap.count ?? 0;
+  } catch (_) {}
+
+  // sum() nécessite le plan Blaze — on tente, mais on ne bloque pas si ça échoue
+  int totalScans    = existingScans;
+  double totalCo2   = existingCo2;
   try {
     final agg = await db.collection('users').aggregate(
-      count(),
       sum('scansCount'),
       sum('co2Saved'),
     ).get();
+    final aggScans = (agg.getSum('scansCount') as num?)?.toInt() ?? 0;
+    final aggCo2   = (agg.getSum('co2Saved')  as num?)?.toDouble() ?? 0.0;
+    // On prend le max entre la valeur existante et l'agrégat (évite de rétrograder)
+    if (aggScans > totalScans) totalScans = aggScans;
+    if (aggCo2   > totalCo2)   totalCo2   = aggCo2;
+  } catch (_) {
+    // Plan Spark : sum() non disponible, on conserve les valeurs existantes
+  }
 
+  // Écriture du document complet (merge pour ne pas supprimer d'autres champs)
+  try {
     await db.collection('community_totals').doc('stats').set({
-      'totalScans':    (agg.getSum('scansCount') as num?)?.toInt()    ?? 0,
-      'totalCo2Grams': (agg.getSum('co2Saved')  as num?)?.toDouble() ?? 0.0,
-      'userCount':     agg.count ?? 0,
+      'totalScans':    totalScans,
+      'totalCo2Grams': totalCo2,
+      'userCount':     userCount,
     }, SetOptions(merge: true));
   } catch (_) {}
+
+  final kg       = (totalCo2 / 1000).round();
+  final progress = (totalScans / 10000.0).clamp(0.0, 1.0);
+
+  return CommunityStats(
+    users:      userCount,
+    scans:      totalScans,
+    kgRecycled: kg,
+    progress:   progress,
+  );
 }

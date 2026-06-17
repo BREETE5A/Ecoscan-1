@@ -217,11 +217,11 @@ class AirQualityService {
   static AirQualityData _buildData(int aqi, String city,
       Map<String, double> pollutants) {
     String level, levelAr, levelEn, levelEs; int color;
-    if      (aqi <= 1) { level='Bon';               levelEn='Good';                  levelAr='جيد';           levelEs='Bueno';            color=0xFF00C853; }
-    else if (aqi <= 2) { level='Modéré';             levelEn='Moderate';              levelAr='معتدل';         levelEs='Moderado';         color=0xFFFFAB00; }
-    else if (aqi <= 3) { level='Mauvais (sensibles)';levelEn='Unhealthy (sensitive)'; levelAr='سيء (حساسون)';  levelEs='Malo (sensibles)'; color=0xFFFF6D00; }
-    else if (aqi <= 4) { level='Mauvais';            levelEn='Unhealthy';             levelAr='غير صحي';       levelEs='No saludable';     color=0xFFD50000; }
-    else               { level='Très mauvais';       levelEn='Very unhealthy';        levelAr='سيء جداً';      levelEs='Muy no saludable'; color=0xFF6200EA; }
+    if      (aqi <= 1) { level='Bon';          levelEn='Good';      levelAr='جيد';      levelEs='Bueno';      color=0xFF00C853; }
+    else if (aqi <= 2) { level='Correct';      levelEn='Fair';      levelAr='مقبول';    levelEs='Aceptable';  color=0xFFFFAB00; }
+    else if (aqi <= 3) { level='Modéré';       levelEn='Moderate';  levelAr='معتدل';    levelEs='Moderado';   color=0xFFFF6D00; }
+    else if (aqi <= 4) { level='Mauvais';      levelEn='Poor';      levelAr='سيئ';      levelEs='Malo';       color=0xFFD50000; }
+    else               { level='Très mauvais'; levelEn='Very Poor'; levelAr='سيئ جداً'; levelEs='Muy malo';   color=0xFF6200EA; }
 
     return AirQualityData(
       aqi: aqi, city: city,

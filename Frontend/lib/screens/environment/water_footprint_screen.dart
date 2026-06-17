@@ -14,13 +14,17 @@ class WaterFootprintScreen extends ConsumerStatefulWidget {
 }
 
 class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
-  double _dishes = 2;
+  double _dishes  = 2;
   double _laundry = 3;
-  double _garden = 0;
+  double _garden  = 0;
+  double _shower  = 8;
+  double _toilet  = 5;
 
   static const _kDishes  = 'wf_dishes';
   static const _kLaundry = 'wf_laundry';
   static const _kGarden  = 'wf_garden';
+  static const _kShower  = 'wf_shower';
+  static const _kToilet  = 'wf_toilet';
 
   @override
   void initState() {
@@ -35,6 +39,8 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
       _dishes  = prefs.getDouble(_kDishes)  ?? 2;
       _laundry = prefs.getDouble(_kLaundry) ?? 3;
       _garden  = prefs.getDouble(_kGarden)  ?? 0;
+      _shower  = prefs.getDouble(_kShower)  ?? 8;
+      _toilet  = prefs.getDouble(_kToilet)  ?? 5;
     });
   }
 
@@ -43,18 +49,20 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
     await prefs.setDouble(key, value);
   }
 
-  // Consommation en litres
-  double get _dishesL    => _dishes * 15;
-  double get _laundryL   => (_laundry / 7) * 60;
-  double get _gardenL    => _garden * 15;
-  double get _total      => _dishesL + _laundryL + _gardenL;
+  // Consommation en litres — sources ADEME 2023 & Banque Mondiale
+  double get _dishesL    => _dishes * 15;           // 15 L/vaisselle (ADEME)
+  double get _laundryL   => (_laundry / 7) * 60;   // 60 L/cycle (ADEME)
+  double get _gardenL    => _garden * 15;           // 15 L/min (débit tuyau standard)
+  double get _showerL    => _shower * 10;           // 10 L/min (ADEME — moyenne pomme de douche)
+  double get _toiletL    => _toilet * 9;            // 9 L/chasse (ADEME — WC standard)
+  double get _total      => _dishesL + _laundryL + _gardenL + _showerL + _toiletL;
 
   static const _moroccanAvg = 143.0;
 
   Color get _totalColor {
-    if (_total <= 30)  return const Color(0xFF00C853);
-    if (_total <= 60)  return const Color(0xFFFFAB00);
-    if (_total <= 100) return const Color(0xFFFF6D00);
+    if (_total <= 100) return const Color(0xFF00C853);
+    if (_total <= 143) return const Color(0xFFFFAB00);
+    if (_total <= 200) return const Color(0xFFFF6D00);
     return const Color(0xFFD50000);
   }
 
@@ -184,24 +192,42 @@ class _WaterFootprintScreenState extends ConsumerState<WaterFootprintScreen> {
         const SizedBox(height: 16),
         _WaterSlider(
           icon: Icons.set_meal_rounded,
-          label: lang == 'ar' ? 'غسيل الأطباق' : lang == 'en' ? 'Dish washing' : 'Vaisselle',
-          value: _dishes, min: 0, max: 6, unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : 'x/jour',
+          label: lang == 'ar' ? 'غسيل الأطباق' : lang == 'en' ? 'Dish washing' : lang == 'es' ? 'Lavado de platos' : 'Vaisselle',
+          value: _dishes, min: 0, max: 6,
+          unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : lang == 'es' ? 'veces/día' : 'x/jour',
           liters: _dishesL, color: const Color(0xFF00897B), isDark: isDark,
           onChanged: (v) { setState(() => _dishes = v);  _save(_kDishes,  v); },
         ),
         _WaterSlider(
           icon: Icons.local_laundry_service_rounded,
-          label: lang == 'ar' ? 'غسيل الملابس' : lang == 'en' ? 'Laundry' : 'Machine à laver',
-          value: _laundry, min: 0, max: 14, unit: lang == 'ar' ? 'مرة/أسبوع' : lang == 'en' ? 'x/week' : 'x/semaine',
+          label: lang == 'ar' ? 'غسيل الملابس' : lang == 'en' ? 'Laundry' : lang == 'es' ? 'Lavadora' : 'Machine à laver',
+          value: _laundry, min: 0, max: 14,
+          unit: lang == 'ar' ? 'مرة/أسبوع' : lang == 'en' ? 'x/week' : lang == 'es' ? 'veces/semana' : 'x/semaine',
           liters: _laundryL, color: const Color(0xFF7B1FA2), isDark: isDark,
           onChanged: (v) { setState(() => _laundry = v); _save(_kLaundry, v); },
         ),
         _WaterSlider(
           icon: Icons.grass_rounded,
-          label: lang == 'ar' ? 'ري الحديقة' : lang == 'en' ? 'Garden watering' : 'Arrosage jardin',
-          value: _garden, min: 0, max: 60, unit: lang == 'ar' ? 'دقيقة/يوم' : lang == 'en' ? 'min/day' : 'min/jour',
+          label: lang == 'ar' ? 'ري الحديقة' : lang == 'en' ? 'Garden watering' : lang == 'es' ? 'Riego del jardín' : 'Arrosage jardin',
+          value: _garden, min: 0, max: 60, unit: lang == 'ar' ? 'دقيقة/يوم' : lang == 'en' ? 'min/day' : lang == 'es' ? 'min/día' : 'min/jour',
           liters: _gardenL, color: const Color(0xFF388E3C), isDark: isDark,
           onChanged: (v) { setState(() => _garden = v);  _save(_kGarden,  v); },
+        ),
+        _WaterSlider(
+          icon: Icons.shower_rounded,
+          label: lang == 'ar' ? 'الاستحمام' : lang == 'en' ? 'Shower' : lang == 'es' ? 'Ducha' : 'Douche',
+          value: _shower, min: 0, max: 30,
+          unit: lang == 'ar' ? 'دقيقة/يوم' : lang == 'en' ? 'min/day' : lang == 'es' ? 'min/día' : 'min/jour',
+          liters: _showerL, color: const Color(0xFF0288D1), isDark: isDark,
+          onChanged: (v) { setState(() => _shower = v); _save(_kShower, v); },
+        ),
+        _WaterSlider(
+          icon: Icons.wc_rounded,
+          label: lang == 'ar' ? 'سحب مياه المرحاض' : lang == 'en' ? 'Toilet flushes' : lang == 'es' ? 'Descargas del inodoro' : 'Chasse d\'eau',
+          value: _toilet, min: 0, max: 15,
+          unit: lang == 'ar' ? 'مرة/يوم' : lang == 'en' ? 'x/day' : lang == 'es' ? 'veces/día' : 'fois/jour',
+          liters: _toiletL, color: const Color(0xFF5C6BC0), isDark: isDark,
+          onChanged: (v) { setState(() => _toilet = v); _save(_kToilet, v); },
         ),
       ]),
     );
