@@ -65,10 +65,6 @@ class ChatService {
         'ميل', 'إيميل', 'البريد'])) {
       return '📧 Pour changer votre **email** :\nProfil → Paramètres → Changer l\'email.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
-    if (_containsAny(q, ['2fa', 'deux facteurs', 'two factor', 'المصادقة', 'doble factor',
-        'authentification', 'التحقق', 'تحقق'])) {
-      return '🔒 Pour activer l\'**authentification à 2 facteurs** :\nProfil → Paramètres → Authentification 2FA.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
-    }
     if (_containsAny(q, ['modifier profil', 'edit profile', 'photo profil', 'تعديل الملف',
         'editar perfil', 'changer nom', 'بدل الاسم', 'بدل صورة', 'صورة البروفيل', 'غير الاسم'])) {
       return '👤 Pour modifier votre **profil** (nom, photo) :\nProfil → Modifier le profil.\n\n⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';

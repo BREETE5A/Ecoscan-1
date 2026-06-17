@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
-import 'two_factor_screen.dart' show TwoFactorScreen;
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -165,19 +164,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   ),
                 ),
               ).animate().fadeIn(delay: 500.ms),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const TwoFactorScreen())),
-                icon: const Icon(Icons.sms_outlined, color: AppColors.primary),
-                label: Text(s.verifyBySms,
-                  style: const TextStyle(color: AppColors.primary, fontFamily: 'Poppins')),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ).animate().fadeIn(delay: 600.ms),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: _changeAccount,
