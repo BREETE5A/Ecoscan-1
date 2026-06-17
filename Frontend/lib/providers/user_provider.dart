@@ -8,6 +8,15 @@ import '../models/scan_result_model.dart';
 import '../services/storage_service.dart';
 import '../services/n8n_service.dart';
 
+double _calcWeeklyCo2(List<Map<String, dynamic>> history) {
+  final weekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  final start = DateTime(weekStart.year, weekStart.month, weekStart.day);
+  return history.fold(0.0, (acc, s) {
+    final at = DateTime.tryParse(s['scannedAt'] as String? ?? '') ?? DateTime(2000);
+    return at.isAfter(start) ? acc + ((s['co2Saved'] as num?)?.toDouble() ?? 0.0) : acc;
+  });
+}
+
 // Stream Firestore en temps réel des stats utilisateur (co2, points, scans)
 final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
   final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -18,7 +27,7 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
       .collection('users')
       .doc(uid)
       .snapshots()
-      .map((doc) {
+      .asyncMap((doc) async {
     if (!doc.exists) return ref.read(userProvider);
     final data = doc.data()!;
     final fsPoints = (data['ecoPoints'] as num?)?.toInt() ?? 0;
@@ -43,6 +52,8 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
     if (fsScans >= 50)   badges++;
     if (fsPoints >= 100) badges++;
     if (fsPoints >= 500) badges++;
+    final history = await StorageService.getHistory();
+    final weeklyCo2 = _calcWeeklyCo2(history);
     return UserModel(
       id: uid,
       name: fsName,
@@ -55,8 +66,8 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
       xp: fsPoints % 200,
       xpMax: 200,
       co2Saved: fsCo2,
-      weeklyGoalKg: 10.0,
-      weeklyProgress: (fsCo2 / 10000).clamp(0.0, 1.0),
+      weeklyGoalKg: 50.0,
+      weeklyProgress: (weeklyCo2 / 50000).clamp(0.0, 1.0),
       streak: fsStreak,
     );
   });
@@ -134,8 +145,8 @@ class UserNotifier extends StateNotifier<UserModel> {
             xp:             fsPoints % 200,
             xpMax:          200,
             co2Saved:       fsCo2,
-            weeklyGoalKg:   10.0,
-            weeklyProgress: (fsCo2 / 10000).clamp(0.0, 1.0),
+            weeklyGoalKg:   50.0,
+            weeklyProgress: (_calcWeeklyCo2(history) / 50000).clamp(0.0, 1.0),
             recentScans:    history.take(4).toList(),
             streak:         fsStreak,
           );
@@ -165,8 +176,8 @@ class UserNotifier extends StateNotifier<UserModel> {
       xp:             points % 200,
       xpMax:          200,
       co2Saved:       co2,
-      weeklyGoalKg:   10.0,
-      weeklyProgress: (co2 / 10000).clamp(0.0, 1.0),
+      weeklyGoalKg:   50.0,
+      weeklyProgress: (_calcWeeklyCo2(history) / 50000).clamp(0.0, 1.0),
       recentScans:    history.take(4).toList(),
     );
   }
