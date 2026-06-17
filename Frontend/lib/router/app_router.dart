@@ -11,7 +11,6 @@ import '../screens/legal/terms_screen.dart';
 import '../screens/auth/verify_email_screen.dart';
 import '../screens/settings/change_password_screen.dart';
 import '../screens/settings/change_email_screen.dart';
-import '../screens/auth/two_factor_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/scan/scan_screen.dart';
 import '../screens/scan/scan_result_screen.dart';
@@ -123,10 +122,6 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/change-email',
       pageBuilder: (c, s) => _fadeSlide(c, s, const ChangeEmailScreen()),
-    ),
-    GoRoute(
-      path: '/two-factor-setup',
-      pageBuilder: (c, s) => _fadeSlide(c, s, const TwoFactorScreen()),
     ),
     ShellRoute(
       builder: (context, state, child) => MainScaffold(child: child),

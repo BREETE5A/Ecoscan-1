@@ -153,13 +153,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           isDark: isDark,
                           onTap: () => context.push('/change-email'),
                         ),
-                        _ActionRow(
-                          icon: Icons.phone_android_rounded,
-                          label: s.twoFactor,
-                          color: AppColors.teal,
-                          isDark: isDark,
-                          onTap: () => context.push('/two-factor-setup'),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
