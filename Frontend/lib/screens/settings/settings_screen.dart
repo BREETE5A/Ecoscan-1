@@ -233,7 +233,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _shareApp() {
-    Share.share('Découvrez EcoScan — l\'app de tri des déchets 🌿\nhttps://ecoscan.app');
+    Share.share('Découvrez EcoScan — l\'app de tri des déchets 🌿');
   }
 
   bool get _isGoogleUser => FirebaseAuth.instance.currentUser?.providerData
