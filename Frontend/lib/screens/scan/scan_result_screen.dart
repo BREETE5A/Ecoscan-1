@@ -343,7 +343,7 @@ class _Co2Card extends ConsumerWidget {
             duration: const Duration(milliseconds: 1200),
             curve: Curves.easeOut,
             builder: (_, v, _) => Text(
-              '${v.round()} g',
+              '${(v / 1000).toStringAsFixed(2)} kg',
               style: const TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 26,

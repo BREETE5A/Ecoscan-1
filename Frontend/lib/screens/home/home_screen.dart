@@ -107,7 +107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       loading: () => const Color(0xFF26C6DA),
       error: (e, st) => const Color(0xFF26C6DA),
     );
-    final co2Str = user.co2Saved > 0 ? '${user.co2Saved.round()} g' : '0 g';
+    final co2Str = user.co2Saved > 0 ? '${(user.co2Saved / 1000).toStringAsFixed(2)} kg' : '0 kg';
 
     final quickActions = [
       (Icons.emoji_events_rounded,    s.qaBadges,       '/badges',      const Color(0xFFF39C12)),
