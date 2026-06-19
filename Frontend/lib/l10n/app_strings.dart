@@ -425,8 +425,8 @@ class AppStrings {
   );
 
   // ── Barcode ───────────────────────────────────────────────────────────────
-  String get barcodeTitle         => _t('Scanner code-barres',              'Barcode Scanner',                'مسح الرمز الشريطي',                 'Escáner de código de barras');
-  String get barcodeCamHint       => _t('Pointez la caméra vers le code-barres du produit', 'Point the camera at the product barcode', 'وجّه الكاميرا نحو الرمز الشريطي للمنتج', 'Apunta la cámara al código de barras del producto');
+  String get barcodeTitle         => _t('Scanner code-barres alimentaire',   'Food Barcode Scanner',           'مسح الرمز الشريطي للأغذية',         'Escáner de código de barras alimentario');
+  String get barcodeCamHint       => _t('Pointez vers le code-barres d\'un produit alimentaire', 'Point at a food product barcode', 'وجّه الكاميرا نحو الرمز الشريطي لمنتج غذائي', 'Apunta al código de barras de un producto alimentario');
   String get barcodeNotFound      => _t('Produit introuvable dans la base de données', 'Product not found in the database', 'لم يُعثر على المنتج في قاعدة البيانات', 'Producto no encontrado en la base de datos');
   String get barcodeScanAgain     => _t('Scanner à nouveau',  'Scan again',      'مسح مجدداً',    'Escanear de nuevo');
   String get barcodeUnknown       => _t('Produit inconnu',    'Unknown product', 'منتج غير معروف','Producto desconocido');
@@ -437,7 +437,7 @@ class AppStrings {
   String get barcodeNotRecyclable => _t('Non recyclable ✗',   'Not recyclable ✗','غير قابل للتدوير ✗','No reciclable ✗');
   String get barcodeEcoImpact     => _t('Impact environnemental', 'Environmental impact', 'التأثير البيئي', 'Impacto ambiental');
   String get barcodeCtaLabel      => _t('Scanner code-barres',  'Scan barcode',  'مسح الباركود',  'Escanear código de barras');
-  String get barcodeCtaSub        => _t('Infos produit & recyclabilité', 'Product info & recyclability', 'معلومات المنتج وقابلية التدوير', 'Info producto y reciclabilidad');
+  String get barcodeCtaSub        => _t('Produits alimentaires uniquement', 'Food products only', 'للمنتجات الغذائية فقط', 'Solo productos alimentarios');
   String get barcodeDisposalTip   => _t('Consigne de tri',  'Sorting instruction', 'تعليمات الفرز', 'Instrucción de clasificación');
   String get barcodeHowToRecycle  => _t('Comment recycler ?',   'How to recycle?',       'كيف تُعيد التدوير؟',      '¿Cómo reciclar?');
   String get barcodeMaterial      => _t('Matériau identifié',   'Identified material',   'المادة المُحددة',         'Material identificado');

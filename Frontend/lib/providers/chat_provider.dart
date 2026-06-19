@@ -9,6 +9,9 @@ import 'locale_provider.dart';
 
 final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
 
+/// Message pré-rempli depuis l'écran de résultat de scan — consommé une seule fois
+final pendingChatContextProvider = StateProvider<String?>((ref) => null);
+
 final chatProvider =
     StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
   final lang = ref.read(localeProvider).languageCode;

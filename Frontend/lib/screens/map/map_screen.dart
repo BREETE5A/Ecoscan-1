@@ -269,14 +269,33 @@ class _MapScreenState extends ConsumerState<MapScreen>
         pos = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 15),
+            timeLimit: Duration(seconds: 20),
           ),
         );
       } catch (_) {
-        pos = await Geolocator.getLastKnownPosition();
+        final last = await Geolocator.getLastKnownPosition();
+        // Ne pas utiliser une position hors Maroc (lat 27-36, lon -13.2 à -0.5)
+        if (last != null &&
+            last.latitude >= 27.0 && last.latitude <= 36.0 &&
+            last.longitude >= -13.2 && last.longitude <= -0.5) {
+          pos = last;
+        }
       }
       if (pos == null) {
-        if (mounted) setState(() => _isLoadingLocation = false);
+        // Centrer sur Casablanca si pas de position valide
+        if (mounted) {
+          setState(() => _isLoadingLocation = false);
+          _mapController.move(const LatLng(33.5731, -7.5898), 6.0);
+        }
+        return;
+      }
+      // Vérifier que la position est au Maroc
+      if (pos.latitude < 27.0 || pos.latitude > 36.0 ||
+          pos.longitude < -13.2 || pos.longitude > -0.5) {
+        if (mounted) {
+          setState(() => _isLoadingLocation = false);
+          _mapController.move(const LatLng(33.5731, -7.5898), 6.0);
+        }
         return;
       }
       final userLoc = LatLng(pos.latitude, pos.longitude);

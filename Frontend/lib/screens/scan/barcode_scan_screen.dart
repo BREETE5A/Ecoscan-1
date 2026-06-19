@@ -107,6 +107,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
       binColor: binColor,
       scannedAt: DateTime.now(),
       mode: 'barcode',
+      imageUrl: product.imageUrl.isNotEmpty ? product.imageUrl : null,
     );
 
     final result = ScanResultModel(
@@ -171,10 +172,20 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        Text(s.barcodeTitle, style: TextStyle(
-          fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.bold,
-          color: isDark ? AppColors.darkText : AppColors.textPrimary,
-        )),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(s.barcodeTitle, style: TextStyle(
+                fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.darkText : AppColors.textPrimary,
+              )),
+              Text(s.barcodeCtaSub, style: const TextStyle(
+                fontFamily: 'Poppins', fontSize: 11, color: AppColors.textSecondary,
+              )),
+            ],
+          ),
+        ),
       ]),
     );
   }

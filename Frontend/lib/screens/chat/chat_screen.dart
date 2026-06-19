@@ -42,6 +42,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       final lang = ref.read(localeProvider).languageCode;
       ref.read(chatProvider.notifier)
           .updateWelcomeMessage(AppStrings.of(lang).botGreeting);
+
+      // Pre-warm Render : ping silencieux à l'ouverture pour réveiller le serveur
+      ref.read(chatServiceProvider).warmUp();
+
+      // Auto-envoie le contexte du scan si disponible (depuis scan_result_screen)
+      final pending = ref.read(pendingChatContextProvider);
+      if (pending != null && pending.isNotEmpty) {
+        ref.read(pendingChatContextProvider.notifier).state = null;
+        ref.read(chatProvider.notifier).sendMessage(pending);
+      }
     });
   }
 

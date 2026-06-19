@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../models/scan_entry.dart';
 import '../../providers/scan_history_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../l10n/app_strings.dart';
 
 class ScanResultScreen extends ConsumerStatefulWidget {
@@ -69,7 +70,26 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
           const SizedBox(height: 12),
           FloatingActionButton(
             heroTag: 'ecobot_fab',
-            onPressed: () => context.push('/chat'),
+            onPressed: () {
+              final lang = ref.read(localeProvider).languageCode;
+              final cat = scan.category;
+              final question = switch (lang) {
+                'en' => 'I just scanned a "$cat" waste item. '
+                    'It is ${scan.recyclable ? "recyclable" : "not recyclable"}. '
+                    'How should I dispose of it correctly?',
+                'ar' => 'لقد قمت للتو بمسح نفاية من نوع "$cat". '
+                    'هي ${scan.recyclable ? "قابلة للتدوير" : "غير قابلة للتدوير"}. '
+                    'كيف يمكنني التخلص منها بشكل صحيح؟',
+                'es' => 'Acabo de escanear un residuo de tipo "$cat". '
+                    'Es ${scan.recyclable ? "reciclable" : "no reciclable"}. '
+                    '¿Cómo debo desecharlo correctamente?',
+                _ => 'Je viens de scanner un déchet de type "$cat". '
+                    'Il est ${scan.recyclable ? "recyclable" : "non recyclable"}. '
+                    'Comment le recycler ou l\'éliminer correctement ?',
+              };
+              ref.read(pendingChatContextProvider.notifier).state = question;
+              context.push('/chat');
+            },
             backgroundColor: const Color(0xFFF5A623),
             elevation: 8,
             shape: const CircleBorder(),

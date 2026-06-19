@@ -522,109 +522,293 @@ class _HistoryTile extends StatelessWidget {
       _    => _recyclable ? 'Recyclable' : 'Non recyclable',
     };
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: _color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () => _showDetailSheet(context),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              blurRadius: 8,
             ),
-            child: Icon(_icon, color: _color, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Row(
+          children: [
+            // Miniature image ou icône catégorie
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: entry.imageUrl != null && entry.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      entry.imageUrl!,
+                      width: 48, height: 48, fit: BoxFit.cover,
+                      errorBuilder: (ctx, e, st) => _iconBox(),
+                    )
+                  : _iconBox(),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _translateCategory(lang),
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(
+                        _recyclable
+                            ? Icons.recycling_rounded
+                            : Icons.delete_outline_rounded,
+                        size: 12,
+                        color: _recyclable ? AppColors.primary : AppColors.danger,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _relativeTime,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _translateCategory(lang),
-                  style: TextStyle(
+                  '+${entry.points} pts',
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color:
-                        isDark ? AppColors.darkText : AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Icon(
-                      _recyclable
-                          ? Icons.recycling_rounded
-                          : Icons.delete_outline_rounded,
-                      size: 12,
-                      color: _recyclable
-                          ? AppColors.primary
-                          : AppColors.danger,
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _recyclable
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : AppColors.danger.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    recyclableLabel,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _recyclable ? AppColors.primary : AppColors.danger,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _relativeTime,
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
+                const SizedBox(height: 4),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 16, color: AppColors.textSecondary),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '+${entry.points} pts',
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _recyclable
-                      ? AppColors.primary.withValues(alpha: 0.1)
-                      : AppColors.danger.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  recyclableLabel,
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _recyclable ? AppColors.primary : AppColors.danger,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     )
         .animate(delay: Duration(milliseconds: delay))
         .fadeIn(duration: 350.ms)
         .slideX(begin: 0.05, duration: 350.ms);
+  }
+
+  Widget _iconBox() => Container(
+        width: 48, height: 48,
+        decoration: BoxDecoration(
+          color: _color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(_icon, color: _color, size: 22),
+      );
+
+  void _showDetailSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final recyclableLabel = switch (lang) {
+      'en' => entry.recyclable ? 'Recyclable' : 'Non-recyclable',
+      'ar' => entry.recyclable ? 'قابل للتدوير' : 'غير قابل للتدوير',
+      'es' => entry.recyclable ? 'Reciclable' : 'No reciclable',
+      _    => entry.recyclable ? 'Recyclable' : 'Non recyclable',
+    };
+    final dateStr = '${entry.scannedAt.day.toString().padLeft(2,'0')}/'
+        '${entry.scannedAt.month.toString().padLeft(2,'0')}/'
+        '${entry.scannedAt.year}  '
+        '${entry.scannedAt.hour.toString().padLeft(2,'0')}:'
+        '${entry.scannedAt.minute.toString().padLeft(2,'0')}';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        minChildSize: 0.4,
+        builder: (_, scroll) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  )),
+              Expanded(
+                child: ListView(
+                  controller: scroll,
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // Image produit si disponible
+                    if (entry.imageUrl != null && entry.imageUrl!.isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          entry.imageUrl!,
+                          height: 200, fit: BoxFit.contain,
+                          errorBuilder: (ctx, e, st) => const SizedBox(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    // Titre catégorie
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(_icon, color: _color, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_translateCategory(lang),
+                              style: TextStyle(
+                                fontFamily: 'Poppins', fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                              )),
+                          if (entry.name.isNotEmpty && entry.name != _translateCategory(lang))
+                            Text(entry.name, style: const TextStyle(
+                              fontFamily: 'Poppins', fontSize: 13,
+                              color: AppColors.textSecondary,
+                            )),
+                        ],
+                      )),
+                    ]),
+                    const SizedBox(height: 20),
+                    // Cartes résultats
+                    _detailRow(isDark, Icons.recycling_rounded,
+                        recyclableLabel,
+                        _recyclable ? AppColors.primary : AppColors.danger),
+                    const SizedBox(height: 10),
+                    _detailRow(isDark, Icons.co2_rounded,
+                        '${entry.co2Saved.toStringAsFixed(1)} g CO₂ économisés',
+                        AppColors.teal),
+                    const SizedBox(height: 10),
+                    _detailRow(isDark, Icons.stars_rounded,
+                        '+${entry.points} EcoPoints',
+                        AppColors.accent),
+                    const SizedBox(height: 10),
+                    _detailRow(isDark, Icons.percent_rounded,
+                        '${(entry.recyclability * 100).toStringAsFixed(0)}% recyclable',
+                        AppColors.primary),
+                    if (entry.binColor.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      _detailRow(isDark, Icons.delete_outline_rounded,
+                          _binLabel(lang),
+                          _color),
+                    ],
+                    const SizedBox(height: 10),
+                    _detailRow(isDark, Icons.access_time_rounded,
+                        dateStr,
+                        AppColors.textSecondary),
+                    const SizedBox(height: 10),
+                    _detailRow(isDark, Icons.camera_alt_rounded,
+                        _modeLabel(lang),
+                        AppColors.textSecondary),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(bool isDark, IconData icon, String label, Color color) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label, style: TextStyle(
+            fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.darkText : AppColors.textPrimary,
+          ))),
+        ]),
+      );
+
+  String _binLabel(String lang) {
+    final bin = _binColorNorm;
+    final labels = <String, List<String>>{
+      'yellow': ['Bac Jaune', 'Yellow Bin', 'الحاوية الصفراء', 'Contenedor Amarillo'],
+      'green':  ['Bac Vert',  'Green Bin',  'الحاوية الخضراء', 'Contenedor Verde'],
+      'blue':   ['Bac Bleu',  'Blue Bin',   'الحاوية الزرقاء', 'Contenedor Azul'],
+      'brown':  ['Bac Marron','Brown Bin',  'الحاوية البنية',  'Contenedor Marrón'],
+      'black':  ['Poubelle',  'Trash Bin',  'حاوية النفايات',  'Cubo de Basura'],
+    };
+    final t = labels[bin];
+    if (t == null) return bin;
+    return switch (lang) { 'en' => t[1], 'ar' => t[2], 'es' => t[3], _ => t[0] };
+  }
+
+  String _modeLabel(String lang) {
+    if (entry.mode == 'barcode') {
+      return switch (lang) {
+        'en' => 'Scanned by barcode',
+        'ar' => 'مسح بالباركود',
+        'es' => 'Escaneado por código',
+        _    => 'Scanné par code-barres',
+      };
+    }
+    return switch (lang) {
+      'en' => 'Scanned by camera (AI)',
+      'ar' => 'مسح بالكاميرا (ذكاء اصطناعي)',
+      'es' => 'Escaneado por cámara (IA)',
+      _    => 'Scanné par caméra (IA)',
+    };
   }
 }

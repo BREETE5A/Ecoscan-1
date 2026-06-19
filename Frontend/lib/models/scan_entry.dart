@@ -27,6 +27,7 @@ class ScanEntry {
   final DateTime scannedAt;
   final String mode;
   final List<ScanComponent> components;
+  final String? imageUrl;
 
   const ScanEntry({
     required this.id,
@@ -41,6 +42,7 @@ class ScanEntry {
     required this.scannedAt,
     required this.mode,
     this.components = const [],
+    this.imageUrl,
   });
 
   // CO2 savings in g/kg — source: ADEME Base Carbone (official French data)
@@ -96,6 +98,7 @@ class ScanEntry {
     'binColor': binColor,
     'scannedAt': scannedAt.toIso8601String(),
     'mode': mode,
+    if (imageUrl != null) 'imageUrl': imageUrl,
   };
 
   static const _binColorMigration = {
@@ -117,6 +120,7 @@ class ScanEntry {
       binColor: _binColorMigration[rawColor] ?? rawColor,
       scannedAt: DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
       mode: json['mode'] as String? ?? 'local',
+      imageUrl: json['imageUrl'] as String?,
     );
   }
 }

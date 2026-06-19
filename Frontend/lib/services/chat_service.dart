@@ -26,30 +26,52 @@ class ChatService {
         .trim();
   }
 
+  /// Envoie le message. Si Render est en cold start, attend et retente automatiquement.
   Future<String> sendMessage(String message, {List<Map<String, String>> history = const []}) async {
+    // Première tentative
     try {
-      final response = await _dio.post(
-        ApiConstants.chatEndpoint,
-        data: {
-          'message': message,
-          'history': history,
-        },
-      );
-      final raw = response.data['response'] as String;
-      return _cleanMarkdown(raw);
-    } on DioException catch (e) {
-      switch (e.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.receiveTimeout:
-          return _offlineFallback(message);
-        case DioExceptionType.connectionError:
-          return _offlineFallback(message);
-        case DioExceptionType.badResponse:
-          throw Exception('Erreur serveur ${e.response?.statusCode ?? ""}. Réessayez.');
-        default:
-          return _offlineFallback(message);
+      return await _sendOnce(message, history: history);
+    } on DioException catch (firstErr) {
+      final isConnectError = firstErr.type == DioExceptionType.connectionError ||
+                             firstErr.type == DioExceptionType.connectionTimeout ||
+                             firstErr.type == DioExceptionType.receiveTimeout;
+
+      if (!isConnectError) {
+        if (firstErr.type == DioExceptionType.badResponse) {
+          throw Exception('Erreur serveur ${firstErr.response?.statusCode ?? ""}. Réessayez.');
+        }
+        return _offlineFallback(message);
       }
+
+      // Render est en cold start : poll le health endpoint jusqu'à réveil (max 3 min)
+      for (int i = 0; i < 18; i++) {
+        await Future.delayed(const Duration(seconds: 10));
+        if (await isHealthy()) {
+          // Serveur réveillé → on envoie la vraie question
+          try {
+            return await _sendOnce(message, history: history);
+          } on DioException catch (retryErr) {
+            if (retryErr.type == DioExceptionType.badResponse) {
+              throw Exception('Erreur serveur ${retryErr.response?.statusCode ?? ""}. Réessayez.');
+            }
+            return _offlineFallback(message);
+          }
+        }
+      }
+
+      // Toujours inaccessible après 3 min → fallback
+      return _offlineFallback(message);
     }
+  }
+
+  /// Un seul appel HTTP sans retry
+  Future<String> _sendOnce(String message, {List<Map<String, String>> history = const []}) async {
+    final response = await _dio.post(
+      ApiConstants.chatEndpoint,
+      data: {'message': message, 'history': history},
+    );
+    final raw = response.data['response'] as String;
+    return _cleanMarkdown(raw);
   }
 
   /// Réponses locales quand le backend n'est pas disponible.
@@ -142,9 +164,7 @@ class ChatService {
           '• MTEDD (ministère) : 0537 57 04 68 — www.mtedd.gov.ma\n'
           '• AMEE (économie circulaire) : 0537 28 73 53 — contact@amee.ma — amee.ma\n\n'
           '🚨 **Urgences :**\n'
-          '• SAMU : 15 | Protection Civile : 150 | Police : 19 | Gendarmerie : 177\n'
-          '• ONDE (enfants) : 2511 — 2511.ma\n'
-          '• Femmes victimes de violence : 08000 8888\n\n'
+          '• SAMU : 15 | Protection Civile : 150 | Police : 19 | Gendarmerie : 177\n\n'
           '📲 **Liste complète dans l\'app :** Accueil → Guide de Tri → Opérateurs & contacts\n\n'
           '⚠️ *Mode hors ligne — backend non disponible.*';
     }
@@ -316,13 +336,18 @@ class ChatService {
           '⚠️ *Mode hors ligne — lancez le backend pour des réponses complètes.*';
     }
 
-    return '🤖 Je suis en **mode hors ligne**. Le serveur backend (Gemini RAG) n\'est pas accessible.\n\n'
-        'Je peux répondre sur : tri des déchets, navigation dans l\'app, contacts opérateurs.\n\n'
-        'Pour activer le mode complet, lancez le backend Python sur votre PC.';
+    return '⚠️ Le serveur est temporairement inaccessible après plusieurs tentatives.\n\n'
+        'Je peux répondre localement sur : tri des déchets, navigation dans l\'app, contacts opérateurs.\n\n'
+        'Réessayez votre question dans quelques instants pour une réponse complète.';
   }
 
   bool _containsAny(String text, List<String> keywords) =>
       keywords.any((k) => text.contains(k));
+
+  /// Ping silencieux à l'ouverture du chatbot pour réveiller Render en avance
+  void warmUp() {
+    isHealthy().catchError((_) => false);
+  }
 
   Future<bool> isHealthy() async {
     try {
