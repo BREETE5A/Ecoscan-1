@@ -30,8 +30,8 @@ const _kWeatherCity  = 'weather_city';
 const _kWeatherTs    = 'weather_city_ts';
 const _kLastLat      = 'last_gps_lat';
 const _kLastLng      = 'last_gps_lng';
-// Refresh GPS-based city at most once per hour
-const _kCityRefreshMs = 3600000;
+// Refresh GPS-based city toutes les 15 minutes (synchronisé avec le StreamProvider)
+const _kCityRefreshMs = 900000;
 
 class WeatherService {
   static const _apiKey = ApiConstants.owmKey;
@@ -55,7 +55,7 @@ class WeatherService {
         try {
           LocationPermission perm = await Geolocator.checkPermission();
 
-          if (perm == LocationPermission.denied && city == null) {
+          if (perm == LocationPermission.denied) {
             perm = await Geolocator.requestPermission();
           }
 
