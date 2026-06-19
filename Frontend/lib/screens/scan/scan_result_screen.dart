@@ -19,6 +19,7 @@ class ScanResultScreen extends ConsumerStatefulWidget {
 
 class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
   late ConfettiController _confetti;
+  bool _chatContextSent = false; // empêche de re-poser la question si l'utilisateur revient
 
   @override
   void initState() {
@@ -71,23 +72,27 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
           FloatingActionButton(
             heroTag: 'ecobot_fab',
             onPressed: () {
-              final lang = ref.read(localeProvider).languageCode;
-              final cat = scan.category;
-              final question = switch (lang) {
-                'en' => 'I just scanned a "$cat" waste item. '
-                    'It is ${scan.recyclable ? "recyclable" : "not recyclable"}. '
-                    'How should I dispose of it correctly?',
-                'ar' => 'لقد قمت للتو بمسح نفاية من نوع "$cat". '
-                    'هي ${scan.recyclable ? "قابلة للتدوير" : "غير قابلة للتدوير"}. '
-                    'كيف يمكنني التخلص منها بشكل صحيح؟',
-                'es' => 'Acabo de escanear un residuo de tipo "$cat". '
-                    'Es ${scan.recyclable ? "reciclable" : "no reciclable"}. '
-                    '¿Cómo debo desecharlo correctamente?',
-                _ => 'Je viens de scanner un déchet de type "$cat". '
-                    'Il est ${scan.recyclable ? "recyclable" : "non recyclable"}. '
-                    'Comment le recycler ou l\'éliminer correctement ?',
-              };
-              ref.read(pendingChatContextProvider.notifier).state = question;
+              // N'envoie le contexte qu'une seule fois par résultat de scan
+              if (!_chatContextSent) {
+                _chatContextSent = true;
+                final lang = ref.read(localeProvider).languageCode;
+                final cat = scan.category;
+                final question = switch (lang) {
+                  'en' => 'I just scanned a "$cat" waste item. '
+                      'It is ${scan.recyclable ? "recyclable" : "not recyclable"}. '
+                      'How should I dispose of it correctly?',
+                  'ar' => 'لقد قمت للتو بمسح نفاية من نوع "$cat". '
+                      'هي ${scan.recyclable ? "قابلة للتدوير" : "غير قابلة للتدوير"}. '
+                      'كيف يمكنني التخلص منها بشكل صحيح؟',
+                  'es' => 'Acabo de escanear un residuo de tipo "$cat". '
+                      'Es ${scan.recyclable ? "reciclable" : "no reciclable"}. '
+                      '¿Cómo debo desecharlo correctamente?',
+                  _ => 'Je viens de scanner un déchet de type "$cat". '
+                      'Il est ${scan.recyclable ? "recyclable" : "non recyclable"}. '
+                      'Comment le recycler ou l\'éliminer correctement ?',
+                };
+                ref.read(pendingChatContextProvider.notifier).state = question;
+              }
               context.push('/chat');
             },
             backgroundColor: const Color(0xFFF5A623),
