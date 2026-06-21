@@ -1,6 +1,4 @@
-﻿import 'dart:convert';
-import 'dart:math' as math;
-import 'package:dio/dio.dart';
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -34,154 +32,75 @@ class _MapScreenState extends ConsumerState<MapScreen>
   String? _selectedCity;
   int? _tapped;
 
-  List<_Point> _osmPoints = [];
-  bool _osmLoading = false;
-
+  // Villes avec CEV officiel opérationnel (rapport PNDM/Ministère)
   static const _cityCoords = <String, LatLng>{
-    'Casablanca':  LatLng(33.5731, -7.5898),
-    'Rabat':       LatLng(33.9716, -6.8498),
-    'Tanger':      LatLng(35.7534, -5.7991),
-    'Marrakech':   LatLng(31.6350, -8.0350),
-    'Fès':         LatLng(33.9779, -4.9993),
-    'Agadir':      LatLng(30.4278, -9.5981),
-    'Oujda':       LatLng(34.6882, -1.9082),
-    'Meknès':      LatLng(33.8957, -5.5555),
-    'Kénitra':     LatLng(34.2610, -6.5802),
-    'El Jadida':   LatLng(33.2340, -8.5041),
-    'Béni Mellal': LatLng(32.3373, -6.3498),
-    'Nador':       LatLng(35.1699, -2.9303),
-    'Tétouan':     LatLng(35.5889, -5.3626),
-    'Safi':        LatLng(32.2994, -9.2372),
-    'Mohammedia':  LatLng(33.6866, -7.3828),
-    'Laâyoune':    LatLng(27.1536, -13.2030),
-    'Dakhla':      LatLng(23.6872, -15.9584),
-    'Errachidia':  LatLng(31.9310, -4.4240),
-    'Ouarzazate':  LatLng(30.9335, -6.9370),
-    'Essaouira':   LatLng(31.5083, -9.7638),
+    'Rabat':      LatLng(33.9716, -6.8498),
+    'Marrakech':  LatLng(31.6350, -8.0350),
+    'Fès':        LatLng(33.9779, -4.9993),
+    'Meknès':     LatLng(33.8957, -5.5555),
+    'Oujda':      LatLng(34.6882, -1.9082),
+    'Agadir':     LatLng(30.4278, -9.5981),
   };
 
-  // Sources : geocycle.com/fr/maroc · ecozalagh.com · smrr.ma · pndm.environnement.gov.ma · marjane.ma
-  // Sources vérifiées : geocycle.com/fr/maroc · ecozalagh.com · smrr.ma · pndm.environnement.gov.ma
+  // Sources officielles : PNDM (pndm.environnement.gov.ma) · Ministère MTED · SUEZ · publications peer-reviewed
+  // Seuls les CEV opérationnels confirmés par l'État marocain sont listés ici.
   static final _staticPoints = <_Point>[
-    // ── GEOCYCLE – 4 plateformes industrielles (geocycle.com/fr/maroc) ──────────
-    _Point('Geocycle – Bouskoura (Nouaceur)', 'Co-traitement industriel – 75 000 t/an',
-        const LatLng(33.4400, -7.6500), AppColors.primary, Icons.factory_rounded, 'Tous'),
-    _Point('Geocycle – El Gara (Berrechid)', 'Co-traitement déchets dangereux',
-        const LatLng(33.2800, -7.2300), AppColors.primary, Icons.factory_rounded, 'Tous'),
-    _Point('Geocycle – Had Gharbia km19 (Tanger)', 'Co-traitement industriel – 20 000 t/an',
-        const LatLng(35.5200, -5.9200), AppColors.primary, Icons.factory_rounded, 'Tous'),
-    _Point('Geocycle – Oum Azza (Rabat)', 'Valorisation déchets ménagers',
-        const LatLng(33.8703, -6.8100), AppColors.primary, Icons.factory_rounded, 'Tous'),
+    // ── CEV Oum Azza — Rabat ─────────────────────────────────────────────────
+    // GPS exact : article scientifique peer-reviewed basé sur données PNDM officielles
+    // Commune Oum Azza, Caïdat El Menzeh, Préfecture Skhirate-Témara
+    // Opérationnel depuis 2007 · 110 ha · ~2 000 t/j · 13 communes
+    _Point('CEV Oum Azza – Rabat',
+        'CEV intercommunal • 110 ha • 2 000 t/j • 13 communes',
+        const LatLng(33.8699, -6.8104),
+        AppColors.primary, Icons.recycling_rounded, 'Tous'),
 
-    // ── ECO ZALAGH – 2 bases logistiques (ecozalagh.com) ─────────────────────────
-    _Point('Eco Zalagh – Sidi Hajjaj (Casablanca)', 'Collecte • Tri • Valorisation déchets',
-        const LatLng(33.4500, -7.5000), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Eco Zalagh – Gzenaya (Tanger)', 'Collecte • Tri • Valorisation déchets',
-        const LatLng(35.7810, -5.8110), AppColors.primary, Icons.recycling_rounded, 'Tous'),
+    // ── CEV Mnabha — Marrakech ────────────────────────────────────────────────
+    // Commune Igoudar Mnabha, 35 km nord de Marrakech (Route N8)
+    // Opérationnel depuis fév. 2015 (tri inauguré jan. 2018) · 182 ha · 900 t/j
+    // Source : communiqué officiel MTED 4 janv. 2018
+    _Point('CEV Mnabha – Marrakech',
+        'CEV officiel • 182 ha • 900 t/j • Inauguré jan. 2018',
+        const LatLng(32.0570, -8.0710),
+        AppColors.primary, Icons.recycling_rounded, 'Tous'),
 
-    // ── SMRR – 4 dépôts confirmés (smrr.ma) ──────────────────────────────────────
-    _Point('SMRR – Tit Mellil (Casablanca)', 'Récupération PET • Papier • Carton',
-        const LatLng(33.5580, -7.4860), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
-    _Point('SMRR – Dépôt Tanger (Mghogha)', 'Récupération PET • Papier • Carton',
-        const LatLng(35.7700, -5.7800), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
-    _Point('SMRR – Dépôt Agadir', 'Récupération PET • Papier • Carton',
-        const LatLng(30.4278, -9.5981), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
-    _Point('SMRR – Dépôt Marrakech', 'Récupération PET • Papier • Carton',
-        const LatLng(31.6500, -8.0400), AppColors.plastic, Icons.recycling_rounded, 'Plastique'),
+    // ── Centre de Tri Fès — Aïn Baïda ────────────────────────────────────────
+    // Commune Aïn Baïda, périphérie de Fès
+    // Inauguré le 5 nov. 2018 · 6 ha · 300 t/j (extensible 500 t/j)
+    // Source : communiqué officiel MTED + inauguration ministérielle
+    _Point('Centre de Tri Fès – Aïn Baïda',
+        'Centre tri semi-auto • 6 ha • 300 t/j • Inauguré nov. 2018',
+        const LatLng(33.9411, -5.0126),
+        AppColors.primary, Icons.recycling_rounded, 'Tous'),
 
-    // ── LOGIPRO / TECMED – DEEE Casablanca ───────────────────────────────────────
-    _Point('Logipro DEEE – Maarif (Casablanca)', 'Électronique • Électroménager',
-        const LatLng(33.5732, -7.6450), AppColors.electronics, Icons.electrical_services_rounded, 'Électronique'),
-    _Point('TECMED – Casablanca', 'Électronique • Électroménager',
-        const LatLng(33.5330, -7.5830), AppColors.electronics, Icons.electrical_services_rounded, 'Électronique'),
+    // ── CEV Meknès — SUEZ ────────────────────────────────────────────────────
+    // Ancienne décharge non contrôlée réhabilitée, ~5 km du centre-ville
+    // Contrat délégation SUEZ depuis janv. 2014 · 56 ha · 330 000 t/an
+    // Source : SUEZ (référence officielle publiée) + rapport i4ce 2022
+    _Point('CEV Meknès – SUEZ',
+        'CEV officiel SUEZ • 56 ha • 330 000 t/an • Opérationnel depuis 2014',
+        const LatLng(33.8559, -5.5530),
+        AppColors.primary, Icons.recycling_rounded, 'Tous'),
 
-    // ── PNDM – 15 centres opérationnels (pndm.environnement.gov.ma) ──────────────
-    _Point('Centre de Valorisation Fès (Aïn Chkef)', 'PNDM complété • Tri • Recyclage',
-        const LatLng(33.9640, -5.0280), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Oujda', 'PNDM complété • Tri • Recyclage',
-        const LatLng(34.6882, -1.9082), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation El Jadida', 'PNDM complété • Tri • Recyclage',
-        const LatLng(33.2340, -8.5041), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Essaouira', 'PNDM complété • Tri • Recyclage',
-        const LatLng(31.5083, -9.7638), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Rabat / Oum Azza', 'PNDM complété • Tri • Recyclage',
-        const LatLng(33.8703, -6.8100), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Berkane', 'PNDM complété • Tri • Recyclage',
-        const LatLng(34.9223, -2.3198), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Figuig', 'PNDM complété • Tri • Recyclage',
-        const LatLng(32.1095, -1.2296), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Guelmim', 'PNDM complété • Tri • Recyclage',
-        const LatLng(28.9871, -10.0572), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Al Hoceima', 'PNDM complété • Tri • Recyclage',
-        const LatLng(35.2517, -3.9372), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Agadir', 'PNDM complété • Tri • Recyclage',
-        const LatLng(30.4278, -9.5981), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Nador', 'PNDM complété • Tri • Recyclage',
-        const LatLng(35.1699, -2.9303), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Dakhla', 'PNDM complété • Tri • Recyclage',
-        const LatLng(23.6872, -15.9584), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Mohammedia', 'PNDM complété • Tri • Recyclage',
-        const LatLng(33.6866, -7.3828), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Laayoune', 'PNDM complété • Tri • Recyclage',
-        const LatLng(27.1536, -13.2030), AppColors.primary, Icons.recycling_rounded, 'Tous'),
-    _Point('Centre de Valorisation Khouribga', 'PNDM complété • Tri • Recyclage',
-        const LatLng(32.8862, -6.9083), AppColors.primary, Icons.recycling_rounded, 'Tous'),
+    // ── CTVD Oujda — CSD-CRB ─────────────────────────────────────────────────
+    // Route Aouinte Sorra Sidi Yehya, ~11 km de la ville d'Oujda
+    // Opérationnel depuis 2005 · 140 000 t/an · Biogaz 11 MW/j
+    // Source : rapports PNDM + CSD-CRB (société agrée par l'État)
+    _Point('CTVD Oujda – CSD-CRB',
+        'CTVD officiel • 140 000 t/an • Biogaz 11 MW/j • Opérationnel depuis 2005',
+        const LatLng(34.6634, -1.9715),
+        AppColors.primary, Icons.recycling_rounded, 'Tous'),
+
+    // ── CEV Tamelast — Grand Agadir ───────────────────────────────────────────
+    // Commune Drarga/Tamelast, ~4,5 km du périmètre urbain d'Agadir
+    // Opérationnel depuis avr. 2010 · 46 ha · 365 000 t/an · 10 communes
+    // Source : documents PNDM + ECI Grand Agadir
+    _Point('CEV Tamelast – Grand Agadir',
+        'CEV officiel • 46 ha • 365 000 t/an • 10 communes • Opérationnel depuis 2010',
+        const LatLng(30.3764, -9.5544),
+        AppColors.primary, Icons.recycling_rounded, 'Tous'),
   ];
 
-  // ── Points OSM – coordonnées vérifiées Overpass API (Maroc uniquement) ──────
-  // Note: anciens points "Laâyoune" supprimés — étaient en réalité à Lanzarote
-  // (Îles Canaries, lat~29°N lon~-13.45°W) et non à Laâyoune (27.15°N,-13.20°W)
-  static const _osmStaticPoints = <_Point>[
-    // Agadir
-    _Point('Bac plastique – Agadir', 'Plastique',
-        LatLng(30.4106444, -9.5970950), AppColors.plastic, Icons.recycling_rounded, 'Plastique', isOsm: true),
-    // Tan-Tan (coordonnées OSM 28.42°N,-11.11°W = Tan-Tan, non Guelmim à 28.99°N,-10.06°W)
-    _Point('Ferraille – Tan-Tan', 'Ferraille • Déchets à vendre',
-        LatLng(28.4270418, -11.1104707), Color(0xFF546E7A), Icons.hardware_rounded, 'Métal', isOsm: true),
-    _Point('Magasin ferraille – Tan-Tan', 'Ferraille',
-        LatLng(28.4270565, -11.1119375), Color(0xFF546E7A), Icons.hardware_rounded, 'Métal', isOsm: true),
-    _Point('Déchetterie – Tan-Tan', 'Déchets divers',
-        LatLng(28.4135111, -11.0973287), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Rabat
-    _Point('Bac de recyclage – Rabat', 'Conteneur de tri',
-        LatLng(34.0157562, -6.8291985), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac de recyclage – Rabat', 'Conteneur de tri',
-        LatLng(34.0152547, -6.8289285), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('Bac de recyclage – Rabat', 'Conteneur de tri',
-        LatLng(34.0161735, -6.8295423), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Région Fès-Meknès (coords 34.04°N,-5.00°W ≠ Sidi Kacem 34.22°N,-5.71°W ni Meknès 33.90°N,-5.55°W)
-    _Point('Bac de recyclage – région Fès-Meknès', 'Conteneur de tri',
-        LatLng(34.0469765, -5.0052651), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    _Point('YUBA CYN – région Fès-Meknès', 'Recyclage industriel',
-        LatLng(34.0392846, -5.0084477), AppColors.primary, Icons.factory_rounded, 'Tous', isOsm: true),
-    // Casablanca
-    _Point('Point S – Casablanca', 'Centre de transfert de déchets',
-        LatLng(33.5802729, -7.6378586), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Taounate (coords 34.54°N,-4.65°W = Taounate, ~55km nord de Fès)
-    _Point('Bac de recyclage – Taounate', 'Conteneur de tri',
-        LatLng(34.5448495, -4.6497615), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-    // Tétouan
-    _Point('2nd Hands Shop – Tétouan', 'Vêtements • Textile',
-        LatLng(35.5639155, -5.3687911), Color(0xFF9C27B0), Icons.checkroom_rounded, 'Textile', isOsm: true),
-    // Fnideq
-    _Point('Centre de transfert – Fnideq', 'Centre de transfert déchets',
-        LatLng(35.9018673, -5.2854477), AppColors.primary, Icons.recycling_rounded, 'Tous', isOsm: true),
-  ];
-  List<_Point> get _allPoints {
-    final seenCoordCat = <String>{};
-    final seenNames = <String>{};
-    final result = <_Point>[];
-    for (final p in [..._staticPoints, ..._osmStaticPoints, ..._osmPoints]) {
-      final coordKey = '${p.latLng.latitude.toStringAsFixed(4)},${p.latLng.longitude.toStringAsFixed(4)},${p.category}';
-      final nameKey = p.name.toLowerCase().trim();
-      if (!seenCoordCat.contains(coordKey) && !seenNames.contains(nameKey)) {
-        seenCoordCat.add(coordKey);
-        seenNames.add(nameKey);
-        result.add(p);
-      }
-    }
-    return result;
-  }
+  List<_Point> get _allPoints => _staticPoints;
 
   List<_Point> get _visiblePoints {
     var pts = _allPoints.toList();
@@ -311,98 +230,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     }
   }
 
-  Future<void> _fetchOsmPoints() async {
-    if (mounted) setState(() => _osmLoading = true);
-    try {
-      const query = '[out:json][timeout:60];'
-          '(node[amenity=recycling](27.0,-13.2,36.0,-0.5);'
-          'node[amenity=waste_transfer_station](27.0,-13.2,36.0,-0.5););'
-          'out body;';
-      final resp = await Dio().get<String>(
-        'https://overpass-api.de/api/interpreter',
-        queryParameters: {'data': query},
-        options: Options(receiveTimeout: const Duration(seconds: 60)),
-      );
-      final data = jsonDecode(resp.data ?? '{}') as Map<String, dynamic>;
-      final elements = (data['elements'] as List?) ?? [];
-      final points = <_Point>[];
-      final seen = <String>{};
-      for (final e in elements) {
-        final lat = (e['lat'] as num?)?.toDouble();
-        final lon = (e['lon'] as num?)?.toDouble();
-        if (lat == null || lon == null) continue;
-        // Exclure les points hors Maroc (ex. Îles Canaries lon < -13.2)
-        if (lon < -13.2 || lon > 0.0 || lat < 27.0 || lat > 36.0) continue;
-        final key = '${lat.toStringAsFixed(4)},${lon.toStringAsFixed(4)}';
-        if (seen.contains(key)) continue;
-        seen.add(key);
-        final tags = (e['tags'] as Map?)?.cast<String, dynamic>() ?? {};
-        final name = (tags['name'] as String?)?.isNotEmpty == true
-            ? tags['name'] as String
-            : 'Point de collecte OSM';
-        final cat = _osmCategory(tags);
-        final label = _osmMaterials(tags);
-        final osmHours = tags['opening_hours'] as String?;
-        points.add(_Point(name, label, LatLng(lat, lon),
-            _catColor(cat), _catIcon(cat), cat,
-            isOsm: true, osmHours: osmHours));
-      }
-      if (mounted) setState(() { _osmPoints = points; _osmLoading = false; });
-    } catch (_) {
-      if (mounted) setState(() => _osmLoading = false);
-    }
-  }
-
-  static String _osmCategory(Map<String, dynamic> t) {
-    if (t['recycling:glass_bottles'] == 'yes' || t['recycling:glass'] == 'yes') return 'Verre';
-    if (t['recycling:paper'] == 'yes' || t['recycling:cardboard'] == 'yes') return 'Papier';
-    if (t['recycling:plastic_bottles'] == 'yes' || t['recycling:plastic'] == 'yes' ||
-        t['recycling:plastic_packaging'] == 'yes') { return 'Plastique'; }
-    if (t['recycling:cooking_oil'] == 'yes' || t['recycling:engine_oil'] == 'yes') return 'Huiles';
-    if (t['recycling:cans'] == 'yes') return 'Métal';
-    if (t['recycling:clothes'] == 'yes' || t['recycling:shoes'] == 'yes') return 'Textile';
-    if (t['recycling:computers'] == 'yes' || t['recycling:mobile_phones'] == 'yes') return 'Électronique';
-    return 'Tous';
-  }
-
-  static String _osmMaterials(Map<String, dynamic> t) {
-    final m = <String>[];
-    if (t['recycling:glass_bottles'] == 'yes' || t['recycling:glass'] == 'yes') m.add('Verre');
-    if (t['recycling:paper'] == 'yes') m.add('Papier');
-    if (t['recycling:cardboard'] == 'yes') m.add('Carton');
-    if (t['recycling:plastic_bottles'] == 'yes' || t['recycling:plastic'] == 'yes') m.add('Plastique');
-    if (t['recycling:cooking_oil'] == 'yes') m.add('Huile cuisine');
-    if (t['recycling:engine_oil'] == 'yes') m.add('Huile moteur');
-    if (t['recycling:cans'] == 'yes') m.add('Canettes');
-    if (m.isEmpty) return 'OpenStreetMap';
-    return m.join(' • ');
-  }
-
-  static Color _catColor(String cat) {
-    switch (cat) {
-      case 'Plastique':    return AppColors.plastic;
-      case 'Verre':        return AppColors.glass;
-      case 'Papier':       return AppColors.paper;
-      case 'Huiles':       return const Color(0xFF795548);
-      case 'Métal':        return const Color(0xFF546E7A);
-      case 'Textile':      return const Color(0xFF9C27B0);
-      case 'Électronique': return AppColors.electronics;
-      default:             return AppColors.primary;
-    }
-  }
-
-  static IconData _catIcon(String cat) {
-    switch (cat) {
-      case 'Plastique':    return Icons.recycling_rounded;
-      case 'Verre':        return Icons.local_bar_rounded;
-      case 'Papier':       return Icons.article_outlined;
-      case 'Huiles':       return Icons.oil_barrel_rounded;
-      case 'Métal':        return Icons.hardware_rounded;
-      case 'Textile':      return Icons.checkroom_rounded;
-      case 'Électronique': return Icons.electrical_services_rounded;
-      default:             return Icons.recycling_rounded;
-    }
-  }
+  Future<void> _fetchOsmPoints() async {}
 
   void _centerOnUser() {
     if (_userPosition != null) {
@@ -834,33 +662,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
                 ),
               ),
             ),
-          // Indicateur chargement OSM
-          if (_osmLoading)
-            Positioned(
-              bottom: 140,
-              left: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 12, height: 12,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 1.5, color: Colors.white),
-                    ),
-                    SizedBox(width: 7),
-                    Text('OpenStreetMap…', style: TextStyle(
-                        fontFamily: 'Poppins', fontSize: 11,
-                        color: Colors.white, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1077,26 +878,6 @@ class _InfoCard extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                if (point.isOsm) ...[
-                  const SizedBox(height: 3),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.public_rounded, size: 9, color: Colors.blue),
-                        SizedBox(width: 3),
-                        Text('OpenStreetMap', style: TextStyle(
-                            fontFamily: 'Poppins', fontSize: 9,
-                            color: Colors.blue, fontWeight: FontWeight.w500)),
-                      ],
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -1207,17 +988,12 @@ class _Point {
   final Color color;
   final IconData icon;
   final String category;
-  final bool isOsm;
-  final String? osmHours;
-
   const _Point(
-      this.name, this.label, this.latLng, this.color, this.icon, this.category,
-      {this.isOsm = false, this.osmHours});
+      this.name, this.label, this.latLng, this.color, this.icon, this.category);
 
   String get displayHours => displayHoursFor('fr');
 
   String displayHoursFor(String lang) {
-    if (osmHours != null) return osmHours!;
     final n = name.toLowerCase();
     if (n.contains('marjane')) {
       switch (lang) {
@@ -1277,6 +1053,8 @@ class _Point {
 
     const prefixes = <String, List<String>>{
       // fr → [en, ar, es]
+      'CEV':                    ['CEV',                         'مركز الردم والتثمين',            'CEV'],
+      'CTVD':                   ['CTVD',                        'مركز المعالجة والتثمين',         'CTVD'],
       'Centre de Valorisation': ['Valorization Center',         'مركز تثمين',                    'Centro de Valorización'],
       'Centre de Collecte':     ['Collection Center',           'مركز الجمع',                    'Centro de Recogida'],
       'Centre de Compost':      ['Composting Center',           'مركز التسميد',                  'Centro de Compostaje'],
@@ -1452,6 +1230,13 @@ class _Point {
     // Table complète de traduction
     const Map<String, List<String>> t = {
       // fr → [en, ar, es]
+      // ─ CEV officiels PNDM/Ministère ─
+      'CEV intercommunal • 110 ha • 2 000 t/j • 13 communes':                          ['Intercommunal CEV • 110 ha • 2,000 t/d • 13 municipalities',           'مركز رسمي بين الجماعات • 110 هك • 2 000 ط/ي • 13 جماعة',                  'CEV intercomunal • 110 ha • 2 000 t/d • 13 municipios'],
+      'CEV officiel • 182 ha • 900 t/j • Inauguré jan. 2018':                          ['Official CEV • 182 ha • 900 t/d • Opened Jan. 2018',                   'مركز رسمي • 182 هك • 900 ط/ي • افتُتح يناير 2018',                        'CEV oficial • 182 ha • 900 t/d • Inaugurado en. 2018'],
+      'Centre tri semi-auto • 6 ha • 300 t/j • Inauguré nov. 2018':                   ['Semi-auto sorting center • 6 ha • 300 t/d • Opened Nov. 2018',          'مركز فرز شبه آلي • 6 هك • 300 ط/ي • افتُتح نوف. 2018',                   'Centro clasificación semi-auto • 6 ha • 300 t/d • Inaugurado nov. 2018'],
+      'CEV officiel SUEZ • 56 ha • 330 000 t/an • Opérationnel depuis 2014':          ['Official CEV SUEZ • 56 ha • 330,000 t/yr • Operational since 2014',     'مركز رسمي SUEZ • 56 هك • 330 000 ط/سنة • يعمل منذ 2014',                 'CEV oficial SUEZ • 56 ha • 330 000 t/año • Operacional desde 2014'],
+      'CTVD officiel • 140 000 t/an • Biogaz 11 MW/j • Opérationnel depuis 2005':     ['Official CTVD • 140,000 t/yr • Biogas 11 MW/d • Operational since 2005', 'مركز رسمي • 140 000 ط/سنة • غاز حيوي 11 ميغاواط/ي • يعمل منذ 2005',     'CTVD oficial • 140 000 t/año • Biogás 11 MW/d • Operacional desde 2005'],
+      'CEV officiel • 46 ha • 365 000 t/an • 10 communes • Opérationnel depuis 2010': ['Official CEV • 46 ha • 365,000 t/yr • 10 municipalities • Operational since 2010', 'مركز رسمي • 46 هك • 365 000 ط/سنة • 10 جماعات • يعمل منذ 2010', 'CEV oficial • 46 ha • 365 000 t/año • 10 municipios • Operacional desde 2010'],
       // ─ PNDM / Centres généraux ─
       'PNDM complété • Tri • Recyclage':          ['PNDM completed • Sorting • Recycling', 'PNDM مكتمل • فرز • إعادة تدوير', 'PNDM completado • Clasificación • Reciclaje'],
       'PNDM en construction':                      ['PNDM under construction', 'PNDM قيد الإنشاء', 'PNDM en construcción'],
