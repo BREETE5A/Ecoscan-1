@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -58,6 +59,9 @@ final scanHistoryStreamProvider = StreamProvider<List<ScanEntry>>((ref) {
 
 // The most recent scan result, used by result screen
 final currentScanProvider = StateProvider<ScanEntry?>((ref) => null);
+
+// The image file of the current scan (session only, null after restart)
+final currentScanImageProvider = StateProvider<File?>((ref) => null);
 
 class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
   static const _key = 'scan_entries_v2';
@@ -140,6 +144,22 @@ class ScanHistoryNotifier extends StateNotifier<List<ScanEntry>> {
 
   Future<void> addScan(ScanEntry entry) async {
     state = [entry, ...state];
+    await _saveToPrefs();
+  }
+
+  Future<void> updateImageUrl(String id, String imageUrl) async {
+    state = state.map((e) {
+      if (e.id != id) return e;
+      return ScanEntry(
+        id: e.id, name: e.name, category: e.category,
+        recyclable: e.recyclable, dangerous: e.dangerous,
+        points: e.points, co2Saved: e.co2Saved,
+        recyclability: e.recyclability, binColor: e.binColor,
+        scannedAt: e.scannedAt, mode: e.mode,
+        components: e.components,
+        imageUrl: imageUrl,
+      );
+    }).toList();
     await _saveToPrefs();
   }
 

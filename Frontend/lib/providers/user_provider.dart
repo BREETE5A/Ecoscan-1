@@ -72,8 +72,8 @@ final userStatsStreamProvider = StreamProvider<UserModel>((ref) {
       xp: fsPoints % 200,
       xpMax: 200,
       co2Saved: fsCo2,
-      weeklyGoalKg: 100.0,
-      weeklyProgress: (weeklyCo2 / 100000).clamp(0.0, 1.0),
+      weeklyGoalKg: 300.0,
+      weeklyProgress: (weeklyCo2 / 300000).clamp(0.0, 1.0),
       streak: fsStreak,
     );
   });
@@ -152,7 +152,7 @@ class UserNotifier extends StateNotifier<UserModel> {
             xpMax:          200,
             co2Saved:       fsCo2,
             weeklyGoalKg:   100.0,
-            weeklyProgress: (await _fetchWeeklyCo2(firebaseUid) / 100000).clamp(0.0, 1.0),
+            weeklyProgress: (await _fetchWeeklyCo2(firebaseUid) / 300000).clamp(0.0, 1.0),
             recentScans:    history.take(4).toList(),
             streak:         fsStreak,
           );
@@ -183,7 +183,7 @@ class UserNotifier extends StateNotifier<UserModel> {
       xpMax:          200,
       co2Saved:       co2,
       weeklyGoalKg:   100.0,
-      weeklyProgress: (await StorageService.getWeeklyCo2() / 100000).clamp(0.0, 1.0),
+      weeklyProgress: (await StorageService.getWeeklyCo2() / 300000).clamp(0.0, 1.0),
       recentScans:    history.take(4).toList(),
     );
   }

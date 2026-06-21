@@ -45,7 +45,7 @@ class UserModel {
         xp: 0,
         xpMax: 200,
         co2Saved: 0,
-        weeklyGoalKg: 100.0,
+        weeklyGoalKg: 300.0,
         weeklyProgress: 0.0,
         streak: 0,
       );

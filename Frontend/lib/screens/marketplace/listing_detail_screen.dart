@@ -192,14 +192,15 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () => _showReviewSheet(context, ref, listing, s, isDark),
-                        icon: const Icon(Icons.star_outline_rounded,
-                            color: Color(0xFFFFD700)),
+                        icon: const Icon(Icons.star_rounded,
+                            color: Colors.white),
                         label: Text(s.leaveReview,
                             style: const TextStyle(fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600)),
+                                fontWeight: FontWeight.w600, color: Colors.white)),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFFFD700),
-                          side: const BorderSide(color: Color(0xFFFFD700)),
+                          backgroundColor: const Color(0xFFFFB300),
+                          foregroundColor: Colors.white,
+                          side: BorderSide.none,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(vertical: 14),

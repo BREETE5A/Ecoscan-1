@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
@@ -173,9 +174,22 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                    child: scan.mode == 'local'
-                        ? _SimpleOfflineResult(scan: scan, isDark: isDark)
-                        : Column(
+                    child: Column(
+                      children: [
+                        // ── Photo du scan ─────────────────────────────────
+                        if (scan.imageUrl != null || ref.watch(currentScanImageProvider) != null) ...[
+                          _ScanPhoto(
+                            imageUrl: scan.imageUrl,
+                            fallbackFile: ref.watch(currentScanImageProvider),
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        // ── Résultats ─────────────────────────────────────
+                        if (scan.mode == 'local' || scan.components.isEmpty)
+                          _SimpleOfflineResult(scan: scan, isDark: isDark)
+                        else
+                          Column(
                             children: [
                               // Composantes détectées (cloud only)
                               if (scan.components.isNotEmpty)
@@ -207,6 +221,8 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
                               const SizedBox(height: 16),
                             ],
                           ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -219,6 +235,58 @@ class _ScanResultScreenState extends ConsumerState<ScanResultScreen> {
 }
 
 // ── Widgets ──────────────────────────────────────────────────────────────────
+
+class _ScanPhoto extends StatelessWidget {
+  final String? imageUrl;      // chemin local ou URL réseau
+  final File? fallbackFile;    // File en mémoire (session courante)
+  final bool isDark;
+  const _ScanPhoto({this.imageUrl, this.fallbackFile, required this.isDark});
+
+  Widget _buildImage() {
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      if (imageUrl!.startsWith('http')) {
+        return Image.network(imageUrl!, width: double.infinity, height: 240, fit: BoxFit.cover);
+      }
+      return Image.file(File(imageUrl!), width: double.infinity, height: 240, fit: BoxFit.cover);
+    }
+    if (fallbackFile != null) {
+      return Image.file(fallbackFile!, width: double.infinity, height: 240, fit: BoxFit.cover);
+    }
+    return const SizedBox.shrink();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        children: [
+          _buildImage(),
+          // Dégradé bas pour lisibilité
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            child: Container(
+              height: 60,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.45),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    )
+        .animate(delay: 20.ms)
+        .fadeIn(duration: 450.ms)
+        .slideY(begin: 0.08);
+  }
+}
 
 
 class _PointsCard extends ConsumerStatefulWidget {
@@ -745,35 +813,37 @@ class _SimpleOfflineResult extends ConsumerWidget {
             .slideY(begin: 0.15),
         const SizedBox(height: 12),
 
-        // ── Badge TFLite ──────────────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.offline_bolt_rounded,
-                  color: Colors.orange, size: 15),
-              const SizedBox(width: 6),
-              Text(
-                s.modeLocal,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.orange,
+        // ── Badge TFLite (uniquement pour les scans locaux) ──────────────
+        if (scan.mode == 'local') ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.offline_bolt_rounded,
+                    color: Colors.orange, size: 15),
+                const SizedBox(width: 6),
+                Text(
+                  s.modeLocal,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        )
-            .animate(delay: 120.ms)
-            .fadeIn(duration: 350.ms),
-        const SizedBox(height: 14),
+              ],
+            ),
+          )
+              .animate(delay: 120.ms)
+              .fadeIn(duration: 350.ms),
+          const SizedBox(height: 14),
+        ],
 
         // ── Recyclabilité ─────────────────────────────────────────────────
         Container(

@@ -12,6 +12,20 @@ class ScanComponent {
     required this.binColor,
     this.conseil = '',
   });
+
+  Map<String, dynamic> toJson() => {
+    'partie':   partie,
+    'label':    label,
+    'binColor': binColor,
+    'conseil':  conseil,
+  };
+
+  factory ScanComponent.fromJson(Map<String, dynamic> json) => ScanComponent(
+    partie:   json['partie']   as String? ?? '',
+    label:    json['label']    as String? ?? '',
+    binColor: json['binColor'] as String? ?? '',
+    conseil:  json['conseil']  as String? ?? '',
+  );
 }
 
 class ScanEntry {
@@ -66,6 +80,10 @@ class ScanEntry {
   static String binColorForLabel(String label) =>
       _categoryData[label]?.binColor ?? 'black';
 
+  /// CO2 sauvé (g/kg) pour un label donné
+  static double co2ForLabel(String label) =>
+      (_categoryData[label] ?? _categoryData['unknown']!).co2Saved;
+
   static ScanEntry fromClassification(String label, double confidence,
       {String lang = 'fr', List<ScanComponent> components = const []}) {
     final data = _categoryData[label] ?? _categoryData['unknown']!;
@@ -87,18 +105,20 @@ class ScanEntry {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'category': category,
-    'recyclable': recyclable,
-    'dangerous': dangerous,
-    'points': points,
-    'co2Saved': co2Saved,
-    'recyclability': recyclability,
-    'binColor': binColor,
-    'scannedAt': scannedAt.toIso8601String(),
-    'mode': mode,
+    'id':           id,
+    'name':         name,
+    'category':     category,
+    'recyclable':   recyclable,
+    'dangerous':    dangerous,
+    'points':       points,
+    'co2Saved':     co2Saved,
+    'recyclability':recyclability,
+    'binColor':     binColor,
+    'scannedAt':    scannedAt.toIso8601String(),
+    'mode':         mode,
     if (imageUrl != null) 'imageUrl': imageUrl,
+    if (components.isNotEmpty)
+      'components': components.map((c) => c.toJson()).toList(),
   };
 
   static const _binColorMigration = {
@@ -108,19 +128,25 @@ class ScanEntry {
 
   factory ScanEntry.fromJson(Map<String, dynamic> json) {
     final rawColor = json['binColor'] as String? ?? 'black';
+    final rawComponents = json['components'] as List?;
     return ScanEntry(
-      id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      name: json['name'] as String? ?? 'Inconnu',
-      category: json['category'] as String? ?? 'unknown',
-      recyclable: json['recyclable'] as bool? ?? false,
-      dangerous: json['dangerous'] as bool? ?? false,
-      points: (json['points'] as num?)?.toInt() ?? 0,
-      co2Saved: (json['co2Saved'] as num?)?.toDouble() ?? 0.0,
-      recyclability: (json['recyclability'] as num?)?.toDouble() ?? 0.0,
-      binColor: _binColorMigration[rawColor] ?? rawColor,
-      scannedAt: DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
-      mode: json['mode'] as String? ?? 'local',
-      imageUrl: json['imageUrl'] as String?,
+      id:           json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      name:         json['name'] as String? ?? 'Inconnu',
+      category:     json['category'] as String? ?? 'unknown',
+      recyclable:   json['recyclable'] as bool? ?? false,
+      dangerous:    json['dangerous'] as bool? ?? false,
+      points:       (json['points'] as num?)?.toInt() ?? 0,
+      co2Saved:     (json['co2Saved'] as num?)?.toDouble() ?? 0.0,
+      recyclability:(json['recyclability'] as num?)?.toDouble() ?? 0.0,
+      binColor:     _binColorMigration[rawColor] ?? rawColor,
+      scannedAt:    DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
+      mode:         json['mode'] as String? ?? 'local',
+      imageUrl:     json['imageUrl'] as String?,
+      components:   rawComponents != null
+          ? rawComponents
+              .map((c) => ScanComponent.fromJson(Map<String, dynamic>.from(c as Map)))
+              .toList()
+          : const [],
     );
   }
 }

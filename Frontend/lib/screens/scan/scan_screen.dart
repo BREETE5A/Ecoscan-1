@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -190,6 +192,38 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     _triggerScan();
   }
 
+  Future<void> _uploadToCloudinaryBackground(String entryId, File imageFile) async {
+    try {
+      final formData = FormData.fromMap({
+        'file':          await MultipartFile.fromFile(imageFile.path),
+        'upload_preset': 'ecoscan_marketplace',
+        'folder':        'scans',
+      });
+      final resp = await Dio().post(
+        'https://api.cloudinary.com/v1_1/dfuhrnnxx/image/upload',
+        data: formData,
+      );
+      final cloudUrl = resp.data['secure_url'] as String?;
+      if (cloudUrl != null) {
+        await ref.read(scanHistoryProvider.notifier).updateImageUrl(entryId, cloudUrl);
+        if (mounted) {
+          final current = ref.read(currentScanProvider);
+          if (current != null && current.id == entryId) {
+            ref.read(currentScanProvider.notifier).state = ScanEntry(
+              id: current.id, name: current.name, category: current.category,
+              recyclable: current.recyclable, dangerous: current.dangerous,
+              points: current.points, co2Saved: current.co2Saved,
+              recyclability: current.recyclability, binColor: current.binColor,
+              scannedAt: current.scannedAt, mode: current.mode,
+              components: current.components,
+              imageUrl: cloudUrl,
+            );
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   void _showError(String msg) {
     if (!mounted) return;
     setState(() {
@@ -298,10 +332,18 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
           onlineResult.topLabel, onlineResult.topConfidence,
           lang: lang, components: onlineResult.components,
         );
+        // CO2 = moyenne de tous les composants détectés × confiance
+        final comps = onlineResult.components;
+        final co2Total = comps.isNotEmpty
+            ? comps.fold(0.0, (s, c) => s + ScanEntry.co2ForLabel(c.label))
+                / comps.length
+                * onlineResult.topConfidence
+            : base.co2Saved;
+
         entry = ScanEntry(
           id: base.id, name: base.name, category: base.category,
           recyclable: base.recyclable, dangerous: base.dangerous,
-          points: base.points, co2Saved: base.co2Saved,
+          points: base.points, co2Saved: co2Total,
           recyclability: base.recyclability, binColor: base.binColor,
           scannedAt: base.scannedAt, mode: 'cloud',
           components: base.components,
@@ -345,9 +387,33 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
     if (!mounted) return;
 
-    // Affiche le résultat immédiatement
+    // 1. Copie locale immédiate (rapide, garantit la sauvegarde même si offline)
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${dir.path}/scan_images');
+      await imagesDir.create(recursive: true);
+      final dest = '${imagesDir.path}/${entry.id}.jpg';
+      await imageToClassify.copy(dest);
+      entry = ScanEntry(
+        id: entry.id, name: entry.name, category: entry.category,
+        recyclable: entry.recyclable, dangerous: entry.dangerous,
+        points: entry.points, co2Saved: entry.co2Saved,
+        recyclability: entry.recyclability, binColor: entry.binColor,
+        scannedAt: entry.scannedAt, mode: entry.mode,
+        components: entry.components,
+        imageUrl: dest,
+      );
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    // 2. Sauvegarde immédiate dans l'historique (avant tout upload réseau)
     ref.read(scanHistoryProvider.notifier).addScan(entry);
     ref.read(currentScanProvider.notifier).state = entry;
+    ref.read(currentScanImageProvider.notifier).state = imageToClassify;
+
+    // 3. Upload Cloudinary en arrière-plan (ne bloque pas la navigation)
+    _uploadToCloudinaryBackground(entry.id, imageToClassify);
 
     setState(() {
       _scanning = false;

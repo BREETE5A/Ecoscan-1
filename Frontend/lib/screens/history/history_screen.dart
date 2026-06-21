@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -546,11 +547,17 @@ class _HistoryTile extends ConsumerWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: entry.imageUrl != null && entry.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      entry.imageUrl!,
-                      width: 48, height: 48, fit: BoxFit.cover,
-                      errorBuilder: (ctx, e, st) => _iconBox(),
-                    )
+                  ? entry.imageUrl!.startsWith('http')
+                      ? Image.network(
+                          entry.imageUrl!,
+                          width: 48, height: 48, fit: BoxFit.cover,
+                          errorBuilder: (ctx, e, st) => _iconBox(),
+                        )
+                      : Image.file(
+                          File(entry.imageUrl!),
+                          width: 48, height: 48, fit: BoxFit.cover,
+                          errorBuilder: (ctx, e, st) => _iconBox(),
+                        )
                   : _iconBox(),
             ),
             const SizedBox(width: 12),
