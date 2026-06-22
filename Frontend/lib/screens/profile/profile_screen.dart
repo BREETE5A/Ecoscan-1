@@ -68,7 +68,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       (Icons.leaderboard_rounded, s.menuLeaderboard,    '/leaderboard',     const Color(0xFFE67E22)),
       (Icons.military_tech_rounded, s.menuBadges,       '/badges',          const Color(0xFFFFD700)),
       (Icons.card_giftcard_rounded, s.menuRewards,      '/rewards',         const Color(0xFFE91E63)),
-      (Icons.history_rounded,     s.menuHistory,        '/history',         const Color(0xFF26A69A)),
       (Icons.flag_rounded,        s.menuChallenges,     '/challenges',      const Color(0xFF4CAF50)),
     ]),
   ];
