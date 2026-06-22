@@ -42,6 +42,7 @@ class ScanEntry {
   final String mode;
   final List<ScanComponent> components;
   final String? imageUrl;
+  final String? barcode;
 
   const ScanEntry({
     required this.id,
@@ -57,6 +58,7 @@ class ScanEntry {
     required this.mode,
     this.components = const [],
     this.imageUrl,
+    this.barcode,
   });
 
   // CO2 savings in g/kg — source: ADEME Base Carbone (official French data)
@@ -117,6 +119,7 @@ class ScanEntry {
     'scannedAt':    scannedAt.toIso8601String(),
     'mode':         mode,
     if (imageUrl != null) 'imageUrl': imageUrl,
+    if (barcode != null) 'barcode': barcode,
     if (components.isNotEmpty)
       'components': components.map((c) => c.toJson()).toList(),
   };
@@ -142,6 +145,7 @@ class ScanEntry {
       scannedAt:    DateTime.tryParse(json['scannedAt'] as String? ?? '') ?? DateTime.now(),
       mode:         json['mode'] as String? ?? 'local',
       imageUrl:     json['imageUrl'] as String?,
+      barcode:      json['barcode'] as String?,
       components:   rawComponents != null
           ? rawComponents
               .map((c) => ScanComponent.fromJson(Map<String, dynamic>.from(c as Map)))

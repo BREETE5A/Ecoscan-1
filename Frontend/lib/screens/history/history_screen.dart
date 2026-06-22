@@ -526,8 +526,12 @@ class _HistoryTile extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        ref.read(currentScanProvider.notifier).state = entry;
-        context.push('/scan/result');
+        if (entry.mode == 'barcode' && entry.barcode != null) {
+          context.push('/barcode', extra: entry.barcode);
+        } else {
+          ref.read(currentScanProvider.notifier).state = entry;
+          context.push('/scan/result');
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(14),

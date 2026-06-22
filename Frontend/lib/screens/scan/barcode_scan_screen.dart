@@ -20,7 +20,8 @@ final _productProvider =
 
 // ── Screen ──────────────────────────────────────────────────────────────────
 class BarcodeScanScreen extends ConsumerStatefulWidget {
-  const BarcodeScanScreen({super.key});
+  final String? initialCode; // si fourni, affiche directement le résultat sans scanner
+  const BarcodeScanScreen({super.key, this.initialCode});
 
   @override
   ConsumerState<BarcodeScanScreen> createState() => _BarcodeScanScreenState();
@@ -35,6 +36,16 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
   String? _scannedCode;
   String? _savedForCode;
   bool _scanning = true;
+  bool get _readOnly => widget.initialCode != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCode != null) {
+      _scannedCode = widget.initialCode;
+      _scanning = false;
+    }
+  }
 
   void _onDetect(BarcodeCapture capture) {
     if (!_scanning) return;
@@ -108,6 +119,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
       scannedAt: DateTime.now(),
       mode: 'barcode',
       imageUrl: product.imageUrl.isNotEmpty ? product.imageUrl : null,
+      barcode: code,
     );
 
     final result = ScanResultModel(
@@ -268,7 +280,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error:   (e, t) => _notFound(isDark, s),
       data:    (product) {
-        if (product != null && _savedForCode != code) {
+        if (!_readOnly && product != null && _savedForCode != code) {
           Future.microtask(() { if (mounted) _saveBarcodeScan(product, code); });
         }
         return product == null

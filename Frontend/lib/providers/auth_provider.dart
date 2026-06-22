@@ -463,6 +463,8 @@ Future<void> signOut(Ref ref) async {
 }
 
 Future<void> signOutUser(WidgetRef ref) async {
+  // Vider l'état immédiatement (invalidate seul ne suffit pas si le provider est déjà observé)
+  await ref.read(scanHistoryProvider.notifier).clearHistory();
   await StorageService.reset();
   ref.read(userProvider.notifier).reset();
   await _googleSignIn.signOut();

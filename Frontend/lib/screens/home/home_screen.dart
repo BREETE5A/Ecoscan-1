@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/did_you_know_data.dart';
 import '../../providers/locale_provider.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   final _scrollCtrl = ScrollController();
   bool _headerCollapsed = false;
   Timer? _envRefreshTimer;
+  StreamSubscription<ServiceStatus>? _gpsSub;
 
   @override
   void initState() {
@@ -52,6 +54,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ref.invalidate(airQualityEnvProvider);
       }
     });
+    // Mise à jour immédiate quand l'utilisateur active le GPS depuis les paramètres
+    _gpsSub = Geolocator.getServiceStatusStream().listen((status) {
+      if (status == ServiceStatus.enabled && mounted) {
+        ref.invalidate(weatherEnvProvider);
+        ref.invalidate(airQualityEnvProvider);
+      }
+    });
   }
 
   void _onScroll() {
@@ -65,6 +74,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void dispose() {
     _envRefreshTimer?.cancel();
+    _gpsSub?.cancel();
     _counterCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();

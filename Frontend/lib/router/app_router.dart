@@ -208,7 +208,10 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/barcode',
-          pageBuilder: (c, s) => _fadeSlide(c, s, const BarcodeScanScreen()),
+          pageBuilder: (c, s) {
+            final code = s.extra as String?;
+            return _fadeSlide(c, s, BarcodeScanScreen(initialCode: code));
+          },
         ),
         GoRoute(
           path: '/marketplace',
