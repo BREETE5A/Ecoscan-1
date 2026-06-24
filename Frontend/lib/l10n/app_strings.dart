@@ -189,6 +189,17 @@ class AppStrings {
   String get changeAccount    => _t('Changer de compte', 'Change account', 'تغيير الحساب', 'Cambiar cuenta');
   String get waitingVerif     => _t('En attente de vérification…', 'Waiting for verification…', 'في انتظار التحقق…', 'Esperando verificación…');
   String get resendIn         => _t('Renvoyer dans', 'Resend in', 'إعادة الإرسال في', 'Reenviar en');
+  String get emailSentTo      => _t('Un email de vérification a été envoyé à :', 'A verification email was sent to:', 'تم إرسال بريد تحقق إلى:', 'Se envió un correo de verificación a:');
+  String get emailResendError => _t('Impossible d\'envoyer l\'email. Réessayez.', 'Unable to send email. Try again.', 'تعذّر إرسال البريد. حاول مجدداً.', 'No se pudo enviar el correo. Inténtalo de nuevo.');
+  String get emailResendSuccess => _t('Email renvoyé ✓', 'Email resent ✓', 'تم إعادة إرسال البريد ✓', 'Correo reenviado ✓');
+  String get passVeryWeak     => _t('Très faible', 'Very weak', 'ضعيف جداً', 'Muy débil');
+  String get passWeak         => _t('Faible', 'Weak', 'ضعيف', 'Débil');
+  String get passMedium       => _t('Moyen', 'Medium', 'متوسط', 'Medio');
+  String get passStrong       => _t('Fort', 'Strong', 'قوي', 'Fuerte');
+  String get chooseYourCity   => _t('Votre ville', 'Your city', 'مدينتك', 'Tu ciudad');
+  String get chooseCityDesc   => _t('Sélectionnez votre ville pour personnaliser votre expérience.', 'Select your city to personalise your experience.', 'اختر مدينتك لتخصيص تجربتك.', 'Selecciona tu ciudad para personalizar tu experiencia.');
+  String get confirmCity      => _t('Confirmer', 'Confirm', 'تأكيد', 'Confirmar');
+  String get scanServerWakingUp => _t('Serveur de scan en démarrage — le 1ᵉʳ scan peut prendre 30-60 s.', 'Scan server starting up — the first scan may take 30-60 s.', 'خادم المسح يبدأ — قد يستغرق أول مسح 30-60 ث.', 'Servidor de escaneo iniciando — el primer escaneo puede tardar 30-60 s.');
 
   // ── Two-Factor Auth ──────────────────────────────────────────────────────
   String get twoFactorTitle   => _t('Double authentification', 'Two-factor authentication', 'المصادقة الثنائية', 'Autenticación de dos factores');

@@ -12,7 +12,11 @@ class ApiConstants {
 
   // n8n Automation Webhooks
   static const String n8nBaseUrl = 'https://badora.app.n8n.cloud';
-  static const String n8nAuthHeader = 'ecoscan';
+  // Injecté via --dart-define=N8N_AUTH=xxx au build ; changer la valeur par défaut en prod
+  static const String n8nAuthHeader = String.fromEnvironment(
+    'N8N_AUTH',
+    defaultValue: 'ecoscan',
+  );
 
   // OpenWeatherMap — injecté via --dart-define=OWM_KEY=xxx au build
   // Fallback de dev uniquement, ne pas commiter une vraie clé ici

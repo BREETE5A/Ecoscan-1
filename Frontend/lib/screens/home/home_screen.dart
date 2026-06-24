@@ -45,8 +45,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     )..forward();
     _counterAnim = CurvedAnimation(parent: _counterCtrl, curve: Curves.easeOut);
     _scrollCtrl.addListener(_onScroll);
-    // Réveille le serveur Render en arrière-plan pour éviter le cold start au premier scan
-    ScanApiService.isAvailable();
+    // Réveille le serveur Render — si froid, informe l'utilisateur que le 1er scan sera lent
+    ScanApiService.isAvailable().then((available) {
+      if (!available && mounted) {
+        final s = AppStrings.of(ref.read(localeProvider).languageCode);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(s.scanServerWakingUp),
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
     // Rafraîchissement automatique météo + qualité air toutes les 10 min
     _envRefreshTimer = Timer.periodic(const Duration(minutes: 10), (_) {
       if (mounted) {

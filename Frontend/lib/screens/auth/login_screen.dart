@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
@@ -54,6 +55,137 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     super.dispose();
   }
 
+  static const _moroccanCities = [
+    'Agadir', 'Al Hoceima', 'Beni Mellal', 'Berkane', 'Casablanca',
+    'Dakhla', 'El Jadida', 'Errachidia', 'Essaouira', 'Fès',
+    'Guelmim', 'Ifrane', 'Kénitra', 'Khouribga', 'Laâyoune',
+    'Larache', 'Marrakech', 'Meknès', 'Mohammedia', 'Nador',
+    'Ouarzazate', 'Oujda', 'Rabat', 'Safi', 'Salé',
+    'Settat', 'Tanger', 'Taroudant', 'Tétouan', 'Zagora',
+  ];
+
+  Future<void> _showCityPickerSheet() async {
+    final s = AppStrings.of(ref.read(localeProvider).languageCode);
+    final cityCtrl = TextEditingController();
+    List<String> suggestions = [];
+
+    final city = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(s.chooseYourCity,
+                  style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Text(s.chooseCityDesc,
+                  style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      color: AppColors.textSecondary)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: cityCtrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.location_city_rounded,
+                      color: AppColors.primary),
+                  labelText: s.listingCity,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onChanged: (q) {
+                  setSheet(() {
+                    suggestions = q.trim().isEmpty
+                        ? []
+                        : _moroccanCities
+                            .where((c) => c
+                                .toLowerCase()
+                                .startsWith(q.trim().toLowerCase()))
+                            .take(5)
+                            .toList();
+                  });
+                },
+              ),
+              if (suggestions.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8)
+                    ],
+                  ),
+                  child: Column(
+                    children: suggestions
+                        .map((c) => ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.place_outlined,
+                                  color: AppColors.primary, size: 18),
+                              title: Text(c,
+                                  style: const TextStyle(
+                                      fontFamily: 'Poppins', fontSize: 13)),
+                              onTap: () {
+                                cityCtrl.text = c;
+                                setSheet(() => suggestions = []);
+                              },
+                            ))
+                        .toList(),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    final val = cityCtrl.text.trim();
+                    Navigator.pop(ctx, val.isEmpty ? null : val);
+                  },
+                  child: Text(s.confirmCity,
+                      style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && city != null && city.isNotEmpty) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update({'city': city}).catchError((_) {});
+    }
+    if (mounted) context.go('/home');
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       setState(() => _shakeForm = true);
@@ -101,7 +233,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     ref.listen(googleSignInProvider, (_, next) {
       if (!mounted) return;
       if (next.status == AuthStatus.success) {
-        context.go('/home');
+        if (next.needsCity) {
+          _showCityPickerSheet();
+        } else {
+          context.go('/home');
+        }
       }
       if (next.status == AuthStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

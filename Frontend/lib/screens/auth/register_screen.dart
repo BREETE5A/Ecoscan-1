@@ -508,8 +508,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   isDark: isDark,
-                  validator: (v) =>
-                      (v == null || !v.contains('@')) ? s.invalidEmail : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return s.invalidEmail;
+                    final ok = RegExp(r'^[\w.+\-]+@[\w\-]+\.[a-zA-Z]{2,}$').hasMatch(v.trim());
+                    return ok ? null : s.invalidEmail;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -538,7 +541,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 const SizedBox(height: 10),
 
                 // Indicateur de force
-                _PasswordStrength(strength: strength),
+                _PasswordStrength(
+                  strength: strength,
+                  labels: [s.passVeryWeak, s.passWeak, s.passMedium, s.passStrong],
+                ),
                 const SizedBox(height: 16),
 
                 // Confirmation mot de passe
@@ -788,8 +794,9 @@ class _StepIndicator extends StatelessWidget {
 // ── Indicateur force du mot de passe ─────────────────────────────────────────
 class _PasswordStrength extends StatelessWidget {
   final int strength; // 0‒4
+  final List<String> labels; // [veryWeak, weak, medium, strong]
 
-  const _PasswordStrength({required this.strength});
+  const _PasswordStrength({required this.strength, required this.labels});
 
   Color get _color => switch (strength) {
         0 => AppColors.textLight,
@@ -801,10 +808,10 @@ class _PasswordStrength extends StatelessWidget {
 
   String get _label => switch (strength) {
         0 => '',
-        1 => 'Très faible',
-        2 => 'Faible',
-        3 => 'Moyen',
-        _ => 'Fort',
+        1 => labels[0],
+        2 => labels[1],
+        3 => labels[2],
+        _ => labels[3],
       };
 
   @override

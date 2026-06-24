@@ -26,7 +26,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
-    _sendVerification();
+    // L'email a déjà été envoyé par auth_provider lors de l'inscription.
+    // On démarre simplement le cooldown pour éviter un double envoi immédiat.
+    _startCooldown();
     _startPolling();
   }
 
@@ -44,8 +46,25 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     try {
       await user.sendEmailVerification();
       _startCooldown();
-    } catch (_) {}
-    setState(() => _sending = false);
+      if (mounted) {
+        final s = AppStrings.of(ref.read(localeProvider).languageCode);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(s.emailResendSuccess),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } catch (_) {
+      if (mounted) {
+        final s = AppStrings.of(ref.read(localeProvider).languageCode);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(s.emailResendError),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
+    if (mounted) setState(() => _sending = false);
   }
 
   void _startCooldown() {
@@ -122,7 +141,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
               ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
               const SizedBox(height: 12),
               Text(
-                '${s.verifyEmail}\n$email',
+                '${s.emailSentTo}\n$email',
                 style: const TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,

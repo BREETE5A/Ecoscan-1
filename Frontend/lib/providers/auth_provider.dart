@@ -48,22 +48,26 @@ class AuthState {
   final AuthStatus status;
   final String? errorMessage;
   final AppUser? user;
+  final bool needsCity;
 
   const AuthState({
     this.status = AuthStatus.idle,
     this.errorMessage,
     this.user,
+    this.needsCity = false,
   });
 
   AuthState copyWith({
     AuthStatus? status,
     String? errorMessage,
     AppUser? user,
+    bool? needsCity,
   }) =>
       AuthState(
         status: status ?? this.status,
         errorMessage: errorMessage,
         user: user ?? this.user,
+        needsCity: needsCity ?? this.needsCity,
       );
 }
 
@@ -403,6 +407,17 @@ class GoogleSignInNotifier extends StateNotifier<AuthState> {
           nom:    fbUser.displayName ?? '',
           email:  fbUser.email ?? '',
         ).catchError((_) {});
+        final user = AppUser.fromFirebase(fbUser, city: '');
+        _ref.read(currentUserProvider.notifier).state = user;
+        _ref.invalidate(userStatsStreamProvider);
+        _ref.invalidate(userProvider);
+        state = state.copyWith(status: AuthStatus.success, user: user, needsCity: true);
+        await _ref.read(userProvider.notifier).loadFromStorage(
+          firebaseName: user.displayName,
+          firebaseUid:  user.uid,
+          firebaseCity: user.city,
+        );
+        return;
       } else {
         city = (docSnap.data()?['city'] as String?) ?? '';
         final existingName = ((docSnap.data()?['displayName'] as String?) ?? '').trim();
